@@ -21,8 +21,8 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp">
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
 
             <ImageView
                 android:id="@+id/author_icon_image_view_item_post_comment"
@@ -129,8 +129,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
             android:visibility="gone"
             android:textSize="?attr/font_default"
             android:fontFamily="?attr/font_family"
@@ -140,17 +140,17 @@
             android:id="@+id/comment_markdown_view_item_post_comment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginTop="-4dp"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
             android:nestedScrollingEnabled="false" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/bottom_constraint_layout_item_post_comment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp">
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp">
 
             <ImageView
                 android:id="@+id/up_vote_button_item_post_comment"

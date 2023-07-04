@@ -534,7 +534,7 @@ public class CommentsRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerVi
                 if (mShowCommentDivider) {
                     if (mDividerType == DIVIDER_PARENT && comment.getDepth() == 0) {
                         RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) holder.itemView.getLayoutParams();
-                        params.setMargins(0, (int) Utils.convertDpToPixel(16, mActivity), 0, 0);
+                        params.setMargins(0, (int) Utils.convertDpToPixel(10, mActivity), 0, 0);
                     }
                 }
             }
