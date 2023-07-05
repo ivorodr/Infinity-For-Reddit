@@ -199,11 +199,11 @@
     </style>
 
     <style name="TitleFontStyle.Small">
-        <item name="title_font_default">11sp</item>
-        <item name="title_font_12">11sp</item>
-        <item name="title_font_16">13sp</item>
-        <item name="title_font_18">15sp</item>
-        <item name="title_font_20">17sp</item>
+        <item name="title_font_default">12sp</item>
+        <item name="title_font_12">12sp</item>
+        <item name="title_font_16">14sp</item>
+        <item name="title_font_18">16sp</item>
+        <item name="title_font_20">18sp</item>
     </style>
 
     <style name="TitleFontStyle.Normal">
