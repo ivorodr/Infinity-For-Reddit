@@ -8,8 +8,8 @@ android {
         applicationId "ml.docilealligator.infinityforreddit"
         minSdk 21
         targetSdk 33
-        versionCode 121
-        versionName "6.0.2"
+        versionCode 138
+        versionName "6.3.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
@@ -188,6 +188,8 @@ dependencies {
     implementation 'me.zhanghai.android.fastscroll:library:1.1.8'
 
     implementation 'com.otaliastudios:zoomlayout:1.9.0'
+
+    implementation 'androidx.core:core-splashscreen:1.0.1'
 
 
 /**** Builds and flavors ****/
