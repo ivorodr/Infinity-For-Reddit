@@ -120,7 +120,6 @@
     <string name="downvoted">"踩过"</string>
     <string name="hidden">"已隐藏"</string>
     <string name="saved">"已保存"</string>
-    <string name="gilded">"镀金帖"</string>
     <string name="settings">"设置"</string>
     <string name="subscribers_number_detail">"关注者：%1$d"</string>
     <string name="online_subscribers_number_detail">"在线：%1$d"</string>
@@ -393,8 +392,6 @@
     <string name="settings_credits_icon_background_summary">"来自 freepik - www.freepik.com 的背景矢量图"</string>
     <string name="settings_credits_error_image_title">"错误图片"</string>
     <string name="settings_credits_error_image_summary">"来自 freepik - www.freepik.com 的科技矢量图"</string>
-    <string name="settings_credits_gilded_icon_title">"镀金图标"</string>
-    <string name="settings_credits_gilded_icon_summary">"图标由来自 www.flaticon.com 的 Freepik 制作"</string>
     <string name="settings_credits_crosspost_icon_title">"转发图标"</string>
     <string name="settings_credits_crosspost_icon_summary">"图标由来自 www.flaticon.com 的 Freepik 制作"</string>
     <string name="settings_credits_thumbtack_icon_title">"图钉图标"</string>
@@ -763,8 +760,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
 她没有生病或遇到任何问题，但是她肯定会好起来的。"</string>
     <string name="edit_multi_reddit">"编辑聚合版块"</string>
     <string name="delete_multi_reddit">"删除聚合版块"</string>
-    <string name="n_awards">"%1$d 个奖励"</string>
-    <string name="one_award">"1 个奖励"</string>
     <string name="report">"举报"</string>
     <string name="reporting">"正在举报"</string>
     <string name="report_successful">"已举报"</string>
@@ -879,14 +874,8 @@ Reddit 视频分辨率较低。
     <string name="refresh">"刷新"</string>
     <string name="change_sort_type">"更改排序类型"</string>
     <string name="change_post_layout">"更改帖子布局"</string>
-    <string name="give_award_dialog_title">"给予奖励？"</string>
-    <string name="anonymous">"匿名"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"错误代码：%1$d/
-错误信息：%2$s"</string>
-    <string name="give_award_success">"奖励已赠送"</string>
-    <string name="give_award_failed">"失败"</string>
     <string name="warning">"警告"</string>
     <string name="this_is_a_nsfw_subreddit">"这是一个 NSFW 版块。"</string>
     <string name="this_user_has_nsfw_content">"该用户有 NSFW 内容"</string>
@@ -1001,7 +990,6 @@ Reddit 视频分辨率较低。
     <string name="choose_a_user">"选择一个用户"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"点击在相册布局中显示媒体"</string>
     <string name="settings_hide_post_type">"隐藏帖子类型"</string>
-    <string name="settings_hide_the_number_of_awards">"隐藏奖励数量"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"隐藏版块与用户前缀"</string>
     <string name="settings_hide_the_number_of_votes">"隐藏投票数"</string>
     <string name="settings_hide_the_number_of_comments">"隐藏评论数"</string>
@@ -1234,7 +1222,6 @@ Reddit 视频分辨率较低。
     <string name="settings_custom_content_font_family_title">"自定义正文字体"</string>
     <string name="settings_fixed_height_preview_in_card_title">"卡片固定高度"</string>
     <string name="settings_hide_text_post_content">"隐藏文字帖内容"</string>
-    <string name="settings_hide_comment_awards_title">"隐藏评论奖励"</string>
 
     <!-- What is the "Starting form" -->
     <string name="settings_show_fewer_toolbar_options_threshold_title">"自何处开始显示更少的工具栏选项"</string>

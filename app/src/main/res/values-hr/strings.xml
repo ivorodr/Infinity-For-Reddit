@@ -120,7 +120,6 @@
     <string name="downvoted">"Označeno glasom dolje"</string>
     <string name="hidden">"Skriveno"</string>
     <string name="saved">"Spremljeno"</string>
-    <string name="gilded">"Pozlaćeno"</string>
     <string name="settings">"Postavke"</string>
 
     <!-- Fuzzy -->
@@ -408,8 +407,6 @@
     <string name="settings_credits_icon_background_summary">"Pozadinski vektor stvorio freepik - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Slika pogreške"</string>
     <string name="settings_credits_error_image_summary">"Tehnološki vektor stvorio freepik - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Ikona pozlaćenog"</string>
-    <string name="settings_credits_gilded_icon_summary">"Ikonu stvorio Freepik s www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Ikona crossposta"</string>
     <string name="settings_credits_crosspost_icon_summary">"Ikonu stvorio Freepik s www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"Thumbtack ikona"</string>
@@ -780,8 +777,6 @@ Baziraj na Indigo Amoled temi"</string>
     <string name="delete_multi_reddit">"Obriši Multireddit"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d Nagrade/a"</string>
-    <string name="one_award">"1 Nagrada"</string>
     <string name="report">"Prijavi"</string>
     <string name="reporting">"Prijavljivanje"</string>
     <string name="report_successful">"Prijavljeno"</string>
@@ -897,14 +892,8 @@ Reddit videi su niže rezolucije."</string>
     <string name="refresh">"Osvježi"</string>
     <string name="change_sort_type">"Promijeni tip redosljeda"</string>
     <string name="change_post_layout">"Promjeni raspored objava"</string>
-    <string name="give_award_dialog_title">"Nagraditi?"</string>
-    <string name="anonymous">"Anonimno"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Kod: %1$d/
-Poruka: %2$s"</string>
-    <string name="give_award_success">"Nagrađeno"</string>
-    <string name="give_award_failed">"Nagrađivanje nije uspjelo"</string>
     <string name="warning">"Upozorenje"</string>
     <string name="this_is_a_nsfw_subreddit">"Ovo je NSFW podreddit."</string>
     <string name="this_user_has_nsfw_content">"Ovaj korisnik ima NSFW sadržaj"</string>
@@ -1011,7 +1000,6 @@ Poruka: %2$s"</string>
     <string name="choose_a_user">"Odaberi korisnika"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Klikni da prikažeš medij u obliku galerije"</string>
     <string name="settings_hide_post_type">"Sakrij vrstu objave"</string>
-    <string name="settings_hide_the_number_of_awards">"Sakrij broj nagrada"</string>
     <string name="settings_hide_the_number_of_votes">"Sakrij broj glasanja"</string>
     <string name="settings_hide_the_number_of_comments">"Sakrij broj komentara"</string>
     <string name="post_layout_gallery">"Izgled galerije"</string>

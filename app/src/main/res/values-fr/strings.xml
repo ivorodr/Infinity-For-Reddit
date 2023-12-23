@@ -130,7 +130,6 @@ Appuyez pour réessayer."</string>
     <string name="downvoted">"Voté contre"</string>
     <string name="hidden">"Masquée"</string>
     <string name="saved">"Enregistrée"</string>
-    <string name="gilded">"Dorée"</string>
     <string name="settings">"Paramètres"</string>
 
     <!-- Fuzzy -->
@@ -444,8 +443,6 @@ peut ne pas fonctionner sur Android 11"</string>
     <string name="settings_credits_icon_background_summary">"Vecteur d'arrière plan créé par freepik - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Image d'erreur"</string>
     <string name="settings_credits_error_image_summary">"Vecteur technologique créé par freepik - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Icône dorée"</string>
-    <string name="settings_credits_gilded_icon_summary">"Icône créée par freepik depuis www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Icône de publication multiple"</string>
     <string name="settings_credits_crosspost_icon_summary">"Icône créée par freepik depuis www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"Icône Épingle"</string>
@@ -831,8 +828,6 @@ Basé sur le thème sombre Indigo"</string>
     <string name="delete_multi_reddit">"Supprimer le multireddit"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d récompenses"</string>
-    <string name="one_award">"Une récompense"</string>
     <string name="report">"Signaler"</string>
 
     <!-- Not sure about the tense.. -->
@@ -950,13 +945,8 @@ Les onglets pourraient perdre tout leur contenu quand vous passez d'un onglet à
     <string name="refresh">"Rafraîchir"</string>
     <string name="change_sort_type">"Changer l'ordre de tri"</string>
     <string name="change_post_layout">"Changer la disposition des posts"</string>
-    <string name="give_award_dialog_title">"Êtes-vous sûr de vouloir récompenser ce post ? "</string>
-    <string name="anonymous">"Anonyme"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Erreur: %2$s, code: %1$d/"</string>
-    <string name="give_award_success">"Succès ! "</string>
-    <string name="give_award_failed">"Échec de la récompense. "</string>
     <string name="warning">"Avertissement "</string>
     <string name="this_is_a_nsfw_subreddit">"Cette Subreddit est PSPT (Pas Sécurisé Pour le Travail) "</string>
     <string name="this_user_has_nsfw_content">"Cet utilisateur poste du contenu NSFW"</string>
@@ -1081,7 +1071,6 @@ Les onglets pourraient perdre tout leur contenu quand vous passez d'un onglet à
     <string name="choose_a_user">"Choisir un utilisateur"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Cliquez pour afficher les médias dans la disposition galerie"</string>
     <string name="settings_hide_post_type">"Masquer le type de publication"</string>
-    <string name="settings_hide_the_number_of_awards">"Masquer le nombre de récompenses"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Masquer Subreddit et préfixe utilisateur"</string>
     <string name="settings_hide_the_number_of_votes">"Cacher le Nombre de Votes"</string>
     <string name="settings_hide_the_number_of_comments">"Cacher le Nombre de Commentaires"</string>
@@ -1344,7 +1333,6 @@ Cliquer pour réessayer."</string>
     <!-- Fuzzy -->
     <string name="settings_fixed_height_preview_in_card_title">"Figés la Hauteur des cartes"</string>
     <string name="settings_hide_text_post_content">"Masquer le Contenu de l'Article Textuel"</string>
-    <string name="settings_hide_comment_awards_title">"Cacher les récompenses sur des commentaires"</string>
 
     <!-- Fuzzy -->
     <string name="settings_show_fewer_toolbar_options_threshold_title">"Afficher moins d'option dans la barre d'outil à partir de"</string>

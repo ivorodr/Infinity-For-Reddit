@@ -108,7 +108,6 @@ Tocca per riprovare."</string>
     <string name="downvoted">"Downvotato"</string>
     <string name="hidden">"Nascosto"</string>
     <string name="saved">"Salvato"</string>
-    <string name="gilded">"Premiati"</string>
     <string name="settings">"Impostazioni"</string>
     <string name="subscribers_number_detail">"Iscritti: %1$,d"</string>
     <string name="online_subscribers_number_detail">"In linea: %1$,d"</string>
@@ -359,8 +358,6 @@ Tocca per riprovare."</string>
     <string name="settings_credits_icon_background_summary">"Sfondo vettoriale creato da freepik - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Immagine di Errore"</string>
     <string name="settings_credits_error_image_summary">"Technology vector creato da freepik - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Icona \"Premiato\""</string>
-    <string name="settings_credits_gilded_icon_summary">"Icona creata da Freepik su www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Icona \"Cross Post\""</string>
     <string name="settings_credits_crosspost_icon_summary">"Icona creata da Freepik su www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"Icona \"Puntina da disegno\""</string>
@@ -696,8 +693,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="comment_content_preview">"Non mi fido molto delle statistiche, perché un uomo con la testa nel forno acceso e i piedi nel congelatore statisticamente ha una temperatura media."</string>
     <string name="edit_multi_reddit">"Modifica multireddit"</string>
     <string name="delete_multi_reddit">"Cancella Multireddit"</string>
-    <string name="n_awards">"%1$,d premi"</string>
-    <string name="one_award">"1 Premio"</string>
     <string name="report">"Segnala"</string>
     <string name="reporting">"Segnala"</string>
     <string name="report_successful">"Segnalato"</string>
@@ -808,12 +803,6 @@ La riproduzione automatica video è disabilitata."</string>
     <string name="refresh">"Ricarica"</string>
     <string name="change_sort_type">"Cambia il tipo di ordinamento"</string>
     <string name="change_post_layout">"Cambia il layout dei post"</string>
-    <string name="give_award_dialog_title">"Vuoi dare premio?"</string>
-    <string name="anonymous">"Anonimo"</string>
-    <string name="give_award_error_message">"Codice: %1$d/
-Messaggio: %2$s"</string>
-    <string name="give_award_success">"Premio conferito"</string>
-    <string name="give_award_failed">"Fallito"</string>
     <string name="warning">"Avvertimento"</string>
     <string name="this_is_a_nsfw_subreddit">"Questo è un subreddit marcato NSFW."</string>
     <string name="this_user_has_nsfw_content">"Questo utente è marcato NSFW"</string>
@@ -926,7 +915,6 @@ Messaggio: %2$s"</string>
     <string name="choose_a_user">"Seleziona un utente"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Clicca per mostrare i media nel layout a galleria"</string>
     <string name="settings_hide_post_type">"Nascondi tipo di post"</string>
-    <string name="settings_hide_the_number_of_awards">"Nascondi numero di premi"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Nascondi subreddit e prefisso utente"</string>
     <string name="settings_hide_the_number_of_votes">"Nascondi numero di voti"</string>
     <string name="settings_hide_the_number_of_comments">"Nascondi numero di commenti"</string>
@@ -1157,7 +1145,6 @@ Premi per riprovare."</string>
     <string name="settings_custom_content_font_family_title">"Famiglia di caratteri contenuto personalizzato"</string>
     <string name="settings_fixed_height_preview_in_card_title">"Altezza fissa nella scheda"</string>
     <string name="settings_hide_text_post_content">"Nascondi il contenuto del post di testo"</string>
-    <string name="settings_hide_comment_awards_title">"Nascondi i premi dei commenti"</string>
     <string name="settings_show_fewer_toolbar_options_threshold_title">"Mostra meno opzioni della barra degli strumenti a partire da"</string>
     <string name="settings_show_fewer_toolbar_options_threshold_summary">"Livello %1$d"</string>
     <string name="settings_show_author_avatar_title">"Mostra avatar dell'autore"</string>

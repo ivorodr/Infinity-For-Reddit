@@ -77,7 +77,6 @@ import ml.docilealligator.infinityforreddit.SaveThing;
 import ml.docilealligator.infinityforreddit.SortType;
 import ml.docilealligator.infinityforreddit.activities.CommentActivity;
 import ml.docilealligator.infinityforreddit.activities.EditPostActivity;
-import ml.docilealligator.infinityforreddit.activities.GiveAwardActivity;
 import ml.docilealligator.infinityforreddit.activities.PostFilterPreferenceActivity;
 import ml.docilealligator.infinityforreddit.activities.ReportActivity;
 import ml.docilealligator.infinityforreddit.activities.SubmitCrosspostActivity;
@@ -608,7 +607,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
             mCommentsAdapter = new CommentsRecyclerViewAdapter(activity,
                     this, mCustomThemeWrapper, mExecutor, mRetrofit, mOauthRetrofit,
                     mAccessToken, mAccountName, mPost, mLocale, mSingleCommentId,
-                    isSingleCommentThreadMode, mSharedPreferences,
+                    isSingleCommentThreadMode, mSharedPreferences, mNsfwAndSpoilerSharedPreferences,
                     new CommentsRecyclerViewAdapter.CommentRecyclerViewAdapterCallback() {
                         @Override
                         public void retryFetchingComments() {
@@ -794,12 +793,6 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
         }
     }
 
-    public void awardGiven(String awardsHTML, int awardCount, int position) {
-        if (mCommentsAdapter != null) {
-            mCommentsAdapter.giveAward(awardsHTML, awardCount, position);
-        }
-    }
-
     public void changeFlair(Flair flair) {
         Map<String, String> params = new HashMap<>();
         params.put(APIUtils.API_TYPE_KEY, APIUtils.API_TYPE_JSON);
@@ -976,6 +969,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                 intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_BODY_KEY, mPost.getSelfTextPlain());
                 intent.putExtra(CommentActivity.EXTRA_PARENT_FULLNAME_KEY, mPost.getFullName());
                 intent.putExtra(CommentActivity.EXTRA_PARENT_DEPTH_KEY, 0);
+                intent.putExtra(CommentActivity.EXTRA_SUBREDDIT_NAME_KEY, mPost.getSubredditName());
                 intent.putExtra(CommentActivity.EXTRA_IS_REPLYING_KEY, false);
                 startActivityForResult(intent, WRITE_COMMENT_REQUEST_CODE);
             }
@@ -1139,17 +1133,6 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
             flairBottomSheetFragment.setArguments(bundle);
             flairBottomSheetFragment.show(activity.getSupportFragmentManager(), flairBottomSheetFragment.getTag());
             return true;
-        } else if (itemId == R.id.action_give_award_view_post_detail_fragment) {
-            if (mAccessToken == null) {
-                Toast.makeText(activity, R.string.login_first, Toast.LENGTH_SHORT).show();
-                return true;
-            }
-
-            Intent giveAwardIntent = new Intent(activity, GiveAwardActivity.class);
-            giveAwardIntent.putExtra(GiveAwardActivity.EXTRA_THING_FULLNAME, mPost.getFullName());
-            giveAwardIntent.putExtra(GiveAwardActivity.EXTRA_ITEM_POSITION, 0);
-            activity.startActivityForResult(giveAwardIntent, ViewPostDetailActivity.GIVE_AWARD_REQUEST_CODE);
-            return true;
         } else if (itemId == R.id.action_report_view_post_detail_fragment) {
             if (mAccessToken == null) {
                 Toast.makeText(activity, R.string.login_first, Toast.LENGTH_SHORT).show();
@@ -1216,6 +1199,9 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
         super.onResume();
         if (mPostAdapter != null) {
             mPostAdapter.setCanStartActivity(true);
+        }
+        if (mCommentsAdapter != null) {
+            mCommentsAdapter.setCanStartActivity(true);
         }
         if (mRecyclerView != null) {
             mRecyclerView.onWindowVisibilityChanged(View.VISIBLE);
@@ -1330,6 +1316,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                                     ViewPostDetailFragment.this, mCustomThemeWrapper, mExecutor,
                                     mRetrofit, mOauthRetrofit, mAccessToken, mAccountName, mPost, mLocale,
                                     mSingleCommentId, isSingleCommentThreadMode, mSharedPreferences,
+                                    mNsfwAndSpoilerSharedPreferences,
                                     new CommentsRecyclerViewAdapter.CommentRecyclerViewAdapterCallback() {
                                         @Override
                                         public void retryFetchingComments() {
@@ -2018,26 +2005,33 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
 
     @Subscribe
     public void onChangeNetworkStatusEvent(ChangeNetworkStatusEvent changeNetworkStatusEvent) {
-        if (mPostAdapter != null) {
-            String autoplay = mSharedPreferences.getString(SharedPreferencesUtils.VIDEO_AUTOPLAY, SharedPreferencesUtils.VIDEO_AUTOPLAY_VALUE_NEVER);
-            String dataSavingMode = mSharedPreferences.getString(SharedPreferencesUtils.DATA_SAVING_MODE, SharedPreferencesUtils.DATA_SAVING_MODE_OFF);
-            boolean stateChanged = false;
-            if (autoplay.equals(SharedPreferencesUtils.VIDEO_AUTOPLAY_VALUE_ON_WIFI)) {
+        String autoplay = mSharedPreferences.getString(SharedPreferencesUtils.VIDEO_AUTOPLAY, SharedPreferencesUtils.VIDEO_AUTOPLAY_VALUE_NEVER);
+        String dataSavingMode = mSharedPreferences.getString(SharedPreferencesUtils.DATA_SAVING_MODE, SharedPreferencesUtils.DATA_SAVING_MODE_OFF);
+        boolean stateChanged = false;
+        if (autoplay.equals(SharedPreferencesUtils.VIDEO_AUTOPLAY_VALUE_ON_WIFI)) {
+            if (mPostAdapter != null) {
                 mPostAdapter.setAutoplay(changeNetworkStatusEvent.connectedNetwork == Utils.NETWORK_TYPE_WIFI);
-                stateChanged = true;
             }
-            if (dataSavingMode.equals(SharedPreferencesUtils.DATA_SAVING_MODE_ONLY_ON_CELLULAR_DATA)) {
+            stateChanged = true;
+        }
+        if (dataSavingMode.equals(SharedPreferencesUtils.DATA_SAVING_MODE_ONLY_ON_CELLULAR_DATA)) {
+            if (mPostAdapter != null) {
                 mPostAdapter.setDataSavingMode(changeNetworkStatusEvent.connectedNetwork == Utils.NETWORK_TYPE_CELLULAR);
-                stateChanged = true;
             }
+            if (mCommentsAdapter != null) {
+                mCommentsAdapter.setDataSavingMode(changeNetworkStatusEvent.connectedNetwork == Utils.NETWORK_TYPE_CELLULAR);
+            }
+            stateChanged = true;
+        }
 
-            if (stateChanged) {
-                if (mCommentsRecyclerView == null) {
-                    refreshAdapter(mRecyclerView, mConcatAdapter);
-                } else {
+        if (stateChanged) {
+            if (mCommentsRecyclerView == null) {
+                refreshAdapter(mRecyclerView, mConcatAdapter);
+            } else {
+                if (mPostAdapter != null) {
                     refreshAdapter(mRecyclerView, mPostAdapter);
-                    refreshAdapter(mCommentsRecyclerView, mCommentsAdapter);
                 }
+                refreshAdapter(mCommentsRecyclerView, mCommentsAdapter);
             }
         }
     }

@@ -1,10 +1,8 @@
 package ml.docilealligator.infinityforreddit.activities;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -20,7 +18,6 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -39,13 +36,13 @@ import ml.docilealligator.infinityforreddit.commentfilter.CommentFilter;
 import ml.docilealligator.infinityforreddit.commentfilter.SaveCommentFilter;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.databinding.ActivityCustomizeCommentFilterBinding;
-import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
 
 public class CustomizeCommentFilterActivity extends BaseActivity {
 
     public static final String EXTRA_COMMENT_FILTER = "ECF";
     public static final String EXTRA_FROM_SETTINGS = "EFS";
+    public static final String EXTRA_EXCLUDE_USER = "EEU";
     public static final String RETURN_EXTRA_COMMENT_FILTER = "RECF";
     private static final String COMMENT_FILTER_STATE = "CFS";
     private static final String ORIGINAL_NAME_STATE = "ONS";
@@ -142,15 +139,25 @@ public class CustomizeCommentFilterActivity extends BaseActivity {
         binding.excludeUsersTextInputEditTextCustomizeCommentFilterActivity.setText(commentFilter.excludeUsers);
         binding.minVoteTextInputEditTextCustomizeCommentFilterActivity.setText(Integer.toString(commentFilter.minVote));
         binding.maxVoteTextInputEditTextCustomizeCommentFilterActivity.setText(Integer.toString(commentFilter.maxVote));
+
+        Intent intent = getIntent();
+        String excludeUser = intent.getStringExtra(EXTRA_EXCLUDE_USER);
+
+        if (excludeUser != null && !excludeUser.equals("")) {
+            if (!binding.excludeUsersTextInputEditTextCustomizeCommentFilterActivity.getText().toString().equals("")) {
+                binding.excludeUsersTextInputEditTextCustomizeCommentFilterActivity.append(",");
+            }
+            binding.excludeUsersTextInputEditTextCustomizeCommentFilterActivity.append(excludeUser);
+        }
     }
 
     @Override
-    protected SharedPreferences getDefaultSharedPreferences() {
+    public SharedPreferences getDefaultSharedPreferences() {
         return mSharedPreferences;
     }
 
     @Override
-    protected CustomThemeWrapper getCustomThemeWrapper() {
+    public CustomThemeWrapper getCustomThemeWrapper() {
         return mCustomThemeWrapper;
     }
 

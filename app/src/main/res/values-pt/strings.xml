@@ -122,7 +122,6 @@ Toque para tentar novamente."</string>
     <string name="downvoted">"Voto Negativo"</string>
     <string name="hidden">"Escondido"</string>
     <string name="saved">"Guardado"</string>
-    <string name="gilded">"Dourado"</string>
     <string name="settings">"Definições"</string>
 
     <!-- Fuzzy -->
@@ -396,8 +395,6 @@ Toque para tentar novamente."</string>
     <string name="settings_credits_icon_background_summary">"Vetor tecnológico criado por freepik - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Imagem de Erro"</string>
     <string name="settings_credits_error_image_summary">"Vetor tecnológico criado por freepik - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Ícone Dourado"</string>
-    <string name="settings_credits_gilded_icon_summary">"Ícone criado por Freepik da www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Ícone de Republicação"</string>
     <string name="settings_credits_crosspost_icon_summary">"Ícone criado por Freepik da www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"Ícone Thumbtack"</string>
@@ -743,8 +740,6 @@ Ela não está doente nem nada, mas certamente poderá melhorar."</string>
     <string name="delete_multi_reddit">"Eliminar Multireddit"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d Prémios"</string>
-    <string name="one_award">"1 Prémio"</string>
     <string name="report">"Denunciar"</string>
     <string name="reporting">"A denunciar"</string>
     <string name="report_successful">"Denunciado"</string>
@@ -855,14 +850,8 @@ Reprodução automática de vídeos desativada."</string>
     <string name="refresh">"Atualizar"</string>
     <string name="change_sort_type">"Alterar Tipo de Ordenação"</string>
     <string name="change_post_layout">"Alterar Visualização de Publicações"</string>
-    <string name="give_award_dialog_title">"Premiar?"</string>
-    <string name="anonymous">"Anónimo"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Código: %1$d/
-Mensagem: %2$s"</string>
-    <string name="give_award_success">"Prémio oferecido"</string>
-    <string name="give_award_failed">"Falhou"</string>
     <string name="warning">"Aviso"</string>
     <string name="this_is_a_nsfw_subreddit">"Esta é uma comunidade 18+."</string>
     <string name="this_user_has_nsfw_content">"Este utilizador tem conteúdo 18+"</string>
@@ -973,7 +962,6 @@ Mensagem: %2$s"</string>
     <string name="choose_a_user">"Escolher um utilizador"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Clicar para Mostrar Média na Visualização Galeria"</string>
     <string name="settings_hide_post_type">"Esconder Tipo de Publicação"</string>
-    <string name="settings_hide_the_number_of_awards">"Esconder Número de Prémios"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Esconder Prefixos de Comunidades e Utilizador"</string>
     <string name="settings_hide_the_number_of_votes">"Esconder Número de Votos"</string>
     <string name="settings_hide_the_number_of_comments">"Esconder Número de Comentários"</string>

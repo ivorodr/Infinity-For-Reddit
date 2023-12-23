@@ -16,8 +16,10 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
+import ml.docilealligator.infinityforreddit.MediaMetadata;
 import ml.docilealligator.infinityforreddit.commentfilter.CommentFilter;
 import ml.docilealligator.infinityforreddit.utils.JSONUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
@@ -265,31 +267,16 @@ public class ParseComment {
         String parentId = singleCommentData.getString(JSONUtils.PARENT_ID_KEY);
         boolean isSubmitter = singleCommentData.getBoolean(JSONUtils.IS_SUBMITTER_KEY);
         String distinguished = singleCommentData.getString(JSONUtils.DISTINGUISHED_KEY);
+        Map<String, MediaMetadata> mediaMetadataMap = JSONUtils.parseMediaMetadata(singleCommentData);
         String commentMarkdown = "";
         if (!singleCommentData.isNull(JSONUtils.BODY_KEY)) {
-            commentMarkdown = Utils.parseInlineGifInComments(Utils.modifyMarkdown(Utils.trimTrailingWhitespace(singleCommentData.getString(JSONUtils.BODY_KEY))));
-            if (!singleCommentData.isNull(JSONUtils.MEDIA_METADATA_KEY)) {
-                JSONObject mediaMetadataObject = singleCommentData.getJSONObject(JSONUtils.MEDIA_METADATA_KEY);
-                commentMarkdown = Utils.parseInlineEmotes(commentMarkdown, mediaMetadataObject);
-            }
+            commentMarkdown = Utils.parseRedditImagesBlock(
+                    Utils.modifyMarkdown(
+                    Utils.trimTrailingWhitespace(singleCommentData.getString(JSONUtils.BODY_KEY))), mediaMetadataMap);
         }
         String commentRawText = Utils.trimTrailingWhitespace(
                 Html.fromHtml(singleCommentData.getString(JSONUtils.BODY_HTML_KEY))).toString();
         String permalink = Html.fromHtml(singleCommentData.getString(JSONUtils.PERMALINK_KEY)).toString();
-        StringBuilder awardingsBuilder = new StringBuilder();
-        JSONArray awardingsArray = singleCommentData.getJSONArray(JSONUtils.ALL_AWARDINGS_KEY);
-        for (int i = 0; i < awardingsArray.length(); i++) {
-            JSONObject award = awardingsArray.getJSONObject(i);
-            int count = award.getInt(JSONUtils.COUNT_KEY);
-            JSONArray icons = award.getJSONArray(JSONUtils.RESIZED_ICONS_KEY);
-            if (icons.length() > 4) {
-                String iconUrl = icons.getJSONObject(3).getString(JSONUtils.URL_KEY);
-                awardingsBuilder.append("<img src=\"").append(Html.escapeHtml(iconUrl)).append("\"> ").append("x").append(count).append(" ");
-            } else if (icons.length() > 0) {
-                String iconUrl = icons.getJSONObject(icons.length() - 1).getString(JSONUtils.URL_KEY);
-                awardingsBuilder.append("<img src=\"").append(Html.escapeHtml(iconUrl)).append("\"> ").append("x").append(count).append(" ");
-            }
-        }
         int score = singleCommentData.getInt(JSONUtils.SCORE_KEY);
         int voteType;
         if (singleCommentData.isNull(JSONUtils.LIKES_KEY)) {
@@ -315,7 +302,8 @@ public class ParseComment {
         return new Comment(id, fullName, author, authorFlair, authorFlairHTMLBuilder.toString(),
                 linkAuthor, submitTime, commentMarkdown, commentRawText,
                 linkId, subredditName, parentId, score, voteType, isSubmitter, distinguished,
-                permalink, awardingsBuilder.toString(), depth, collapsed, hasReply, scoreHidden, saved, edited);
+                permalink, depth, collapsed, hasReply, scoreHidden, saved, edited,
+                mediaMetadataMap);
     }
 
     @Nullable

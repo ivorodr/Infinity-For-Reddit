@@ -122,7 +122,6 @@
     <string name="downvoted">"Голоси вниз"</string>
     <string name="hidden">"Приховане"</string>
     <string name="saved">"Збережено"</string>
-    <string name="gilded">"Позолочене"</string>
     <string name="settings">"Налаштування"</string>
 
     <!-- Fuzzy -->
@@ -385,8 +384,6 @@
     <string name="settings_credits_icon_background_summary">"Векторне тло створене freepik - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Зображення помилки"</string>
     <string name="settings_credits_error_image_summary">"Векторна технологія створена freepik - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Значок позолоченого"</string>
-    <string name="settings_credits_gilded_icon_summary">"Автор значка Freepik із www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Значок передопису"</string>
     <string name="settings_credits_crosspost_icon_summary">"Автор значка Freepik із www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"Значок пришпильки"</string>
@@ -742,8 +739,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="delete_multi_reddit">"Видалити мультиредит"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d нагород"</string>
-    <string name="one_award">"1 нагорода"</string>
     <string name="report">"Повідомити"</string>
     <string name="reporting">"Звітування"</string>
     <string name="report_successful">"Відзвітовано"</string>
@@ -854,14 +849,8 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="refresh">"Оновити"</string>
     <string name="change_sort_type">"Змінити тип сортування"</string>
     <string name="change_post_layout">"Змінити форму дописів"</string>
-    <string name="give_award_dialog_title">"Дати нагороду?"</string>
-    <string name="anonymous">"Анонімно"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Код: %1$d/
-Повідомлення: %2$s"</string>
-    <string name="give_award_success">"Дано нагороду"</string>
-    <string name="give_award_failed">"Не вдалося"</string>
     <string name="warning">"Попередження"</string>
     <string name="this_is_a_nsfw_subreddit">"Це сабредит НБДР."</string>
     <string name="this_user_has_nsfw_content">"У цього користувача є вміст НБДР"</string>
@@ -974,7 +963,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="choose_a_user">"Оберіть користувача"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Клацнути, щоб показати медія у вигляді галереї"</string>
     <string name="settings_hide_post_type">"Ховати тип дописів"</string>
-    <string name="settings_hide_the_number_of_awards">"Ховати кількість нагород"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Ховати префікс сабредитів і користувачів"</string>
     <string name="settings_hide_the_number_of_votes">"Ховати кількість голосів"</string>
     <string name="settings_hide_the_number_of_comments">"Ховати кількість коментарів"</string>
@@ -1217,7 +1205,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="settings_custom_content_font_family_title">"Власне сімейство шрифтів для вмісту"</string>
     <string name="settings_fixed_height_preview_in_card_title">"Фіксована висота карток"</string>
     <string name="settings_hide_text_post_content">"Ховати текст вмісту дописів"</string>
-    <string name="settings_hide_comment_awards_title">"Ховати нагороди коментарів"</string>
     <string name="settings_show_fewer_toolbar_options_threshold_title">"Показувати менше параметрів панелі засобів починаючи з"</string>
 
     <!-- Fuzzy -->

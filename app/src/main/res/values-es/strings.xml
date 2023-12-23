@@ -128,7 +128,6 @@ Toca para reintentar."</string>
     <string name="downvoted">"Downvoted"</string>
     <string name="hidden">"Oculto"</string>
     <string name="saved">"Guardado"</string>
-    <string name="gilded">"Premiado"</string>
     <string name="settings">"Configuración"</string>
 
     <!-- Fuzzy -->
@@ -408,8 +407,6 @@ Premio means prize, so it's better suited the first word instead of the second o
     <string name="settings_credits_icon_background_summary">"Vector de fondo creado por Freepik - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Imagen de Error"</string>
     <string name="settings_credits_error_image_summary">"Vector de tecnología creado por Freepik - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Ícono de Gold"</string>
-    <string name="settings_credits_gilded_icon_summary">"Ícono hecho por Freepik desde www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Ícono de crosspost
 "</string>
     <string name="settings_credits_crosspost_icon_summary">"Ícono hecho por Freepik desde www.flaticon.com"</string>
@@ -787,8 +784,6 @@ No está enferma ni nada, pero definitivamente podría mejorar."</string>
     <string name="delete_multi_reddit">"Borrar multireddit"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d Premios"</string>
-    <string name="one_award">"1 Premio"</string>
     <string name="report">"Reportar"</string>
     <string name="reporting">"Reportando"</string>
     <string name="report_successful">"Reportado"</string>
@@ -898,18 +893,12 @@ La reproducción automática de video está deshabilitada."</string>
     <string name="refresh">"Actualizar"</string>
     <string name="change_sort_type">"Cambiar orden"</string>
     <string name="change_post_layout">"Cambiar diseño"</string>
-    <string name="give_award_dialog_title">"¿Premiar?"</string>
-    <string name="anonymous">"Anónimo"</string>
 
     <!-- Código: %1$d/
 Mensaje: %2$s
 
 https://s3.eu-west-1.amazonaws.com/po-pub/i/hJAe7sMhrfJzqjhp9VkDQOVC.PNG -->
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Código: %1$d/
-Mensaje: %2$s"</string>
-    <string name="give_award_success">"Premiado"</string>
-    <string name="give_award_failed">"Falló"</string>
     <string name="warning">"Precaución"</string>
     <string name="this_is_a_nsfw_subreddit">"Este es un subreddit NSFW."</string>
     <string name="this_user_has_nsfw_content">"Este usuario tiene contenido NSFW"</string>
@@ -1026,7 +1015,6 @@ Mensaje: %2$s"</string>
     <string name="choose_a_user">"Elige un usuario"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Pulsa para mostrar los medios en el diseño de galería"</string>
     <string name="settings_hide_post_type">"Ocultar el tipo de publicación"</string>
-    <string name="settings_hide_the_number_of_awards">"Ocultar el número de premios"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Ocultar el prefijo de subreddit y de usuario"</string>
     <string name="settings_hide_the_number_of_votes">"Ocultar el número de votos"</string>
     <string name="settings_hide_the_number_of_comments">"Ocultar el número de comentarios"</string>
@@ -1273,7 +1261,6 @@ Toque para volver a intentarlo."</string>
     <string name="settings_custom_content_font_family_title">"Familia de fuente del contenido personalizada"</string>
     <string name="settings_fixed_height_preview_in_card_title">"Altura fija en tarjeta"</string>
     <string name="settings_hide_text_post_content">"Ocultar contenido de publicación de texto"</string>
-    <string name="settings_hide_comment_awards_title">"Ocultar premios del comentario"</string>
     <string name="settings_show_fewer_toolbar_options_threshold_title">"Mostrar menos opciones de la barra de herramientas a partir de"</string>
 
     <!-- Fuzzy -->

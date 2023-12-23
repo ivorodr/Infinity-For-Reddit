@@ -119,7 +119,6 @@ Druk om opnieuw te proberen."</string>
     <string name="downvoted">"Omlaagstemmen"</string>
     <string name="hidden">"Verborgen"</string>
     <string name="saved">"Opgeslagen"</string>
-    <string name="gilded">"Verguld"</string>
     <string name="settings">"Instellingen"</string>
 
     <!-- Fuzzy -->
@@ -392,8 +391,6 @@ Druk om opnieuw te proberen."</string>
     <string name="settings_credits_icon_background_summary">"De achtergrondvector is gemaakt door freepik - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Foutmeldingsafbeelding"</string>
     <string name="settings_credits_error_image_summary">"De technologievector is gemaakt door freepik - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Verguld pictogram"</string>
-    <string name="settings_credits_gilded_icon_summary">"Dit pictogram is gemaakt door Freepik - www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Crosspost-pictogram"</string>
     <string name="settings_credits_crosspost_icon_summary">"Dit pictogram is gemaakt door Freepik - www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"Miniatuurpictogram"</string>
@@ -754,8 +751,6 @@ Ze is niet ziek of zo, maar ze kan zeker beter worden."</string>
     <string name="delete_multi_reddit">"Verwijder Multireddit"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d Awards"</string>
-    <string name="one_award">"1 Award"</string>
     <string name="report">"Meld"</string>
     <string name="reporting">"Aan het melden"</string>
     <string name="report_successful">"Gemeld"</string>
@@ -871,14 +866,8 @@ Automatisch afspelen van video is uitgeschakeld."</string>
     <string name="refresh">"Ververs"</string>
     <string name="change_sort_type">"Wijzig het sorteertype"</string>
     <string name="change_post_layout">"Wijzig het postlayout"</string>
-    <string name="give_award_dialog_title">"Geef Award?"</string>
-    <string name="anonymous">"Anoniem"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Code: %1$d/
-Bericht: %2$s"</string>
-    <string name="give_award_success">"Award gegeven"</string>
-    <string name="give_award_failed">"Mislukt"</string>
     <string name="warning">"Waarschuwing"</string>
     <string name="this_is_a_nsfw_subreddit">"Dit is een NSFW subreddit."</string>
     <string name="this_user_has_nsfw_content">"Deze gebruiker heeft NSFW inhoud"</string>
@@ -986,7 +975,6 @@ Bericht: %2$s"</string>
     <string name="choose_a_user">"Kies een gebruiker"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Klik om Media in Gallerij Lay-Out te Tonen"</string>
     <string name="settings_hide_post_type">"Verberg Post Type"</string>
-    <string name="settings_hide_the_number_of_awards">"Verberg het Aantal Awards"</string>
     <string name="settings_hide_the_number_of_votes">"Verberg het Aantal Stemmen"</string>
     <string name="settings_hide_the_number_of_comments">"Verberg het aantal reacties"</string>
     <string name="post_layout_gallery">"Gallerij Lay-Out"</string>

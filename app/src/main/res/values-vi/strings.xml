@@ -116,7 +116,6 @@
     <string name="downvoted">"Không thích"</string>
     <string name="hidden">"Ẩn"</string>
     <string name="saved">"Lưu"</string>
-    <string name="gilded">"Mạ vàng"</string>
     <string name="settings">"Cài đặt"</string>
 
     <!-- Fuzzy -->
@@ -398,8 +397,6 @@ Nhấn để thử lại."</string>
     <string name="settings_credits_icon_background_summary">"Véc tơ nền được tạo bởi freepik - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Hình ảnh lỗi"</string>
     <string name="settings_credits_error_image_summary">"Véc tơ công nghệ được tạo bởi freepik - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Biểu tượng mạ vàng"</string>
-    <string name="settings_credits_gilded_icon_summary">"Biểu tượng được tạo bởi Freepik từ www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Biểu tượng bài đăng chéo"</string>
     <string name="settings_credits_crosspost_icon_summary">"Biểu tượng được tạo bởi Freepik từ www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"Biểu tượng đinh ghim"</string>
@@ -755,8 +752,6 @@ Cô ta không ốm hay gì cả, nhưng cô ấy chắc chắn có thể khá h�
     <string name="delete_multi_reddit">"Xoá Multireddit"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d giải thưởng"</string>
-    <string name="one_award">"1 giải thưởng"</string>
     <string name="report">"Báo cáo"</string>
     <string name="reporting">"Đang báo cáo"</string>
     <string name="report_successful">"Đã báo cáo"</string>
@@ -867,14 +862,8 @@ Tự động phát video bị tắt."</string>
     <string name="refresh">"Làm mới"</string>
     <string name="change_sort_type">"Thay đổi loại sắp xếp"</string>
     <string name="change_post_layout">"Thay đổi bố cục bài đăng"</string>
-    <string name="give_award_dialog_title">"Cho giải thưởng?"</string>
-    <string name="anonymous">"Vô danh"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Mã: %1$d/
-Thông báo: %2$s"</string>
-    <string name="give_award_success">"Giải thưởng đã được cho"</string>
-    <string name="give_award_failed">"Thất bại"</string>
     <string name="warning">"Cảnh báo"</string>
     <string name="this_is_a_nsfw_subreddit">"Đây là một subreddit NSFW."</string>
     <string name="this_user_has_nsfw_content">"Người dùng này có nội dung NSFW"</string>
@@ -987,7 +976,6 @@ Thông báo: %2$s"</string>
     <string name="choose_a_user">"Chọn người dùng"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Nhấn để hiện phương tiện trong bố cục thư viện"</string>
     <string name="settings_hide_post_type">"Ẩn loại bài đăng"</string>
-    <string name="settings_hide_the_number_of_awards">"Ẩn số lượng giải thưởng"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Ẩn subreddit và tiền tố người dùng"</string>
     <string name="settings_hide_the_number_of_votes">"Ẩn số lượng vote"</string>
     <string name="settings_hide_the_number_of_comments">"Ẩn số lượng bình luận"</string>

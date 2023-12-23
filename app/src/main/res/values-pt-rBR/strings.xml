@@ -124,7 +124,6 @@ Toque para tentar de novo."</string>
     <string name="downvoted">"Votado contra"</string>
     <string name="hidden">"Oculto"</string>
     <string name="saved">"Salvo"</string>
-    <string name="gilded">"Premiações"</string>
     <string name="settings">"Ajustes"</string>
     <string name="subscribers_number_detail">"Inscritos: %1$,d"</string>
     <string name="online_subscribers_number_detail">"Online: %1$,d"</string>
@@ -381,8 +380,6 @@ Toque para tentar de novo."</string>
     <string name="settings_credits_icon_background_summary">"Vetor de fundo criado por Freepik - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Erro na imagem"</string>
     <string name="settings_credits_error_image_summary">"Vetor de tecnologia criado por Freepik - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Ícone de Prêmio"</string>
-    <string name="settings_credits_gilded_icon_summary">"Ícone feito por Freepik - www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Ícone da postagem cruzada"</string>
     <string name="settings_credits_crosspost_icon_summary">"Ícone feito por Freepik - www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"Ícone do Thumbtack"</string>
@@ -732,8 +729,6 @@ Baseado no tema Índigo AMOLED"</string>
 Ela não está doente ou algo assim, mas definitivamente poderia melhorar."</string>
     <string name="edit_multi_reddit">"Editar Multireddit"</string>
     <string name="delete_multi_reddit">"Excluir Multireddit"</string>
-    <string name="n_awards">"%1$,d prêmios"</string>
-    <string name="one_award">"1 Prêmio"</string>
     <string name="report">"Reportar"</string>
     <string name="reporting">"Reportando"</string>
     <string name="report_successful">"Reportado"</string>
@@ -844,14 +839,8 @@ A reprodução automática de vídeos fica desativada."</string>
     <string name="refresh">"Atualizar"</string>
     <string name="change_sort_type">"Mudar modo de ordenação"</string>
     <string name="change_post_layout">"Mudar estrutura da postagem"</string>
-    <string name="give_award_dialog_title">"Dar prêmio?"</string>
-    <string name="anonymous">"Anônimo"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Código: %1$,d/
-Mensagem: %2$s"</string>
-    <string name="give_award_success">"Prêmio concedido"</string>
-    <string name="give_award_failed">"Falhou"</string>
     <string name="warning">"Aviso"</string>
     <string name="this_is_a_nsfw_subreddit">"Este é um subreddit NSFW."</string>
     <string name="this_user_has_nsfw_content">"Este usuário tem conteúdo NSFW"</string>
@@ -964,7 +953,6 @@ Mensagem: %2$s"</string>
     <string name="choose_a_user">"Escolha um usuário"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Clicar para exibir mídia na estrutura de galeria"</string>
     <string name="settings_hide_post_type">"Ocultar tipo de postagem"</string>
-    <string name="settings_hide_the_number_of_awards">"Ocultar o Número de Prêmios"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Ocultar prefixos do subreddit e do usuário"</string>
     <string name="settings_hide_the_number_of_votes">"Ocultar o número de votos"</string>
     <string name="settings_hide_the_number_of_comments">"Ocultar o Número de Comentários"</string>
@@ -1199,7 +1187,6 @@ Toque para tentar de novo."</string>
     <string name="settings_custom_content_font_family_title">"Família da fonte de conteúdo customizada"</string>
     <string name="settings_fixed_height_preview_in_card_title">"Altura fixa em cartão"</string>
     <string name="settings_hide_text_post_content">"Ocultar texto do conteúdo da postagem"</string>
-    <string name="settings_hide_comment_awards_title">"Ocultar prêmios de comentário"</string>
     <string name="settings_show_fewer_toolbar_options_threshold_title">"Exibir menos opções na barra de ferramentas a partir de"</string>
 
     <!-- Fuzzy -->

@@ -102,7 +102,6 @@
     <string name="downvoted">"Leszavazott"</string>
     <string name="hidden">"Rejtett"</string>
     <string name="saved">"Mentett"</string>
-    <string name="gilded">"Jutalmazott"</string>
     <string name="settings">"Beállítások"</string>
 
     <!-- Fuzzy -->
@@ -359,8 +358,6 @@
     <string name="settings_credits_icon_background_summary">"A háttér vektort a freepik készítette - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Kép hiba"</string>
     <string name="settings_credits_error_image_summary">"A technológia vektort a freepik készítette - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Jutalmazott ikon"</string>
-    <string name="settings_credits_gilded_icon_summary">"Az ikont a Freepik készítette a www.flaticon.com-ról"</string>
     <string name="settings_credits_crosspost_icon_title">"Crossposzt ikon"</string>
     <string name="settings_credits_crosspost_icon_summary">"Az ikont a Freepik készítette a www.flaticon.com-ról"</string>
     <string name="settings_credits_thumbtack_icon_title">"Rajzszög ikon"</string>
@@ -719,8 +716,6 @@ Az alap az indigó amoled téma"</string>
     <string name="delete_multi_reddit">"Multireddit törlése"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d kitüntetés"</string>
-    <string name="one_award">"1 kitüntetés"</string>
     <string name="report">"Jelent"</string>
     <string name="reporting">"Jelentés"</string>
     <string name="report_successful">"Jelentve"</string>
@@ -835,14 +830,8 @@ Videó autómatikus lejátszása le van tiltva."</string>
     <string name="refresh">"Frissítés"</string>
     <string name="change_sort_type">"Rendezés típus megváltoztatása"</string>
     <string name="change_post_layout">"Poszt elrendezése megváltoztatása"</string>
-    <string name="give_award_dialog_title">"Adsz kitüntetést?"</string>
-    <string name="anonymous">"Anoním"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Kód: %1$d/
-Üzenet %2$s"</string>
-    <string name="give_award_success">"Kitüntetés megadva"</string>
-    <string name="give_award_failed">"Nem sikerült"</string>
     <string name="warning">"Figyelem"</string>
     <string name="this_is_a_nsfw_subreddit">"Ez egy NSFW subreddit."</string>
     <string name="this_user_has_nsfw_content">"Ennek a felhasználónak van NSFW tartlama"</string>
@@ -957,7 +946,6 @@ Videó autómatikus lejátszása le van tiltva."</string>
     <string name="choose_a_user">"Felhasználó kiválasztása"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Koppints a média megjelenítéséhez gallléria elrendezésben."</string>
     <string name="settings_hide_post_type">"Poszt típus elrejtése"</string>
-    <string name="settings_hide_the_number_of_awards">"Díjak számának elrejtése"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Subreddit és felhasználó prefix elrejtése"</string>
     <string name="settings_hide_the_number_of_votes">"Szavazások számának elrejtése"</string>
     <string name="settings_hide_the_number_of_comments">"Kommentek számának elrejtése"</string>

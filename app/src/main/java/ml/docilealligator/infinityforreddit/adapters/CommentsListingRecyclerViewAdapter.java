@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.Locale;
@@ -35,13 +36,13 @@ import io.noties.markwon.Markwon;
 import io.noties.markwon.MarkwonConfiguration;
 import io.noties.markwon.MarkwonPlugin;
 import io.noties.markwon.core.MarkwonTheme;
-import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import ml.docilealligator.infinityforreddit.NetworkState;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.SaveThing;
 import ml.docilealligator.infinityforreddit.VoteThing;
 import ml.docilealligator.infinityforreddit.activities.BaseActivity;
 import ml.docilealligator.infinityforreddit.activities.LinkResolverActivity;
+import ml.docilealligator.infinityforreddit.activities.ViewImageOrGifActivity;
 import ml.docilealligator.infinityforreddit.activities.ViewPostDetailActivity;
 import ml.docilealligator.infinityforreddit.activities.ViewSubredditDetailActivity;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.CommentMoreBottomSheetFragment;
@@ -49,12 +50,17 @@ import ml.docilealligator.infinityforreddit.bottomsheetfragments.UrlMenuBottomSh
 import ml.docilealligator.infinityforreddit.comment.Comment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.customviews.CommentIndentationView;
-import ml.docilealligator.infinityforreddit.customviews.CustomMarkwonAdapter;
 import ml.docilealligator.infinityforreddit.customviews.LinearLayoutManagerBugFixed;
 import ml.docilealligator.infinityforreddit.customviews.SpoilerOnClickTextView;
 import ml.docilealligator.infinityforreddit.customviews.SwipeLockInterface;
 import ml.docilealligator.infinityforreddit.customviews.SwipeLockLinearLayoutManager;
 import ml.docilealligator.infinityforreddit.databinding.ItemCommentBinding;
+import ml.docilealligator.infinityforreddit.markdown.EvenBetterLinkMovementMethod;
+import ml.docilealligator.infinityforreddit.markdown.CustomMarkwonAdapter;
+import ml.docilealligator.infinityforreddit.markdown.EmoteCloseBracketInlineProcessor;
+import ml.docilealligator.infinityforreddit.markdown.EmotePlugin;
+import ml.docilealligator.infinityforreddit.markdown.ImageAndGifEntry;
+import ml.docilealligator.infinityforreddit.markdown.ImageAndGifPlugin;
 import ml.docilealligator.infinityforreddit.markdown.MarkdownUtils;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
@@ -79,7 +85,11 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
     private BaseActivity mActivity;
     private Retrofit mOauthRetrofit;
     private Locale mLocale;
+    private EmoteCloseBracketInlineProcessor mEmoteCloseBracketInlineProcessor;
+    private EmotePlugin mEmotePlugin;
+    private ImageAndGifPlugin mImageAndGifPlugin;
     private Markwon mMarkwon;
+    private ImageAndGifEntry mImageAndGifEntry;
     private RecyclerView.RecycledViewPool recycledViewPool;
     private String mAccessToken;
     private String mAccountName;
@@ -101,13 +111,15 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
     private String mTimeFormatPattern;
     private boolean mShowCommentDivider;
     private boolean mShowAbsoluteNumberOfVotes;
+    private boolean canStartActivity = true;
     private NetworkState networkState;
     private RetryLoadingMoreCallback mRetryLoadingMoreCallback;
 
     public CommentsListingRecyclerViewAdapter(BaseActivity activity, Retrofit oauthRetrofit,
                                               CustomThemeWrapper customThemeWrapper, Locale locale,
                                               SharedPreferences sharedPreferences, String accessToken,
-                                              String accountName, RetryLoadingMoreCallback retryLoadingMoreCallback) {
+                                              String accountName, String username,
+                                              RetryLoadingMoreCallback retryLoadingMoreCallback) {
         super(DIFF_CALLBACK);
         mActivity = activity;
         mOauthRetrofit = oauthRetrofit;
@@ -161,15 +173,46 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
                 builder.linkColor(linkColor);
             }
         };
-        BetterLinkMovementMethod.OnLinkLongClickListener onLinkLongClickListener = (textView, url) -> {
+        EvenBetterLinkMovementMethod.OnLinkLongClickListener onLinkLongClickListener = (textView, url) -> {
             if (!activity.isDestroyed() && !activity.isFinishing()) {
                 UrlMenuBottomSheetFragment urlMenuBottomSheetFragment = UrlMenuBottomSheetFragment.newInstance(url);
-                urlMenuBottomSheetFragment.show(activity.getSupportFragmentManager(), null);
+                urlMenuBottomSheetFragment.show(activity.getSupportFragmentManager(), urlMenuBottomSheetFragment.getTag());
             }
             return true;
         };
+        mEmoteCloseBracketInlineProcessor = new EmoteCloseBracketInlineProcessor();
+        mEmotePlugin = EmotePlugin.create(activity, mediaMetadata -> {
+            Intent intent = new Intent(activity, ViewImageOrGifActivity.class);
+            if (mediaMetadata.isGIF) {
+                intent.putExtra(ViewImageOrGifActivity.EXTRA_GIF_URL_KEY, mediaMetadata.original.url);
+            } else {
+                intent.putExtra(ViewImageOrGifActivity.EXTRA_IMAGE_URL_KEY, mediaMetadata.original.url);
+            }
+            intent.putExtra(ViewImageOrGifActivity.EXTRA_SUBREDDIT_OR_USERNAME_KEY, username);
+            intent.putExtra(ViewImageOrGifActivity.EXTRA_FILE_NAME_KEY, mediaMetadata.fileName);
+            if (canStartActivity) {
+                canStartActivity = false;
+                activity.startActivity(intent);
+            }
+        });
+        mImageAndGifPlugin = new ImageAndGifPlugin();
         mMarkwon = MarkdownUtils.createFullRedditMarkwon(mActivity,
-                miscPlugin, mCommentColor, commentSpoilerBackgroundColor, onLinkLongClickListener);
+                miscPlugin, mEmoteCloseBracketInlineProcessor, mEmotePlugin, mImageAndGifPlugin, mCommentColor,
+                commentSpoilerBackgroundColor, onLinkLongClickListener);
+        mImageAndGifEntry = new ImageAndGifEntry(activity, Glide.with(activity), mediaMetadata -> {
+            Intent intent = new Intent(activity, ViewImageOrGifActivity.class);
+            if (mediaMetadata.isGIF) {
+                intent.putExtra(ViewImageOrGifActivity.EXTRA_GIF_URL_KEY, mediaMetadata.original.url);
+            } else {
+                intent.putExtra(ViewImageOrGifActivity.EXTRA_IMAGE_URL_KEY, mediaMetadata.original.url);
+            }
+            intent.putExtra(ViewImageOrGifActivity.EXTRA_SUBREDDIT_OR_USERNAME_KEY, username);
+            intent.putExtra(ViewImageOrGifActivity.EXTRA_FILE_NAME_KEY, mediaMetadata.fileName);
+            if (canStartActivity) {
+                canStartActivity = false;
+                activity.startActivity(intent);
+            }
+        });
         recycledViewPool = new RecyclerView.RecycledViewPool();
     }
 
@@ -209,11 +252,8 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
                     ((CommentBaseViewHolder) holder).commentTimeTextView.setText(Utils.getFormattedTime(mLocale, comment.getCommentTimeMillis(), mTimeFormatPattern));
                 }
 
-                if (comment.getAwards() != null && !comment.getAwards().equals("")) {
-                    ((CommentBaseViewHolder) holder).awardsTextView.setVisibility(View.VISIBLE);
-                    Utils.setHTMLWithImageToTextView(((CommentBaseViewHolder) holder).awardsTextView, comment.getAwards(), true);
-                }
-
+                mEmoteCloseBracketInlineProcessor.setMediaMetadataMap(comment.getMediaMetadataMap());
+                mImageAndGifPlugin.setMediaMetadataMap(comment.getMediaMetadataMap());
                 ((CommentBaseViewHolder) holder).markwonAdapter.setMarkdown(mMarkwon, comment.getCommentMarkdown());
                 // noinspection NotifyDataSetChanged
                 ((CommentBaseViewHolder) holder).markwonAdapter.notifyDataSetChanged();
@@ -268,8 +308,6 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
         if (holder instanceof CommentBaseViewHolder) {
             ((CommentBaseViewHolder) holder).authorFlairTextView.setText("");
             ((CommentBaseViewHolder) holder).authorFlairTextView.setVisibility(View.GONE);
-            ((CommentBaseViewHolder) holder).awardsTextView.setText("");
-            ((CommentBaseViewHolder) holder).awardsTextView.setVisibility(View.GONE);
             ((CommentBaseViewHolder) holder).upvoteButton.setIconResource(R.drawable.ic_upvote_24dp);
             ((CommentBaseViewHolder) holder).upvoteButton.setIconTint(ColorStateList.valueOf(mCommentIconAndInfoColor));
             ((CommentBaseViewHolder) holder).scoreTextView.setTextColor(mCommentIconAndInfoColor);
@@ -324,22 +362,21 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
         }
     }
 
-    public void giveAward(String awardsHTML, int position) {
-        if (position >= 0 && position < getItemCount()) {
-            Comment comment = getItem(position);
-            if (comment != null) {
-                comment.addAwards(awardsHTML);
-                notifyItemChanged(position);
-            }
-        }
-    }
-
     public void editComment(String commentContentMarkdown, int position) {
         Comment comment = getItem(position);
         if (comment != null) {
             comment.setCommentMarkdown(commentContentMarkdown);
             notifyItemChanged(position);
         }
+    }
+
+    public void setCanStartActivity(boolean canStartActivity) {
+        this.canStartActivity = canStartActivity;
+    }
+
+    public void setDataSavingMode(boolean dataSavingMode) {
+        mEmotePlugin.setDataSavingMode(dataSavingMode);
+        mImageAndGifEntry.setDataSavingMode(dataSavingMode);
     }
 
     public interface RetryLoadingMoreCallback {
@@ -351,7 +388,6 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
         TextView authorTextView;
         TextView authorFlairTextView;
         TextView commentTimeTextView;
-        TextView awardsTextView;
         RecyclerView commentMarkdownView;
         ConstraintLayout bottomConstraintLayout;
         MaterialButton upvoteButton;
@@ -372,7 +408,6 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
                          TextView authorTextView,
                          TextView authorFlairTextView,
                          TextView commentTimeTextView,
-                         TextView awardsTextView,
                          RecyclerView commentMarkdownView,
                          ConstraintLayout bottomConstraintLayout,
                          MaterialButton upvoteButton,
@@ -389,7 +424,6 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
             this.authorTextView = authorTextView;
             this.authorFlairTextView = authorFlairTextView;
             this.commentTimeTextView = commentTimeTextView;
-            this.awardsTextView = awardsTextView;
             this.commentMarkdownView = commentMarkdownView;
             this.bottomConstraintLayout = bottomConstraintLayout;
             this.upvoteButton = upvoteButton;
@@ -454,14 +488,12 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
                 authorTextView.setTypeface(mActivity.typeface);
                 authorFlairTextView.setTypeface(mActivity.typeface);
                 commentTimeTextView.setTypeface(mActivity.typeface);
-                awardsTextView.setTypeface(mActivity.typeface);
                 upvoteButton.setTypeface(mActivity.typeface);
             }
             itemView.setBackgroundColor(mCommentBackgroundColor);
             authorTextView.setTextColor(mUsernameColor);
             authorFlairTextView.setTextColor(mAuthorFlairColor);
             commentTimeTextView.setTextColor(mSecondaryTextColor);
-            awardsTextView.setTextColor(mSecondaryTextColor);
             upvoteButton.setIconTint(ColorStateList.valueOf(mCommentIconAndInfoColor));
             scoreTextView.setTextColor(mCommentIconAndInfoColor);
             downvoteButton.setIconTint(ColorStateList.valueOf(mCommentIconAndInfoColor));
@@ -530,7 +562,7 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
                 }
             });
             commentMarkdownView.setLayoutManager(linearLayoutManager);
-            markwonAdapter = MarkdownUtils.createCustomTablesAdapter();
+            markwonAdapter = MarkdownUtils.createCustomTablesAdapter(mImageAndGifEntry);
             markwonAdapter.setOnClickListener(view -> {
                 if (view instanceof SpoilerOnClickTextView) {
                     if (((SpoilerOnClickTextView) view).isSpoilerOnClick()) {
@@ -538,7 +570,10 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
                         return;
                     }
                 }
-                itemView.callOnClick();
+                if (canStartActivity) {
+                    canStartActivity = false;
+                    itemView.performClick();
+                }
             });
             commentMarkdownView.setAdapter(markwonAdapter);
 
@@ -763,7 +798,6 @@ public class CommentsListingRecyclerViewAdapter extends PagedListAdapter<Comment
                     binding.authorTextViewItemPostComment,
                     binding.authorFlairTextViewItemPostComment,
                     binding.commentTimeTextViewItemPostComment,
-                    binding.awardsTextViewItemComment,
                     binding.commentMarkdownViewItemPostComment,
                     binding.bottomConstraintLayoutItemPostComment,
                     binding.upvoteButtonItemPostComment,

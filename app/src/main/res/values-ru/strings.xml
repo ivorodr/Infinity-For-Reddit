@@ -125,7 +125,6 @@
     <string name="downvoted">"Голос-"</string>
     <string name="hidden">"Скрытые"</string>
     <string name="saved">"Сохранённые"</string>
-    <string name="gilded">"Позолоченные"</string>
     <string name="settings">"Настройки"</string>
 
     <!-- Fuzzy -->
@@ -396,8 +395,6 @@
     <string name="settings_credits_icon_background_summary">"Фоновый вектор, созданный freepik из www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Ошибка изображения"</string>
     <string name="settings_credits_error_image_summary">"Технологический вектор, созданный freepik из www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Значок золота"</string>
-    <string name="settings_credits_gilded_icon_summary">"Значок создан Freepik из www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Значок кросспоста"</string>
     <string name="settings_credits_crosspost_icon_summary">"Значок создан Freepik из www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"Значок канцелярской кнопки"</string>
@@ -754,8 +751,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="delete_multi_reddit">"Удалить мультиреддит"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d наград"</string>
-    <string name="one_award">"1 награда"</string>
     <string name="report">"Пожаловаться"</string>
     <string name="reporting">"Жалоба отправляется"</string>
     <string name="report_successful">"Жалоба отправлена"</string>
@@ -866,14 +861,8 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="refresh">"Обновить"</string>
     <string name="change_sort_type">"Изменить тип сортировки"</string>
     <string name="change_post_layout">"Изменить макет поста"</string>
-    <string name="give_award_dialog_title">"Выдать награду?"</string>
-    <string name="anonymous">"Аноним"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Код: %1$d/
-Сообщение: %2$s"</string>
-    <string name="give_award_success">"Награда выдана"</string>
-    <string name="give_award_failed">"Ошибка"</string>
     <string name="warning">"Предупреждение"</string>
     <string name="this_is_a_nsfw_subreddit">"Это NSFW-сабреддит"</string>
     <string name="this_user_has_nsfw_content">"У пользователь есть NSFW-контент"</string>
@@ -986,7 +975,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="choose_a_user">"Выберите пользователя"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Открывать мультимедиа нажатием в режиме галереи"</string>
     <string name="settings_hide_post_type">"Скрыть тип поста"</string>
-    <string name="settings_hide_the_number_of_awards">"Скрыть количество наград"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Скрыть префикс сабреддита и пользователя"</string>
     <string name="settings_hide_the_number_of_votes">"Скрыть количество голосов"</string>
     <string name="settings_hide_the_number_of_comments">"Скрыть количество комментариев"</string>
@@ -1233,7 +1221,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="settings_custom_content_font_family_title">"Пользовательское семейство шрифтов содержания"</string>
     <string name="settings_fixed_height_preview_in_card_title">"Фиксированная высота карточки"</string>
     <string name="settings_hide_text_post_content">"Скрыть содержание текстового поста"</string>
-    <string name="settings_hide_comment_awards_title">"Скрыть награды за комментарии"</string>
     <string name="settings_show_fewer_toolbar_options_threshold_title">"Показывать меньше параметров панели инструментов, начиная с"</string>
 
     <!-- Fuzzy -->

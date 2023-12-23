@@ -122,7 +122,6 @@
     <string name="downvoted">"Hlasováno proti"</string>
     <string name="hidden">"Skryté"</string>
     <string name="saved">"Uložené"</string>
-    <string name="gilded">"Pozlacené"</string>
     <string name="settings">"Nastavení"</string>
 
     <!-- Fuzzy -->
@@ -389,8 +388,6 @@
     <string name="settings_credits_icon_background_summary">"Vektor pozadí vytvořil Freepik - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Obrázek chyby"</string>
     <string name="settings_credits_error_image_summary">"Vektor technologie vytvořil Freepik - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Ikona pozlacených"</string>
-    <string name="settings_credits_gilded_icon_summary">"Ikonu vytvořil Freepik z www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Ikona crosspostu"</string>
     <string name="settings_credits_crosspost_icon_summary">"Ikonu vytvořil Freepik z www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"Ikona palce"</string>
@@ -746,8 +743,6 @@ Chodí popředu."</string>
     <string name="delete_multi_reddit">"Odstranit multireddit"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d ocenění"</string>
-    <string name="one_award">"1 ocenění"</string>
     <string name="report">"Nahlásit"</string>
     <string name="reporting">"Nahlašování"</string>
     <string name="report_successful">"Nahlášeno"</string>
@@ -858,14 +853,8 @@ Automatické přehrávání videí je zakázáno."</string>
     <string name="refresh">"Obnovit"</string>
     <string name="change_sort_type">"Změnit typ řazení"</string>
     <string name="change_post_layout">"Změnit rozložení příspěvků"</string>
-    <string name="give_award_dialog_title">"Dát ocenění?"</string>
-    <string name="anonymous">"Anonymní"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Kód: %1$d/
-Zpráva: %2$s"</string>
-    <string name="give_award_success">"Ocenění uděleno"</string>
-    <string name="give_award_failed">"Selhání"</string>
     <string name="warning">"Varování"</string>
     <string name="this_is_a_nsfw_subreddit">"Toto je NSFW subreddit."</string>
     <string name="this_user_has_nsfw_content">"Tento uživatel má NSFW obsah"</string>
@@ -978,7 +967,6 @@ Zpráva: %2$s"</string>
     <string name="choose_a_user">"Vybrat uživatele"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Klikněte pro zobrazení médií v rozložení galerie"</string>
     <string name="settings_hide_post_type">"Skrýt typ příspěvků"</string>
-    <string name="settings_hide_the_number_of_awards">"Skrýt počet ocenění"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Skrýt předponu subredditů a uživatelů"</string>
     <string name="settings_hide_the_number_of_votes">"Skrýt počet hlasů"</string>
     <string name="settings_hide_the_number_of_comments">"Skrýt počet komentářů"</string>
@@ -1223,7 +1211,6 @@ Pokud ano, přejmenujte je, než povolíte Material You."</string>
     <string name="settings_custom_content_font_family_title">"Vlastní rodina obsahových písem"</string>
     <string name="settings_fixed_height_preview_in_card_title">"Pevná výška karty"</string>
     <string name="settings_hide_text_post_content">"Skrýt obsah textového příspěvku"</string>
-    <string name="settings_hide_comment_awards_title">"Schovat "</string>
     <string name="settings_show_fewer_toolbar_options_threshold_title">"Zobrazit méně možností na liště nástrojů"</string>
 
     <!-- Fuzzy -->

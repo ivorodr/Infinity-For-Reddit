@@ -135,7 +135,6 @@
     <!-- What posts the app shows when I select this?
 (1) My posts that someone gave (gold or better only?) rewards for me.
 (2) Someone's posts that I gave (gold or better only?) rewards for them. -->
-    <string name="gilded">"アワードを贈った投稿"</string>
     <string name="settings">"設定"</string>
 
     <!-- Fuzzy -->
@@ -441,8 +440,6 @@
     <string name="settings_credits_icon_background_summary">"freepikにより作成されたBackground vectorを使用しています - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"エラー時の画像"</string>
     <string name="settings_credits_error_image_summary">"freepikにより作成されたTechnology vectorを使用しています - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"アワードアイコン"</string>
-    <string name="settings_credits_gilded_icon_summary">"Freepikにより作成されたアイコンを使用しています - www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"クロスポストアイコン"</string>
     <string name="settings_credits_crosspost_icon_summary">"Freepikにより作成されたアイコンを使用しています - www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"画鋲アイコン"</string>
@@ -825,8 +822,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="delete_multi_reddit">"カスタムフィードを削除"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d個のアワード"</string>
-    <string name="one_award">"1個のアワード"</string>
     <string name="report">"通報"</string>
     <string name="reporting">"通報しています"</string>
     <string name="report_successful">"通報しました"</string>
@@ -946,14 +941,8 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="refresh">"更新"</string>
     <string name="change_sort_type">"並べ替えを変更"</string>
     <string name="change_post_layout">"表示レイアウトを変更"</string>
-    <string name="give_award_dialog_title">"アワードを贈りますか？"</string>
-    <string name="anonymous">"匿名"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"コード: %1$d/
-メッセージ: %2$s"</string>
-    <string name="give_award_success">"アワードを贈りました"</string>
-    <string name="give_award_failed">"失敗しました"</string>
     <string name="warning">"警告"</string>
     <string name="this_is_a_nsfw_subreddit">"このSubredditはNSFWです"</string>
     <string name="this_user_has_nsfw_content">"このユーザーはNSFWの投稿を含んでいます"</string>
@@ -1050,7 +1039,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="choose_a_user">"ユーザーを選択"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"クリックしてギャラリービューでメディアを見る"</string>
     <string name="settings_hide_post_type">"投稿の種類を非表示にする"</string>
-    <string name="settings_hide_the_number_of_awards">"Awardsの数を非表示にする"</string>
     <string name="settings_hide_the_number_of_comments">"コメント数を非表示にする"</string>
     <string name="post_layout_gallery">"ギャラリーレイアウト"</string>
     <string name="post_layout_card_2">"カードレイアウト2"</string>

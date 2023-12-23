@@ -123,7 +123,6 @@ This translation does it work well in this kinda format. People use "since" in s
     <string name="downvoted">"Olumsuz Oylananlar"</string>
     <string name="hidden">"Gizlenenler"</string>
     <string name="saved">"Kaydedilenler"</string>
-    <string name="gilded">"Yaldızlananlar"</string>
     <string name="settings">"Ayarlar"</string>
     <string name="subscribers_number_detail">"Aboneler: %1$,d"</string>
     <string name="online_subscribers_number_detail">"Çevrimiçi: %1$,d"</string>
@@ -388,8 +387,6 @@ Tekrar denemek için tıklayın."</string>
     <string name="settings_credits_icon_background_summary">"Freepik tarafından oluşturulan arka plan vektörü - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Hata Görüntüsü"</string>
     <string name="settings_credits_error_image_summary">"Freepik tarafından oluşturulan teknoloji vektörü - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Yaldızlı Simge"</string>
-    <string name="settings_credits_gilded_icon_summary">"Freepik tarafından www.flaticon.com adresinden yapılan simge"</string>
     <string name="settings_credits_crosspost_icon_title">"Çapraz Gönderi Simgesi"</string>
     <string name="settings_credits_crosspost_icon_summary">"Freepik tarafından www.flaticon.com adresinden yapılan simge"</string>
     <string name="settings_credits_thumbtack_icon_title">"Raptiye Simgesi"</string>
@@ -746,8 +743,6 @@ Amoled Tema Şablonu Oluştur"</string>
     <string name="delete_multi_reddit">"Multireddit'i Sil"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d Ödül"</string>
-    <string name="one_award">"1 Ödül"</string>
     <string name="report">"Bildir"</string>
     <string name="reporting">"Bildiriliyor"</string>
     <string name="report_successful">"Bildirildi"</string>
@@ -866,14 +861,8 @@ Otomatik video oynatma kapatılır."</string>
     <string name="refresh">"Yenile"</string>
     <string name="change_sort_type">"Sıralama Türünü Değiştir"</string>
     <string name="change_post_layout">"Gönderi Düzenini Değiştir"</string>
-    <string name="give_award_dialog_title">"Ödül Verilsin mi?"</string>
-    <string name="anonymous">"Anonim"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Kod: %1$d/
-Mesaj: %2$s"</string>
-    <string name="give_award_success">"Ödül verildi"</string>
-    <string name="give_award_failed">"İşlem Başarısız Oldu"</string>
     <string name="warning">"Uyarı"</string>
     <string name="this_is_a_nsfw_subreddit">"Bu bir NSFW subredditidir."</string>
     <string name="this_user_has_nsfw_content">"Bu kullanıcının NSFW içeriği var"</string>
@@ -994,7 +983,6 @@ Mesaj: %2$s"</string>
     <string name="choose_a_user">"Bir kullanıcı seç"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Medyayı Galeri Düzeninde Göstermek İçin Tıkla"</string>
     <string name="settings_hide_post_type">"Gönderi Türünü Gizle"</string>
-    <string name="settings_hide_the_number_of_awards">"Ödül Sayısını Gizle"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Subreddit ve Kullanıcı Önekini Gizle"</string>
     <string name="settings_hide_the_number_of_votes">"Oy Sayısını Gizle"</string>
     <string name="settings_hide_the_number_of_comments">"Yorum Sayısını Gizle"</string>
@@ -1243,7 +1231,6 @@ Tekrar denemek için tıklayın."</string>
     <string name="settings_custom_content_font_family_title">"Özel İçerik Yazı Tipi Ailesi"</string>
     <string name="settings_fixed_height_preview_in_card_title">"Karttaki Sabit Yükseklik"</string>
     <string name="settings_hide_text_post_content">"Metin Gönderisi İçeriğini Gizle"</string>
-    <string name="settings_hide_comment_awards_title">"Yorum Ödüllerini Gizle"</string>
     <string name="settings_show_fewer_toolbar_options_threshold_title">"Daha Az Araç Çubuğu Seçeneği Göster"</string>
 
     <!-- Fuzzy -->

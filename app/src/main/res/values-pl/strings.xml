@@ -117,7 +117,6 @@ Naciśnij, aby spróbować ponownie."</string>
     <string name="downvoted">"Dano downvote"</string>
     <string name="hidden">"Ukryte"</string>
     <string name="saved">"Zapisane"</string>
-    <string name="gilded">"Nagrodzone"</string>
     <string name="settings">"Ustawienia"</string>
 
     <!-- Fuzzy -->
@@ -388,8 +387,6 @@ Naciśnij, aby spróbować ponownie."</string>
     <string name="settings_credits_icon_background_summary">"Background vector created by freepik - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Zdjęcie błędu"</string>
     <string name="settings_credits_error_image_summary">"Technology vector created by freepik - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Pozłacana ikona"</string>
-    <string name="settings_credits_gilded_icon_summary">"Icon made by Freepik from www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Ikona crosspostu"</string>
     <string name="settings_credits_crosspost_icon_summary">"Icon made by Freepik from www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"Ikona pinezki"</string>
@@ -746,8 +743,6 @@ Nie jest chora ani nic, ale na pewno może stać się lepsza."</string>
     <string name="delete_multi_reddit">"Usuń Multireddit"</string>
 
     <!-- Fuzzy -->
-    <string name="n_awards">"%1$d Nagród"</string>
-    <string name="one_award">"1 Nagroda"</string>
     <string name="report">"Zgłoś"</string>
     <string name="reporting">"Zagłaszanie"</string>
     <string name="report_successful">"Zgłoszono"</string>
@@ -864,14 +859,8 @@ Autoodtwarzanie filmów jest wyłączone."</string>
     <string name="refresh">"Odśwież"</string>
     <string name="change_sort_type">"Zmień typ sortowania"</string>
     <string name="change_post_layout">"Zmień układ postów"</string>
-    <string name="give_award_dialog_title">"Dać nagrodę?"</string>
-    <string name="anonymous">"Anonim"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Kod: %1$d/
-Wiadomość: %2$s"</string>
-    <string name="give_award_success">"Nagroda przyznana"</string>
-    <string name="give_award_failed">"Niepowodzenie"</string>
     <string name="warning">"Ostrzeżenie "</string>
     <string name="this_is_a_nsfw_subreddit">"To jest subreddit NSFW"</string>
     <string name="this_user_has_nsfw_content">"Ten użytkownik posiada treści NSFW"</string>
@@ -977,7 +966,6 @@ użytkownika / multireddita"</string>
     <string name="choose_a_user">"Wybierz użytkownika"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Kliknij by pokazać media w układzie galerii"</string>
     <string name="settings_hide_post_type">"Ukryj typ posta"</string>
-    <string name="settings_hide_the_number_of_awards">"Ukryj liczbę nagród"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Ukryj prefix subbredita i użytkownika"</string>
     <string name="settings_hide_the_number_of_votes">"Ukryj liczbę głosów"</string>
     <string name="settings_hide_the_number_of_comments">"Ukryj liczbę komentarzy"</string>
@@ -1187,7 +1175,6 @@ Brak podglądu w Ostatnich aplikacjach."</string>
 
     <!-- Fuzzy -->
     <string name="settings_custom_content_font_family_title">"Własna czcionka zawartości"</string>
-    <string name="settings_hide_comment_awards_title">"Ukryj nagrody komentarza"</string>
 
     <!-- Fuzzy -->
     <string name="settings_show_fewer_toolbar_options_threshold_summary">"Poziom %1$d"</string>

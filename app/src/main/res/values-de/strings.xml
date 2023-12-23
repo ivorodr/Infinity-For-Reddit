@@ -124,7 +124,6 @@ Tippen für Neuversuch."</string>
     <string name="downvoted">"Downgevotet"</string>
     <string name="hidden">"Versteckt"</string>
     <string name="saved">"Gespeichert"</string>
-    <string name="gilded">"Vergoldet"</string>
     <string name="settings">"Einstellungen"</string>
     <string name="subscribers_number_detail">"Abonnenten: %1$,d"</string>
     <string name="online_subscribers_number_detail">"Online: %1$,d"</string>
@@ -399,8 +398,6 @@ Tippen für Neuversuch."</string>
     <string name="settings_credits_icon_background_summary">"Hintergrund Vektor von freepik erstellt - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Fehlerbild"</string>
     <string name="settings_credits_error_image_summary">"Technologie Vektor von freepik erstellt - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Vergoldet Symbol"</string>
-    <string name="settings_credits_gilded_icon_summary">"Symbol von Freepik von www.flaticon.com erstellt"</string>
     <string name="settings_credits_crosspost_icon_title">"Crosspost-Symbol"</string>
     <string name="settings_credits_crosspost_icon_summary">"Symbol von Freepik von www.flaticon.com erstellt"</string>
     <string name="settings_credits_thumbtack_icon_title">"Reißzwecken-Symbol"</string>
@@ -762,8 +759,6 @@ Basiere auf Indigo-AMOLED-Thema"</string>
 Sie ist nicht krank oder so, aber sie könnte sich definitiv bessern."</string>
     <string name="edit_multi_reddit">"Multireddit bearbeiten"</string>
     <string name="delete_multi_reddit">"Multireddit löschen"</string>
-    <string name="n_awards">"%1$,d Auszeichnungen"</string>
-    <string name="one_award">"1 Auszeichnung"</string>
     <string name="report">"Melden"</string>
     <string name="reporting">"Melde"</string>
     <string name="report_successful">"Gemeldet"</string>
@@ -885,14 +880,8 @@ Automatisches Abspielen von Videos ist deaktiviert."</string>
     <string name="refresh">"Aktualisieren"</string>
     <string name="change_sort_type">"Sortiertyp ändern"</string>
     <string name="change_post_layout">"Beitragslayout ändern"</string>
-    <string name="give_award_dialog_title">"Auszeichnung verleihen?"</string>
-    <string name="anonymous">"Anonym"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"Code: %1$d/
-Nachricht: %2$s"</string>
-    <string name="give_award_success">"Auszeichnung verliehen"</string>
-    <string name="give_award_failed">"Fehlgeschlagen"</string>
     <string name="warning">"Warnung"</string>
     <string name="this_is_a_nsfw_subreddit">"Dies ist ein NSFW-Subreddit."</string>
     <string name="this_user_has_nsfw_content">"Dieser Nutzer hat NSFW-Inhalte"</string>
@@ -1015,7 +1004,6 @@ Nachricht: %2$s"</string>
     <string name="choose_a_user">"Wähle einen Benutzer"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Antippen, um die Medien in der Galerie-Ansicht anzuzeigen"</string>
     <string name="settings_hide_post_type">"Beitragsart verstecken"</string>
-    <string name="settings_hide_the_number_of_awards">"Anzahl der Auszeichnungen verstecken"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Subreddit und Benutzerpräfix verstecken"</string>
     <string name="settings_hide_the_number_of_votes">"Anzahl der Abstimmungen verstecken"</string>
     <string name="settings_hide_the_number_of_comments">"Anzahl der Kommentare verstecken"</string>
@@ -1264,7 +1252,6 @@ Antippen zum Wiederholen."</string>
     <string name="settings_custom_content_font_family_title">"Benutzerdefinierte Inhaltschriftart-familie"</string>
     <string name="settings_fixed_height_preview_in_card_title">"Festgestellte Höhe in Kartenansicht"</string>
     <string name="settings_hide_text_post_content">"Text-Post Inhalt verstecken"</string>
-    <string name="settings_hide_comment_awards_title">"Kommentarauszeichnungen verstecken"</string>
     <string name="settings_show_fewer_toolbar_options_threshold_title">"Weniger Werkzeugleistenoptionen anzeigen"</string>
 
     <!-- Fuzzy -->

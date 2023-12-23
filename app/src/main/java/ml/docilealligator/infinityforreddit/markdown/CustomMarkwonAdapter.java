@@ -1,4 +1,4 @@
-package ml.docilealligator.infinityforreddit.customviews;
+package ml.docilealligator.infinityforreddit.markdown;
 
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -23,6 +23,7 @@ import io.noties.markwon.MarkwonReducer;
 import io.noties.markwon.recycler.MarkwonAdapter;
 import io.noties.markwon.recycler.SimpleEntry;
 import ml.docilealligator.infinityforreddit.R;
+import ml.docilealligator.infinityforreddit.customviews.SpoilerOnClickTextView;
 
 public class CustomMarkwonAdapter extends MarkwonAdapter {
     private final SparseArray<Entry<Node, Holder>> entries;
@@ -119,8 +120,18 @@ public class CustomMarkwonAdapter extends MarkwonAdapter {
         entry.bindHolder(markwon, holder, node);
 
         if (holder.itemView instanceof SpoilerOnClickTextView) {
-            holder.itemView.setOnClickListener(onClickListener);
-            holder.itemView.setOnLongClickListener(onLongClickListener);
+            SpoilerOnClickTextView textView = (SpoilerOnClickTextView) holder.itemView;
+            holder.itemView.setOnClickListener(view -> {
+                if (onClickListener != null && textView.getSelectionStart() == -1 && textView.getSelectionEnd() == -1) {
+                    onClickListener.onClick(view);
+                }
+            });
+            holder.itemView.setOnLongClickListener(view -> {
+                if (onLongClickListener != null && textView.getSelectionStart() == -1 && textView.getSelectionEnd() == -1) {
+                    return onLongClickListener.onLongClick(view);
+                }
+                return false;
+            });
         } else if (holder.itemView instanceof HorizontalScrollView) {
             TableLayout tableLayout = holder.itemView.findViewById(R.id.table_layout);
             if (tableLayout != null) {
@@ -129,11 +140,45 @@ public class CustomMarkwonAdapter extends MarkwonAdapter {
                         TableRow tableRow = ((TableRow) tableLayout.getChildAt(i));
                         for (int j = 0; j < tableRow.getChildCount(); j++) {
                             if (tableRow.getChildAt(j) instanceof TextView) {
-                                tableRow.getChildAt(j).setOnClickListener(onClickListener);
-                                tableRow.getChildAt(j).setOnLongClickListener(onLongClickListener);
+                                TextView textView = (TextView) tableRow.getChildAt(j);
+                                tableRow.getChildAt(j).setOnClickListener(view -> {
+                                    if (onClickListener != null && textView.getSelectionStart() == -1 && textView.getSelectionEnd() == -1) {
+                                        onClickListener.onClick(view);
+                                    }
+                                });
+                                tableRow.getChildAt(j).setOnLongClickListener(view -> {
+                                    if (onLongClickListener != null && textView.getSelectionStart() == -1 && textView.getSelectionEnd() == -1) {
+                                        onLongClickListener.onLongClick(view);
+                                        return true;
+                                    }
+                                    return false;
+                                });
                             }
                         }
                     }
+                }
+            }
+        }
+
+        if (node instanceof ImageAndGifBlock) {
+            if (!holder.itemView.hasOnClickListeners()) {
+                holder.itemView.setOnClickListener(onClickListener);
+                holder.itemView.setOnLongClickListener(onLongClickListener);
+            }
+
+            if (holder instanceof ImageAndGifEntry.Holder) {
+                if (!((ImageAndGifEntry.Holder) holder).binding.captionTextViewMarkdownImageAndGifBlock.hasOnClickListeners()) {
+                    ((ImageAndGifEntry.Holder) holder).binding.captionTextViewMarkdownImageAndGifBlock.setOnClickListener(view -> {
+                        if (onClickListener != null && ((ImageAndGifEntry.Holder) holder).binding.captionTextViewMarkdownImageAndGifBlock.getSelectionStart() == -1 && ((ImageAndGifEntry.Holder) holder).binding.captionTextViewMarkdownImageAndGifBlock.getSelectionEnd() == -1) {
+                            onClickListener.onClick(view);
+                        }
+                    });
+                    ((ImageAndGifEntry.Holder) holder).binding.captionTextViewMarkdownImageAndGifBlock.setOnLongClickListener(view -> {
+                        if (onLongClickListener != null && ((ImageAndGifEntry.Holder) holder).binding.captionTextViewMarkdownImageAndGifBlock.getSelectionStart() == -1 && ((ImageAndGifEntry.Holder) holder).binding.captionTextViewMarkdownImageAndGifBlock.getSelectionEnd() == -1) {
+                            return onLongClickListener.onLongClick(view);
+                        }
+                        return false;
+                    });
                 }
             }
         }

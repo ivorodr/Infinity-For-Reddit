@@ -272,16 +272,6 @@ public class CustomThemeWrapper {
                 getDefaultColor("#FFFFFF", "#FFFFFF", "#FFFFFF"));
     }
 
-    public int getAwardsBackgroundColor() {
-        return getThemeSharedPreferences().getInt(CustomThemeSharedPreferencesUtils.AWARDS_BACKGROUND_COLOR,
-                getDefaultColor("#EEAB02", "#EEAB02", "#EEAB02"));
-    }
-
-    public int getAwardsTextColor() {
-        return getThemeSharedPreferences().getInt(CustomThemeSharedPreferencesUtils.AWARDS_TEXT_COLOR,
-                getDefaultColor("#FFFFFF", "#FFFFFF", "#FFFFFF"));
-    }
-
     public int getArchivedIconTint() {
         return getThemeSharedPreferences().getInt(CustomThemeSharedPreferencesUtils.ARCHIVED_ICON_TINT,
                 getDefaultColor("#B4009F", "#B4009F", "#B4009F"));
@@ -455,11 +445,6 @@ public class CustomThemeWrapper {
     public int getFullyCollapsedCommentBackgroundColor() {
         return getThemeSharedPreferences().getInt(CustomThemeSharedPreferencesUtils.FULLY_COLLAPSED_COMMENT_BACKGROUND_COLOR,
                 getDefaultColor("#8EDFBA", "#21C561", "#21C561"));
-    }
-
-    public int getAwardedCommentBackgroundColor() {
-        return getThemeSharedPreferences().getInt(CustomThemeSharedPreferencesUtils.AWARDED_COMMENT_BACKGROUND_COLOR,
-                getDefaultColor("#FFFFFF", "#242424", "#000000"));
     }
 
     public int getNavBarColor() {
