@@ -42,7 +42,6 @@ import retrofit2.Retrofit;
  */
 public class FlairBottomSheetFragment extends LandscapeExpandedBottomSheetDialogFragment {
 
-    public static final String EXTRA_ACCESS_TOKEN = "EAT";
     public static final String EXTRA_SUBREDDIT_NAME = "ESN";
     public static final String EXTRA_VIEW_POST_DETAIL_FRAGMENT_ID = "EPFI";
     @BindView(R.id.progress_bar_flair_bottom_sheet_fragment)
@@ -55,11 +54,7 @@ public class FlairBottomSheetFragment extends LandscapeExpandedBottomSheetDialog
     @Named("oauth")
     Retrofit mOauthRetrofit;
     @Inject
-    @Named("no_oauth")
-    Retrofit mRetrofit;
-    @Inject
     CustomThemeWrapper mCustomThemeWrapper;
-    private String mAccessToken;
     private String mSubredditName;
     private BaseActivity mActivity;
     private FlairBottomSheetRecyclerViewAdapter mAdapter;
@@ -94,7 +89,6 @@ public class FlairBottomSheetFragment extends LandscapeExpandedBottomSheetDialog
 
         recyclerView.setAdapter(mAdapter);
 
-        mAccessToken = getArguments().getString(EXTRA_ACCESS_TOKEN);
         mSubredditName = getArguments().getString(EXTRA_SUBREDDIT_NAME);
 
         fetchFlairs();
@@ -103,7 +97,7 @@ public class FlairBottomSheetFragment extends LandscapeExpandedBottomSheetDialog
     }
 
     private void fetchFlairs() {
-        FetchFlairs.fetchFlairsInSubreddit(mOauthRetrofit, mAccessToken,
+        FetchFlairs.fetchFlairsInSubreddit(mOauthRetrofit, mActivity.accessToken,
                 mSubredditName, new FetchFlairs.FetchFlairsInSubredditListener() {
                     @Override
                     public void fetchSuccessful(ArrayList<Flair> flairs) {

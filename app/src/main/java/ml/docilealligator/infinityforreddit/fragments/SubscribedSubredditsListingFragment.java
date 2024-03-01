@@ -34,6 +34,7 @@ import ml.docilealligator.infinityforreddit.FragmentCommunicator;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
+import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.activities.BaseActivity;
 import ml.docilealligator.infinityforreddit.activities.SubredditSelectionActivity;
 import ml.docilealligator.infinityforreddit.activities.SubscribedThingListingActivity;
@@ -50,8 +51,6 @@ import retrofit2.Retrofit;
  */
 public class SubscribedSubredditsListingFragment extends Fragment implements FragmentCommunicator {
 
-    public static final String EXTRA_ACCOUNT_NAME = "EAN";
-    public static final String EXTRA_ACCESS_TOKEN = "EAT";
     public static final String EXTRA_ACCOUNT_PROFILE_IMAGE_URL = "EAPIU";
     public static final String EXTRA_IS_SUBREDDIT_SELECTION = "EISS";
     public static final String EXTRA_EXTRA_CLEAR_SELECTION = "EECS";
@@ -109,10 +108,7 @@ public class SubscribedSubredditsListingFragment extends Fragment implements Fra
             }
         }
 
-        String accountName = getArguments().getString(EXTRA_ACCOUNT_NAME, "-");
-        String accessToken = getArguments().getString(EXTRA_ACCESS_TOKEN);
-
-        if (accessToken == null) {
+        if (mActivity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
             mSwipeRefreshLayout.setEnabled(false);
         }
 
@@ -124,18 +120,18 @@ public class SubscribedSubredditsListingFragment extends Fragment implements Fra
         SubscribedSubredditsRecyclerViewAdapter adapter;
         if (getArguments().getBoolean(EXTRA_IS_SUBREDDIT_SELECTION)) {
             adapter = new SubscribedSubredditsRecyclerViewAdapter(mActivity, mExecutor, mOauthRetrofit, mRedditDataRoomDatabase,
-                    mCustomThemeWrapper, accessToken, getArguments().getBoolean(EXTRA_EXTRA_CLEAR_SELECTION),
+                    mCustomThemeWrapper, mActivity.accessToken, mActivity.accountName, getArguments().getBoolean(EXTRA_EXTRA_CLEAR_SELECTION),
                     (name, iconUrl, subredditIsUser) -> ((SubredditSelectionActivity) mActivity).getSelectedSubreddit(name, iconUrl, subredditIsUser));
         } else {
             adapter = new SubscribedSubredditsRecyclerViewAdapter(mActivity, mExecutor, mOauthRetrofit, mRedditDataRoomDatabase,
-                    mCustomThemeWrapper, accessToken);
+                    mCustomThemeWrapper, mActivity.accessToken, mActivity.accountName);
         }
 
         mRecyclerView.setAdapter(adapter);
         new FastScrollerBuilder(mRecyclerView).useMd2Style().build();
 
         mSubscribedSubredditViewModel = new ViewModelProvider(this,
-                new SubscribedSubredditViewModel.Factory(mActivity.getApplication(), mRedditDataRoomDatabase, accountName))
+                new SubscribedSubredditViewModel.Factory(mActivity.getApplication(), mRedditDataRoomDatabase, mActivity.accountName))
                 .get(SubscribedSubredditViewModel.class);
         mSubscribedSubredditViewModel.getAllSubscribedSubreddits().observe(getViewLifecycleOwner(), subscribedSubredditData -> {
             mSwipeRefreshLayout.setRefreshing(false);
@@ -149,8 +145,8 @@ public class SubscribedSubredditsListingFragment extends Fragment implements Fra
                 mGlide.clear(mImageView);
             }
 
-            if (accessToken != null) {
-                adapter.addUser(accountName, getArguments().getString(EXTRA_ACCOUNT_PROFILE_IMAGE_URL));
+            if (!mActivity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+                adapter.addUser(mActivity.accountName, getArguments().getString(EXTRA_ACCOUNT_PROFILE_IMAGE_URL));
             }
             adapter.setSubscribedSubreddits(subscribedSubredditData);
         });

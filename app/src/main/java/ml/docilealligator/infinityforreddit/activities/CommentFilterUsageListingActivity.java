@@ -42,6 +42,9 @@ public class CommentFilterUsageListingActivity extends BaseActivity {
     @Named("default")
     SharedPreferences sharedPreferences;
     @Inject
+    @Named("current_account")
+    SharedPreferences mCurrentAccountSharedPreferences;
+    @Inject
     RedditDataRoomDatabase redditDataRoomDatabase;
     @Inject
     CustomThemeWrapper customThemeWrapper;
@@ -92,10 +95,8 @@ public class CommentFilterUsageListingActivity extends BaseActivity {
     }
 
     public void newCommentFilterUsage(int type) {
-        switch (type) {
-            case CommentFilterUsage.SUBREDDIT_TYPE:
-                editAndCommentFilterUsageNameOfUsage(type, null);
-                break;
+        if (type == CommentFilterUsage.SUBREDDIT_TYPE) {
+            editAndCommentFilterUsageNameOfUsage(type, null);
         }
     }
 
@@ -114,10 +115,8 @@ public class CommentFilterUsageListingActivity extends BaseActivity {
         }
         textInputEditText.requestFocus();
         int titleStringId = R.string.subreddit;
-        switch (type) {
-            case CommentFilterUsage.SUBREDDIT_TYPE:
-                textInputEditText.setHint(R.string.settings_tab_subreddit_name);
-                break;
+        if (type == CommentFilterUsage.SUBREDDIT_TYPE) {
+            textInputEditText.setHint(R.string.settings_tab_subreddit_name);
         }
 
         Utils.showKeyboard(this, new Handler(), textInputEditText);
@@ -162,6 +161,11 @@ public class CommentFilterUsageListingActivity extends BaseActivity {
     @Override
     public SharedPreferences getDefaultSharedPreferences() {
         return sharedPreferences;
+    }
+
+    @Override
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
     }
 
     @Override

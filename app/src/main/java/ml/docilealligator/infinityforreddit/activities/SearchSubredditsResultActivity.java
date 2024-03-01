@@ -30,6 +30,7 @@ import butterknife.ButterKnife;
 import ml.docilealligator.infinityforreddit.ActivityToolbarInterface;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
+import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
 import ml.docilealligator.infinityforreddit.events.SwitchAccountEvent;
@@ -61,8 +62,6 @@ public class SearchSubredditsResultActivity extends BaseActivity implements Acti
     SharedPreferences mCurrentAccountSharedPreferences;
     @Inject
     CustomThemeWrapper mCustomThemeWrapper;
-    private String mAccessToken;
-    private String mAccountName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,16 +104,11 @@ public class SearchSubredditsResultActivity extends BaseActivity implements Acti
 
         String query = getIntent().getExtras().getString(EXTRA_QUERY);
 
-        mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
-        mAccountName = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCOUNT_NAME, null);
-
         if (savedInstanceState == null) {
             mFragment = new SubredditListingFragment();
             Bundle bundle = new Bundle();
             bundle.putString(SubredditListingFragment.EXTRA_QUERY, query);
             bundle.putBoolean(SubredditListingFragment.EXTRA_IS_GETTING_SUBREDDIT_INFO, true);
-            bundle.putString(SubredditListingFragment.EXTRA_ACCESS_TOKEN, mAccessToken);
-            bundle.putString(SubredditListingFragment.EXTRA_ACCOUNT_NAME, mAccountName);
             bundle.putBoolean(SubredditListingFragment.EXTRA_IS_MULTI_SELECTION, getIntent().getBooleanExtra(EXTRA_IS_MULTI_SELECTION, false));
             mFragment.setArguments(bundle);
         } else {
@@ -128,6 +122,11 @@ public class SearchSubredditsResultActivity extends BaseActivity implements Acti
     @Override
     public SharedPreferences getDefaultSharedPreferences() {
         return mSharedPreferences;
+    }
+
+    @Override
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
     }
 
     @Override

@@ -93,10 +93,13 @@ public class WikiActivity extends BaseActivity {
 
     @Inject
     @Named("no_oauth")
-    Retrofit retrofit;
+    Retrofit mRetrofit;
     @Inject
     @Named("default")
     SharedPreferences mSharedPreferences;
+    @Inject
+    @Named("current_account")
+    SharedPreferences mCurrentAccountSharedPreferences;
     @Inject
     CustomThemeWrapper mCustomThemeWrapper;
     private String wikiMarkdown;
@@ -256,7 +259,7 @@ public class WikiActivity extends BaseActivity {
         Glide.with(this).clear(mFetchWikiInfoImageView);
         mFetchWikiInfoLinearLayout.setVisibility(View.GONE);
 
-        retrofit.create(RedditAPI.class).getWikiPage(mSubredditName, getIntent().getStringExtra(EXTRA_WIKI_PATH)).enqueue(new Callback<String>() {
+        mRetrofit.create(RedditAPI.class).getWikiPage(mSubredditName, getIntent().getStringExtra(EXTRA_WIKI_PATH)).enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
                 if (response.isSuccessful()) {
@@ -322,6 +325,11 @@ public class WikiActivity extends BaseActivity {
     @Override
     public SharedPreferences getDefaultSharedPreferences() {
         return mSharedPreferences;
+    }
+
+    @Override
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
     }
 
     @Override

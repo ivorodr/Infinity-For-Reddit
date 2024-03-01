@@ -42,6 +42,7 @@ import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
+import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
 import ml.docilealligator.infinityforreddit.events.SubmitChangeAvatarEvent;
@@ -97,9 +98,6 @@ public class EditProfileActivity extends BaseActivity {
     @Inject
     CustomThemeWrapper mCustomThemeWrapper;
 
-    private String mAccountName;
-    private String mAccessToken;
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         ((Infinity) getApplication()).getAppComponent().inject(this);
@@ -125,9 +123,6 @@ public class EditProfileActivity extends BaseActivity {
             Slidr.attach(this);
         }
 
-        mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
-        mAccountName = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCOUNT_NAME, null);
-
         changeBanner.setOnClickListener(view -> {
             startPickImage(PICK_IMAGE_BANNER_REQUEST_CODE);
         });
@@ -137,7 +132,7 @@ public class EditProfileActivity extends BaseActivity {
 
         final RequestManager glide = Glide.with(this);
         final UserViewModel.Factory userViewModelFactory =
-                new UserViewModel.Factory(getApplication(), mRedditDataRoomDatabase, mAccountName);
+                new UserViewModel.Factory(getApplication(), mRedditDataRoomDatabase, accountName);
         final UserViewModel userViewModel =
                 new ViewModelProvider(this, userViewModelFactory).get(UserViewModel.class);
 
@@ -159,7 +154,7 @@ public class EditProfileActivity extends BaseActivity {
                 changeBanner.setLayoutParams(cBannerLp);
                 glide.load(userBanner).into(bannerImageView);
                 changeBanner.setOnLongClickListener(view -> {
-                    if (mAccessToken == null) {
+                    if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                         return false;
                     }
                     new MaterialAlertDialogBuilder(this, R.style.MaterialAlertDialogTheme)
@@ -167,8 +162,8 @@ public class EditProfileActivity extends BaseActivity {
                             .setMessage(R.string.are_you_sure)
                             .setPositiveButton(R.string.yes, (dialogInterface, i)
                                     -> EditProfileUtils.deleteBanner(mOauthRetrofit,
-                                    mAccessToken,
-                                    mAccountName,
+                                    accessToken,
+                                    accountName,
                                     new EditProfileUtils.EditProfileUtilsListener() {
                                         @Override
                                         public void success() {
@@ -202,7 +197,7 @@ public class EditProfileActivity extends BaseActivity {
             } else {
                 changeAvatar.setLongClickable(true);
                 changeAvatar.setOnLongClickListener(view -> {
-                    if (mAccessToken == null) {
+                    if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                         return false;
                     }
                     new MaterialAlertDialogBuilder(this, R.style.MaterialAlertDialogTheme)
@@ -210,8 +205,8 @@ public class EditProfileActivity extends BaseActivity {
                             .setMessage(R.string.are_you_sure)
                             .setPositiveButton(R.string.yes, (dialogInterface, i)
                                     -> EditProfileUtils.deleteAvatar(mOauthRetrofit,
-                                    mAccessToken,
-                                    mAccountName,
+                                    accessToken,
+                                    accountName,
                                     new EditProfileUtils.EditProfileUtilsListener() {
                                         @Override
                                         public void success() {
@@ -241,12 +236,13 @@ public class EditProfileActivity extends BaseActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != RESULT_OK || data == null) return; //
-        if (mAccessToken == null || mAccountName == null) return; //
+        if (resultCode != RESULT_OK || data == null || accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+            return;
+        }
         Intent intent = new Intent(this, EditProfileService.class);
         intent.setData(data.getData());
-        intent.putExtra(EditProfileService.EXTRA_ACCOUNT_NAME, mAccountName);
-        intent.putExtra(EditProfileService.EXTRA_ACCESS_TOKEN, mAccessToken);
+        intent.putExtra(EditProfileService.EXTRA_ACCOUNT_NAME, accountName);
+        intent.putExtra(EditProfileService.EXTRA_ACCESS_TOKEN, accessToken);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         switch (requestCode) {
             case PICK_IMAGE_BANNER_REQUEST_CODE:
@@ -287,8 +283,8 @@ public class EditProfileActivity extends BaseActivity {
             if (aboutYou == null || displayName == null) return false; //
 
             Intent intent = new Intent(this, EditProfileService.class);
-            intent.putExtra(EditProfileService.EXTRA_ACCOUNT_NAME, mAccountName);
-            intent.putExtra(EditProfileService.EXTRA_ACCESS_TOKEN, mAccessToken);
+            intent.putExtra(EditProfileService.EXTRA_ACCOUNT_NAME, accountName);
+            intent.putExtra(EditProfileService.EXTRA_ACCESS_TOKEN, accessToken);
             intent.putExtra(EditProfileService.EXTRA_DISPLAY_NAME, displayName); //
             intent.putExtra(EditProfileService.EXTRA_ABOUT_YOU, aboutYou); //
             intent.putExtra(EditProfileService.EXTRA_POST_TYPE, EditProfileService.EXTRA_POST_TYPE_SAVE_EDIT_PROFILE);
@@ -333,6 +329,11 @@ public class EditProfileActivity extends BaseActivity {
     @Override
     public SharedPreferences getDefaultSharedPreferences() {
         return mSharedPreferences;
+    }
+
+    @Override
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
     }
 
     @Override

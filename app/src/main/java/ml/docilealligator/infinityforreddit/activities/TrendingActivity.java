@@ -43,6 +43,7 @@ import butterknife.ButterKnife;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.TrendingSearch;
+import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.adapters.TrendingSearchRecyclerViewAdapter;
 import ml.docilealligator.infinityforreddit.apis.RedditAPI;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
@@ -100,7 +101,6 @@ public class TrendingActivity extends BaseActivity {
     CustomThemeWrapper mCustomThemeWrapper;
     @Inject
     Executor mExecutor;
-    private String mAccessToken;
     private boolean isRefreshing = false;
     private ArrayList<TrendingSearch> trendingSearches;
     private TrendingSearchRecyclerViewAdapter adapter;
@@ -148,8 +148,6 @@ public class TrendingActivity extends BaseActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setToolbarGoToTop(toolbar);
-
-        mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
 
         mGlide = Glide.with(this);
 
@@ -206,10 +204,10 @@ public class TrendingActivity extends BaseActivity {
         adapter.setTrendingSearches(null);
         Handler handler = new Handler();
         Call<String> trendingCall;
-        if (mAccessToken == null) {
+        if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
             trendingCall = mRetrofit.create(RedditAPI.class).getTrendingSearches();
         } else {
-            trendingCall = mOauthRetrofit.create(RedditAPI.class).getTrendingSearchesOauth(APIUtils.getOAuthHeader(mAccessToken));
+            trendingCall = mOauthRetrofit.create(RedditAPI.class).getTrendingSearchesOauth(APIUtils.getOAuthHeader(accessToken));
         }
         trendingCall.enqueue(new Callback<>() {
             @Override
@@ -316,6 +314,11 @@ public class TrendingActivity extends BaseActivity {
     @Override
     public SharedPreferences getDefaultSharedPreferences() {
         return mSharedPreferences;
+    }
+
+    @Override
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
     }
 
     @Override

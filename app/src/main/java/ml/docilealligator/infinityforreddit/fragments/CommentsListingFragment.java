@@ -47,13 +47,12 @@ import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.RecyclerViewContentScrollingInterface;
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
 import ml.docilealligator.infinityforreddit.SortType;
+import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.activities.BaseActivity;
 import ml.docilealligator.infinityforreddit.adapters.CommentsListingRecyclerViewAdapter;
 import ml.docilealligator.infinityforreddit.comment.CommentViewModel;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.customviews.LinearLayoutManagerBugFixed;
-import ml.docilealligator.infinityforreddit.events.ChangeDataSavingModeEvent;
-import ml.docilealligator.infinityforreddit.events.ChangeDisableImagePreviewEvent;
 import ml.docilealligator.infinityforreddit.events.ChangeNetworkStatusEvent;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
@@ -66,8 +65,6 @@ import retrofit2.Retrofit;
 public class CommentsListingFragment extends Fragment implements FragmentCommunicator {
 
     public static final String EXTRA_USERNAME = "EN";
-    public static final String EXTRA_ACCESS_TOKEN = "EAT";
-    public static final String EXTRA_ACCOUNT_NAME = "EAN";
     public static final String EXTRA_ARE_SAVED_COMMENTS = "EISC";
 
     @BindView(R.id.coordinator_layout_comments_listing_fragment)
@@ -107,7 +104,6 @@ public class CommentsListingFragment extends Fragment implements FragmentCommuni
     CustomThemeWrapper customThemeWrapper;
     @Inject
     Executor mExecutor;
-    private String mAccessToken;
     private RequestManager mGlide;
     private BaseActivity mActivity;
     private LinearLayoutManagerBugFixed mLinearLayoutManager;
@@ -258,8 +254,6 @@ public class CommentsListingFragment extends Fragment implements FragmentCommuni
             touchHelper.attachToRecyclerView(mCommentRecyclerView);
         }
 
-        mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
-
         new Handler().postDelayed(() -> bindView(resources), 0);
 
         return rootView;
@@ -281,7 +275,7 @@ public class CommentsListingFragment extends Fragment implements FragmentCommuni
 
             mAdapter = new CommentsListingRecyclerViewAdapter(mActivity, mOauthRetrofit, customThemeWrapper,
                     getResources().getConfiguration().locale, mSharedPreferences,
-                    getArguments().getString(EXTRA_ACCESS_TOKEN), getArguments().getString(EXTRA_ACCOUNT_NAME),
+                    mActivity.accessToken, mActivity.accountName,
                     username, () -> mCommentViewModel.retryLoadingMore());
 
             mCommentRecyclerView.setAdapter(mAdapter);
@@ -301,13 +295,12 @@ public class CommentsListingFragment extends Fragment implements FragmentCommuni
 
             CommentViewModel.Factory factory;
 
-            if (mAccessToken == null) {
-                factory = new CommentViewModel.Factory(mRetrofit,
-                        resources.getConfiguration().locale, null, username, sortType,
+            if (mActivity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+                factory = new CommentViewModel.Factory(mRetrofit, null, mActivity.accountName, username, sortType,
                         getArguments().getBoolean(EXTRA_ARE_SAVED_COMMENTS));
             } else {
                 factory = new CommentViewModel.Factory(mOauthRetrofit,
-                        resources.getConfiguration().locale, mAccessToken, username, sortType,
+                        mActivity.accessToken, mActivity.accountName, username, sortType,
                         getArguments().getBoolean(EXTRA_ARE_SAVED_COMMENTS));
             }
 

@@ -65,9 +65,6 @@ public class SelectUserFlairActivity extends BaseActivity implements ActivityToo
     @Inject
     CustomThemeWrapper mCustomThemeWrapper;
     private LinearLayoutManagerBugFixed mLinearLayoutManager;
-    private boolean mNullAccessToken = false;
-    private String mAccessToken;
-    private String mAccountName;
     private ArrayList<UserFlair> mUserFlairs;
     private String mSubredditName;
     private UserFlairRecyclerViewAdapter mAdapter;
@@ -100,9 +97,6 @@ public class SelectUserFlairActivity extends BaseActivity implements ActivityToo
         mSubredditName = getIntent().getStringExtra(EXTRA_SUBREDDIT_NAME);
         setTitle(mSubredditName);
 
-        mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
-        mAccountName = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCOUNT_NAME, null);
-
         if (savedInstanceState != null) {
             mUserFlairs = savedInstanceState.getParcelableArrayList(USER_FLAIRS_STATE);
         }
@@ -111,7 +105,7 @@ public class SelectUserFlairActivity extends BaseActivity implements ActivityToo
 
     private void bindView() {
         if (mUserFlairs == null) {
-            FetchUserFlairs.fetchUserFlairsInSubreddit(mOauthRetrofit, mAccessToken, mSubredditName,
+            FetchUserFlairs.fetchUserFlairsInSubreddit(mOauthRetrofit, accessToken, mSubredditName,
                     new FetchUserFlairs.FetchUserFlairsInSubredditListener() {
                         @Override
                         public void fetchSuccessful(ArrayList<UserFlair> userFlairs) {
@@ -176,7 +170,7 @@ public class SelectUserFlairActivity extends BaseActivity implements ActivityToo
     }
 
     private void selectUserFlair(@Nullable UserFlair userFlair) {
-        SelectUserFlair.selectUserFlair(mOauthRetrofit, mAccessToken, userFlair, mSubredditName, mAccountName,
+        SelectUserFlair.selectUserFlair(mOauthRetrofit, accessToken, userFlair, mSubredditName, accountName,
                 new SelectUserFlair.SelectUserFlairListener() {
                     @Override
                     public void success() {
@@ -221,6 +215,11 @@ public class SelectUserFlairActivity extends BaseActivity implements ActivityToo
     @Override
     public SharedPreferences getDefaultSharedPreferences() {
         return mSharedPreferences;
+    }
+
+    @Override
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
     }
 
     @Override

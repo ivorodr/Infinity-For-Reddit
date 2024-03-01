@@ -80,6 +80,7 @@ import ml.docilealligator.infinityforreddit.RecyclerViewContentScrollingInterfac
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
 import ml.docilealligator.infinityforreddit.SortType;
 import ml.docilealligator.infinityforreddit.SortTypeSelectionCallback;
+import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.adapters.SubredditAutocompleteRecyclerViewAdapter;
 import ml.docilealligator.infinityforreddit.apis.RedditAPI;
 import ml.docilealligator.infinityforreddit.asynctasks.AddSubredditOrUserToMultiReddit;
@@ -206,8 +207,6 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
     private SectionsPagerAdapter sectionsPagerAdapter;
     private NavigationWrapper navigationWrapper;
     private Call<String> subredditAutocompleteCall;
-    private String mAccessToken;
-    private String mAccountName;
     private String subredditName;
     private String description;
     private boolean mFetchSubredditInfoSuccess = false;
@@ -342,9 +341,6 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
 
         fragmentManager = getSupportFragmentManager();
 
-        mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
-        mAccountName = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCOUNT_NAME, null);
-
         if (savedInstanceState == null) {
             mMessageFullname = getIntent().getStringExtra(EXTRA_MESSAGE_FULLNAME);
             mNewAccountName = getIntent().getStringExtra(EXTRA_NEW_ACCOUNT_NAME);
@@ -478,7 +474,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
 
                 if (subredditData.isNSFW()) {
                     if (nsfwWarningBuilder == null
-                            && mSharedPreferences.getBoolean(SharedPreferencesUtils.DISABLE_NSFW_FOREVER, false) || !mNsfwAndSpoilerSharedPreferences.getBoolean((mAccountName == null ? "" : mAccountName) + SharedPreferencesUtils.NSFW_BASE, false)) {
+                            && mSharedPreferences.getBoolean(SharedPreferencesUtils.DISABLE_NSFW_FOREVER, false) || !mNsfwAndSpoilerSharedPreferences.getBoolean((accountName.equals(Account.ANONYMOUS_ACCOUNT) ? "" : accountName) + SharedPreferencesUtils.NSFW_BASE, false)) {
                         nsfwWarningBuilder = new MaterialAlertDialogBuilder(this, R.style.MaterialAlertDialogTheme)
                                 .setTitle(R.string.warning)
                                 .setMessage(R.string.this_is_a_nsfw_subreddit)
@@ -506,6 +502,11 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
     @Override
     public SharedPreferences getDefaultSharedPreferences() {
         return mSharedPreferences;
+    }
+
+    @Override
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
     }
 
     @Override
@@ -557,7 +558,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
 
     private void checkNewAccountAndBindView() {
         if (mNewAccountName != null) {
-            if (mAccountName == null || !mAccountName.equals(mNewAccountName)) {
+            if (accountName.equals(Account.ANONYMOUS_ACCOUNT) || !accountName.equals(mNewAccountName)) {
                 SwitchAccount.switchAccount(mRedditDataRoomDatabase, mCurrentAccountSharedPreferences,
                         mExecutor, new Handler(), mNewAccountName, newAccount -> {
                             EventBus.getDefault().post(new SwitchAccountEvent(getClass().getName()));
@@ -565,8 +566,8 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
 
                             mNewAccountName = null;
                             if (newAccount != null) {
-                                mAccessToken = newAccount.getAccessToken();
-                                mAccountName = newAccount.getAccountName();
+                                accessToken = newAccount.getAccessToken();
+                                accountName = newAccount.getAccountName();
                             }
 
                             bindView();
@@ -581,7 +582,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
 
     private void fetchSubredditData() {
         if (!mFetchSubredditInfoSuccess) {
-            FetchSubredditData.fetchSubredditData(mOauthRetrofit, mRetrofit, subredditName, mAccessToken, new FetchSubredditData.FetchSubredditDataListener() {
+            FetchSubredditData.fetchSubredditData(accountName.equals(Account.ANONYMOUS_ACCOUNT) ? null : mOauthRetrofit, mRetrofit, subredditName, accessToken, new FetchSubredditData.FetchSubredditDataListener() {
                 @Override
                 public void onFetchSubredditDataSuccess(SubredditData subredditData, int nCurrentOnlineSubscribers) {
                     mNCurrentOnlineSubscribers = nCurrentOnlineSubscribers;
@@ -617,7 +618,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
             }
             case SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_PROFILE: {
                 Intent intent = new Intent(this, ViewUserDetailActivity.class);
-                intent.putExtra(ViewUserDetailActivity.EXTRA_USER_NAME_KEY, mAccountName);
+                intent.putExtra(ViewUserDetailActivity.EXTRA_USER_NAME_KEY, accountName);
                 startActivity(intent);
                 break;
             }
@@ -750,7 +751,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
 
     private void bindView() {
         if (mMessageFullname != null) {
-            ReadMessage.readMessage(mOauthRetrofit, mAccessToken, mMessageFullname, new ReadMessage.ReadMessageListener() {
+            ReadMessage.readMessage(mOauthRetrofit, accessToken, mMessageFullname, new ReadMessage.ReadMessageListener() {
                 @Override
                 public void readSuccess() {
                     mMessageFullname = null;
@@ -764,9 +765,9 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
         }
 
         if (showBottomAppBar) {
-            int optionCount = mBottomAppBarSharedPreference.getInt((mAccessToken == null ? "-" : "") + SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_COUNT, 4);
-            int option1 = mBottomAppBarSharedPreference.getInt((mAccessToken == null ? "-" : "") + SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_1, SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_HOME);
-            int option2 = mBottomAppBarSharedPreference.getInt((mAccessToken == null ? "-" : "") + SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_2, SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_SUBSCRIPTIONS);
+            int optionCount = mBottomAppBarSharedPreference.getInt((accountName.equals(Account.ANONYMOUS_ACCOUNT) ? Account.ANONYMOUS_ACCOUNT : "") + SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_COUNT, 4);
+            int option1 = mBottomAppBarSharedPreference.getInt((accountName.equals(Account.ANONYMOUS_ACCOUNT) ? Account.ANONYMOUS_ACCOUNT : "") + SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_1, SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_HOME);
+            int option2 = mBottomAppBarSharedPreference.getInt((accountName.equals(Account.ANONYMOUS_ACCOUNT) ? Account.ANONYMOUS_ACCOUNT : "") + SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_2, SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_SUBSCRIPTIONS);
 
             if (optionCount == 2) {
                 navigationWrapper.bindOptionDrawableResource(getBottomAppBarOptionDrawableResource(option1), getBottomAppBarOptionDrawableResource(option2));
@@ -793,8 +794,8 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
                     });
                 }
             } else {
-                int option3 = mBottomAppBarSharedPreference.getInt((mAccessToken == null ? "-" : "") + SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_3, mAccessToken == null ? SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_MULTIREDDITS : SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_INBOX);
-                int option4 = mBottomAppBarSharedPreference.getInt((mAccessToken == null ? "-" : "") + SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_4, mAccessToken == null ? SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_REFRESH : SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_PROFILE);
+                int option3 = mBottomAppBarSharedPreference.getInt((accountName.equals(Account.ANONYMOUS_ACCOUNT) ? Account.ANONYMOUS_ACCOUNT : "") + SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_3, accountName.equals(Account.ANONYMOUS_ACCOUNT) ? SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_MULTIREDDITS : SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_INBOX);
+                int option4 = mBottomAppBarSharedPreference.getInt((accountName.equals(Account.ANONYMOUS_ACCOUNT) ? Account.ANONYMOUS_ACCOUNT : "") + SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_4, accountName.equals(Account.ANONYMOUS_ACCOUNT) ? SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_REFRESH : SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_PROFILE);
 
                 navigationWrapper.bindOptionDrawableResource(getBottomAppBarOptionDrawableResource(option1),
                         getBottomAppBarOptionDrawableResource(option2), getBottomAppBarOptionDrawableResource(option3),
@@ -843,7 +844,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
             navigationWrapper.floatingActionButton.setLayoutParams(lp);
         }
 
-        fabOption = mBottomAppBarSharedPreference.getInt((mAccessToken == null ? "-" : "") + SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_FAB, SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_FAB_SUBMIT_POSTS);
+        fabOption = mBottomAppBarSharedPreference.getInt((accountName.equals(Account.ANONYMOUS_ACCOUNT) ? Account.ANONYMOUS_ACCOUNT : "") + SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_FAB, SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_FAB_SUBMIT_POSTS);
         switch (fabOption) {
             case SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_FAB_REFRESH:
                 navigationWrapper.floatingActionButton.setImageResource(R.drawable.ic_refresh_24dp);
@@ -867,7 +868,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
                 navigationWrapper.floatingActionButton.setImageResource(R.drawable.ic_random_24dp);
                 break;
             case SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_FAB_HIDE_READ_POSTS:
-                if (mAccessToken == null) {
+                if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                     navigationWrapper.floatingActionButton.setImageResource(R.drawable.ic_filter_24dp);
                     fabOption = SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_FAB_FILTER_POSTS;
                 } else {
@@ -881,7 +882,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
                 navigationWrapper.floatingActionButton.setImageResource(R.drawable.ic_keyboard_double_arrow_up_24);
                 break;
             default:
-                if (mAccessToken == null) {
+                if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                     navigationWrapper.floatingActionButton.setImageResource(R.drawable.ic_filter_24dp);
                     fabOption = SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_FAB_FILTER_POSTS;
                 } else {
@@ -945,7 +946,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
         navigationWrapper.floatingActionButton.setOnLongClickListener(view -> {
             FABMoreOptionsBottomSheetFragment fabMoreOptionsBottomSheetFragment = new FABMoreOptionsBottomSheetFragment();
             Bundle bundle = new Bundle();
-            bundle.putBoolean(FABMoreOptionsBottomSheetFragment.EXTRA_ANONYMOUS_MODE, mAccessToken == null);
+            bundle.putBoolean(FABMoreOptionsBottomSheetFragment.EXTRA_ANONYMOUS_MODE, accountName.equals(Account.ANONYMOUS_ACCOUNT));
             fabMoreOptionsBottomSheetFragment.setArguments(bundle);
             fabMoreOptionsBottomSheetFragment.show(getSupportFragmentManager(), fabMoreOptionsBottomSheetFragment.getTag());
             return true;
@@ -953,7 +954,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
         navigationWrapper.floatingActionButton.setVisibility(hideFab ? View.GONE : View.VISIBLE);
 
         subscribeSubredditChip.setOnClickListener(view -> {
-            if (mAccessToken == null) {
+            if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                 if (subscriptionReady) {
                     subscriptionReady = false;
                     if (getResources().getString(R.string.subscribe).contentEquals(subscribeSubredditChip.getText())) {
@@ -999,7 +1000,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
                     subscriptionReady = false;
                     if (getResources().getString(R.string.subscribe).contentEquals(subscribeSubredditChip.getText())) {
                         SubredditSubscription.subscribeToSubreddit(mExecutor, new Handler(), mOauthRetrofit,
-                                mRetrofit, mAccessToken, subredditName, mAccountName, mRedditDataRoomDatabase,
+                                mRetrofit, accessToken, subredditName, accountName, mRedditDataRoomDatabase,
                                 new SubredditSubscription.SubredditSubscriptionListener() {
                                     @Override
                                     public void onSubredditSubscriptionSuccess() {
@@ -1017,7 +1018,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
                                 });
                     } else {
                         SubredditSubscription.unsubscribeToSubreddit(mExecutor, new Handler(), mOauthRetrofit,
-                                mAccessToken, subredditName, mAccountName, mRedditDataRoomDatabase,
+                                accessToken, subredditName, accountName, mRedditDataRoomDatabase,
                                 new SubredditSubscription.SubredditSubscriptionListener() {
                                     @Override
                                     public void onSubredditSubscriptionSuccess() {
@@ -1039,7 +1040,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
         });
 
         CheckIsSubscribedToSubreddit.checkIsSubscribedToSubreddit(mExecutor, new Handler(),
-                mRedditDataRoomDatabase, subredditName, mAccountName,
+                mRedditDataRoomDatabase, subredditName, accountName,
                 new CheckIsSubscribedToSubreddit.CheckIsSubscribedToSubredditListener() {
                     @Override
                     public void isSubscribed() {
@@ -1134,7 +1135,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
             postLayoutBottomSheetFragment.show(getSupportFragmentManager(), postLayoutBottomSheetFragment.getTag());
             return true;
         } else if (itemId == R.id.action_select_user_flair_view_subreddit_detail_activity) {
-            if (mAccessToken == null) {
+            if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                 Toast.makeText(this, R.string.login_first, Toast.LENGTH_SHORT).show();
                 return true;
             }
@@ -1143,7 +1144,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
             startActivity(selectUserFlairIntent);
             return true;
         } else if (itemId == R.id.action_add_to_multireddit_view_subreddit_detail_activity) {
-            if (mAccessToken == null) {
+            if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                 Toast.makeText(this, R.string.login_first, Toast.LENGTH_SHORT).show();
                 return true;
             }
@@ -1190,7 +1191,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
                 MultiReddit multiReddit = data.getParcelableExtra(MultiredditSelectionActivity.EXTRA_RETURN_MULTIREDDIT);
                 if (multiReddit != null) {
                     AddSubredditOrUserToMultiReddit.addSubredditOrUserToMultiReddit(mOauthRetrofit,
-                            mAccessToken, multiReddit.getPath(), subredditName,
+                            accessToken, multiReddit.getPath(), subredditName,
                             new AddSubredditOrUserToMultiReddit.AddSubredditOrUserToMultiRedditListener() {
                                 @Override
                                 public void success() {
@@ -1433,7 +1434,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
             return false;
         });
 
-        boolean nsfw = mNsfwAndSpoilerSharedPreferences.getBoolean((mAccountName == null ? "" : mAccountName) + SharedPreferencesUtils.NSFW_BASE, false);
+        boolean nsfw = mNsfwAndSpoilerSharedPreferences.getBoolean((accountName.equals(Account.ANONYMOUS_ACCOUNT) ? "" : accountName) + SharedPreferencesUtils.NSFW_BASE, false);
         thingEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -1450,7 +1451,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
                 if (subredditAutocompleteCall != null) {
                     subredditAutocompleteCall.cancel();
                 }
-                subredditAutocompleteCall = mOauthRetrofit.create(RedditAPI.class).subredditAutocomplete(APIUtils.getOAuthHeader(mAccessToken),
+                subredditAutocompleteCall = mOauthRetrofit.create(RedditAPI.class).subredditAutocomplete(APIUtils.getOAuthHeader(accessToken),
                         editable.toString(), nsfw);
                 subredditAutocompleteCall.enqueue(new Callback<String>() {
                     @Override
@@ -1533,7 +1534,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
     private void random() {
         RandomBottomSheetFragment randomBottomSheetFragment = new RandomBottomSheetFragment();
         Bundle bundle = new Bundle();
-        bundle.putBoolean(RandomBottomSheetFragment.EXTRA_IS_NSFW, !mSharedPreferences.getBoolean(SharedPreferencesUtils.DISABLE_NSFW_FOREVER, false) && mNsfwAndSpoilerSharedPreferences.getBoolean((mAccountName == null ? "" : mAccountName) + SharedPreferencesUtils.NSFW_BASE, false));
+        bundle.putBoolean(RandomBottomSheetFragment.EXTRA_IS_NSFW, !mSharedPreferences.getBoolean(SharedPreferencesUtils.DISABLE_NSFW_FOREVER, false) && mNsfwAndSpoilerSharedPreferences.getBoolean((accountName.equals(Account.ANONYMOUS_ACCOUNT) ? "" : accountName) + SharedPreferencesUtils.NSFW_BASE, false));
         randomBottomSheetFragment.setArguments(bundle);
         randomBottomSheetFragment.show(getSupportFragmentManager(), randomBottomSheetFragment.getTag());
     }
@@ -1547,7 +1548,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
 
     @Override
     public void markPostAsRead(Post post) {
-        InsertReadPost.insertReadPost(mRedditDataRoomDatabase, mExecutor, mAccountName, post.getId());
+        InsertReadPost.insertReadPost(mRedditDataRoomDatabase, mExecutor, accountName, post.getId());
     }
 
     @Override
@@ -1578,14 +1579,11 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
                 Bundle bundle = new Bundle();
                 bundle.putString(PostFragment.EXTRA_NAME, subredditName);
                 bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostPagingSource.TYPE_SUBREDDIT);
-                bundle.putString(PostFragment.EXTRA_ACCESS_TOKEN, mAccessToken);
-                bundle.putString(PostFragment.EXTRA_ACCOUNT_NAME, mAccountName);
                 fragment.setArguments(bundle);
                 return fragment;
             }
             SidebarFragment fragment = new SidebarFragment();
             Bundle bundle = new Bundle();
-            bundle.putString(SidebarFragment.EXTRA_ACCESS_TOKEN, mAccessToken);
             bundle.putString(SidebarFragment.EXTRA_SUBREDDIT_NAME, subredditName);
             fragment.setArguments(bundle);
             return fragment;

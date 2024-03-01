@@ -73,8 +73,6 @@ public class HistoryActivity extends BaseActivity implements ActivityToolbarInte
     CustomThemeWrapper mCustomThemeWrapper;
     private FragmentManager fragmentManager;
     private SectionsPagerAdapter sectionsPagerAdapter;
-    private String mAccessToken;
-    private String mAccountName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,9 +117,6 @@ public class HistoryActivity extends BaseActivity implements ActivityToolbarInte
 
         fragmentManager = getSupportFragmentManager();
 
-        mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
-        mAccountName = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCOUNT_NAME, null);
-
         initializeViewPager();
     }
 
@@ -137,6 +132,11 @@ public class HistoryActivity extends BaseActivity implements ActivityToolbarInte
     @Override
     public SharedPreferences getDefaultSharedPreferences() {
         return mSharedPreferences;
+    }
+
+    @Override
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
     }
 
     @Override
@@ -262,16 +262,12 @@ public class HistoryActivity extends BaseActivity implements ActivityToolbarInte
                 HistoryPostFragment fragment = new HistoryPostFragment();
                 Bundle bundle = new Bundle();
                 bundle.putInt(HistoryPostFragment.EXTRA_HISTORY_TYPE, HistoryPostFragment.HISTORY_TYPE_READ_POSTS);
-                bundle.putString(HistoryPostFragment.EXTRA_ACCESS_TOKEN, mAccessToken);
-                bundle.putString(HistoryPostFragment.EXTRA_ACCOUNT_NAME, mAccountName);
                 fragment.setArguments(bundle);
                 return fragment;
             } else {
                 HistoryPostFragment fragment = new HistoryPostFragment();
                 Bundle bundle = new Bundle();
                 bundle.putInt(HistoryPostFragment.EXTRA_HISTORY_TYPE, HistoryPostFragment.HISTORY_TYPE_READ_POSTS);
-                bundle.putString(HistoryPostFragment.EXTRA_ACCESS_TOKEN, mAccessToken);
-                bundle.putString(HistoryPostFragment.EXTRA_ACCOUNT_NAME, mAccountName);
                 fragment.setArguments(bundle);
                 return fragment;
             }

@@ -38,6 +38,9 @@ public class CommentFilterPreferenceActivity extends BaseActivity {
     @Named("default")
     SharedPreferences sharedPreferences;
     @Inject
+    @Named("current_account")
+    SharedPreferences mCurrentAccountSharedPreferences;
+    @Inject
     RedditDataRoomDatabase redditDataRoomDatabase;
     @Inject
     CustomThemeWrapper customThemeWrapper;
@@ -125,10 +128,8 @@ public class CommentFilterPreferenceActivity extends BaseActivity {
                     intent.putExtra(CustomizeCommentFilterActivity.EXTRA_FROM_SETTINGS, true);
                     for (int j = 0; j < selectedOptions.length; j++) {
                         if (selectedOptions[j]) {
-                            switch (j) {
-                                case 0:
-                                    intent.putExtra(CustomizeCommentFilterActivity.EXTRA_EXCLUDE_USER, comment.getAuthor());
-                                    break;
+                            if (j == 0) {
+                                intent.putExtra(CustomizeCommentFilterActivity.EXTRA_EXCLUDE_USER, comment.getAuthor());
                             }
                         }
                     }
@@ -140,6 +141,11 @@ public class CommentFilterPreferenceActivity extends BaseActivity {
     @Override
     public SharedPreferences getDefaultSharedPreferences() {
         return sharedPreferences;
+    }
+
+    @Override
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
     }
 
     @Override

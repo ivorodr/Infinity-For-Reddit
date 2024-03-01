@@ -57,7 +57,6 @@ import ml.docilealligator.infinityforreddit.events.SubmitTextOrLinkPostEvent;
 import ml.docilealligator.infinityforreddit.events.SwitchAccountEvent;
 import ml.docilealligator.infinityforreddit.services.SubmitPostService;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
-import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import pl.droidsonroids.gif.GifImageView;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -143,7 +142,6 @@ public class PostLinkActivity extends BaseActivity implements FlairBottomSheetFr
     @Inject
     Executor mExecutor;
     private Account selectedAccount;
-    private String mAccessToken;
     private String iconUrl;
     private String subredditName;
     private boolean subredditSelected = false;
@@ -194,8 +192,6 @@ public class PostLinkActivity extends BaseActivity implements FlairBottomSheetFr
         mPostingSnackbar = Snackbar.make(coordinatorLayout, R.string.posting, Snackbar.LENGTH_INDEFINITE);
 
         resources = getResources();
-
-        mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
 
         if (savedInstanceState != null) {
             selectedAccount = savedInstanceState.getParcelable(SELECTED_ACCOUNT_STATE);
@@ -307,7 +303,6 @@ public class PostLinkActivity extends BaseActivity implements FlairBottomSheetFr
             if (flair == null) {
                 flairSelectionBottomSheetFragment = new FlairBottomSheetFragment();
                 Bundle bundle = new Bundle();
-                bundle.putString(FlairBottomSheetFragment.EXTRA_ACCESS_TOKEN, mAccessToken);
                 bundle.putString(FlairBottomSheetFragment.EXTRA_SUBREDDIT_NAME, subredditName);
                 flairSelectionBottomSheetFragment.setArguments(bundle);
                 flairSelectionBottomSheetFragment.show(getSupportFragmentManager(), flairSelectionBottomSheetFragment.getTag());
@@ -358,11 +353,23 @@ public class PostLinkActivity extends BaseActivity implements FlairBottomSheetFr
             mRetrofit.newBuilder()
                     .baseUrl("http://localhost/")
                     .addConverterFactory(ScalarsConverterFactory.create())
-                    .build().create(TitleSuggestion.class).getHtml(url).enqueue(new Callback<String>() {
+                    .build().create(TitleSuggestion.class).getHtml(url).enqueue(new Callback<>() {
                 @Override
                 public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
                     if (response.isSuccessful()) {
-                        titleEditText.setText(response.body().substring(response.body().indexOf("<title>") + 7, response.body().indexOf("</title>")));
+                        String body = response.body();
+                        if (body != null) {
+                            int start = body.indexOf("<title>");
+                            if (start >= 0) {
+                                int end = body.indexOf("</title>");
+                                if (end > start) {
+                                    titleEditText.setText(body.substring(start + 7, end));
+                                    return;
+                                }
+                            }
+                        }
+
+                        Toast.makeText(PostLinkActivity.this, R.string.suggest_title_failed, Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(PostLinkActivity.this, R.string.suggest_title_failed, Toast.LENGTH_SHORT).show();
                     }
@@ -398,6 +405,11 @@ public class PostLinkActivity extends BaseActivity implements FlairBottomSheetFr
     @Override
     public SharedPreferences getDefaultSharedPreferences() {
         return mSharedPreferences;
+    }
+
+    @Override
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
     }
 
     @Override
@@ -465,7 +477,7 @@ public class PostLinkActivity extends BaseActivity implements FlairBottomSheetFr
 
     private void loadSubredditIcon() {
         LoadSubredditIcon.loadSubredditIcon(mExecutor, new Handler(), mRedditDataRoomDatabase, subredditName,
-                mAccessToken, mOauthRetrofit, mRetrofit, iconImageUrl -> {
+                accessToken, accountName, mOauthRetrofit, mRetrofit, iconImageUrl -> {
             iconUrl = iconImageUrl;
             displaySubredditIcon();
             loadSubredditIconSuccessful = true;
