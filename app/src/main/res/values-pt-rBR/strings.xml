@@ -1032,9 +1032,7 @@ A reprodução automática de vídeos fica desativada."</string>
 Ainda quer a ativar?"</string>
     <string name="reply">"Responder"</string>
     <string name="post_gallery_activity_label">"Postar galeria"</string>
-    <string name="trending_activity_label">"Tendências"</string>
     <string name="action_share_post_link">"Compartilhar link da postagem"</string>
-    <string name="trending">"Em alta"</string>
     <string name="receive_post_reply_notifications">"Receber notificações de respostas às postagens"</string>
     <string name="bottom_sheet_post_gallery">"Galeria"</string>
     <string name="posting_gallery">"Postando galeria"</string>
@@ -1198,7 +1196,6 @@ Toque para tentar de novo."</string>
     <string name="reddit_gallery_item_caption_hint">"Legenda (até 180 caracteres)"</string>
     <string name="reddit_gallery_item_url_hint">"URL"</string>
     <string name="user_agreement_dialog_title">"Acordo de Usuário"</string>
-    <string name="user_agreement_message">"Você deve concordar com o Acordo de Usuário do Reddit (%1$s) e com a Política de Privacidade do Infinity for Reddit (%2$s) antes da autenticação."</string>
     <string name="agree">"Concordar"</string>
     <string name="do_not_agree">"Discordar"</string>
     <string name="option_1_hint">"Opção 1 (exigida)"</string>

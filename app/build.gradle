@@ -3,13 +3,13 @@ plugins {
 }
 
 android {
-    compileSdk 33
+    compileSdk 34
     defaultConfig {
         applicationId "ir.docilealligator.infinityforreddit"
         minSdk 21
         targetSdk 33
-        versionCode 161
-        versionName "7.0.1"
+        versionCode 165
+        versionName "7.1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
@@ -52,38 +52,39 @@ android {
     buildFeatures {
         viewBinding true
     }
+    namespace 'ml.docilealligator.infinityforreddit'
 }
 
 dependencies {
 /** AndroidX **/
-    implementation 'androidx.appcompat:appcompat:1.7.0-alpha01'
+    implementation 'androidx.appcompat:appcompat:1.7.0-beta01'
     implementation 'androidx.biometric:biometric:1.2.0-alpha05'
-    implementation 'androidx.browser:browser:1.4.0'
+    implementation 'androidx.browser:browser:1.8.0'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    def lifecycleVersion = "2.5.1"
+    def lifecycleVersion = "2.7.0"
     implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-livedata:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-process:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-runtime:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-viewmodel:$lifecycleVersion"
 
-    def pagingVersion = '3.2.0-alpha03'
+    def pagingVersion = '3.2.1'
     implementation "androidx.paging:paging-runtime:$pagingVersion"
     implementation "androidx.paging:paging-guava:$pagingVersion"
-    implementation 'androidx.preference:preference:1.2.0'
-    implementation 'androidx.recyclerview:recyclerview:1.2.1'
-    def roomVersion = "2.4.3"
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    def roomVersion = "2.6.1"
     implementation "androidx.room:room-runtime:$roomVersion"
     annotationProcessor "androidx.room:room-compiler:$roomVersion"
     implementation "androidx.room:room-guava:$roomVersion"
-    implementation 'androidx.viewpager2:viewpager2:1.1.0-beta01'
-    implementation 'androidx.work:work-runtime:2.7.1'
-    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'androidx.viewpager2:viewpager2:1.1.0-rc01'
+    implementation 'androidx.work:work-runtime:2.9.0'
+    implementation 'com.google.android.material:material:1.12.0'
 
 /** ExoPlayer **/
-    def exoplayerVersion = "2.18.2"
+    def exoplayerVersion = "2.19.1"
     implementation "com.google.android.exoplayer:exoplayer-core:$exoplayerVersion"
     implementation "com.google.android.exoplayer:exoplayer-dash:$exoplayerVersion"
     implementation "com.google.android.exoplayer:exoplayer-hls:$exoplayerVersion"
@@ -99,7 +100,7 @@ dependencies {
     implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
     implementation "com.squareup.retrofit2:converter-scalars:$retrofitVersion"
     implementation "com.squareup.retrofit2:adapter-guava:$retrofitVersion"
-    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 
     // Dependency injection
     def daggerVersion = '2.40.5'
@@ -107,11 +108,7 @@ dependencies {
     annotationProcessor "com.google.dagger:dagger-compiler:$daggerVersion"
 
     // Binding
-    // NOTE: Deprecated in favor of viewbinding
-    def butterknifeVersion = "10.2.3"
-    implementation "com.jakewharton:butterknife:$butterknifeVersion"
-    annotationProcessor "com.jakewharton:butterknife-compiler:$butterknifeVersion"
-    compileOnly 'com.android.databinding:viewbinding:7.3.1'
+    compileOnly 'com.android.databinding:viewbinding:8.4.0'
 
     // Events
     def eventbusVersion = "3.3.1"
@@ -129,13 +126,13 @@ dependencies {
 
     // Object to JSON
     // NOTE: Replace with Squareup's Moshi?
-    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'com.google.code.gson:gson:2.10.1'
 
     // Java library for zip files and streams
     implementation 'net.lingala.zip4j:zip4j:2.11.2'
 
     // IO functionality
-    implementation 'commons-io:commons-io:2.5'
+    implementation 'commons-io:commons-io:2.13.0'
 
     // Crash reporting
     implementation 'com.github.FunkyMuse:Crashy:1.2.0'
@@ -144,7 +141,7 @@ dependencies {
 /**** User Interface (frontend) ****/
 
     //Image loading
-    def glideVersion = "4.12.0"
+    def glideVersion = "4.16.0"
     implementation "com.github.bumptech.glide:glide:$glideVersion"
     annotationProcessor "com.github.bumptech.glide:compiler:$glideVersion"
     implementation 'jp.wasabeef:glide-transformations:4.3.0'
