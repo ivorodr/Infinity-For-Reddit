@@ -25,12 +25,21 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.constraintlayout.widget.Barrier;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.Player;
+import androidx.media3.common.Tracks;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.common.util.Util;
+import androidx.media3.ui.AspectRatioFrameLayout;
+import androidx.media3.ui.DefaultTimeBar;
+import androidx.media3.ui.PlayerView;
+import androidx.media3.ui.TimeBar;
 import androidx.paging.PagingDataAdapter;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -45,14 +54,6 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
-import com.google.android.exoplayer2.PlaybackException;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.Tracks;
-import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
-import com.google.android.exoplayer2.ui.DefaultTimeBar;
-import com.google.android.exoplayer2.ui.StyledPlayerView;
-import com.google.android.exoplayer2.ui.TimeBar;
-import com.google.android.exoplayer2.util.Util;
 import com.google.android.material.button.MaterialButton;
 import com.google.common.collect.ImmutableList;
 import com.libRG.CustomTextView;
@@ -493,6 +494,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         }
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -556,6 +558,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         }
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @Override
     public void onBindViewHolder(@NonNull final RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof PostBaseViewHolder) {
@@ -2212,6 +2215,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         this.mEasierToWatchInFullScreen = easierToWatchInFullScreen;
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @Override
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
         if (holder instanceof PostBaseViewHolder) {
@@ -3114,11 +3118,12 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         }
     }
 
+    @UnstableApi
     class PostBaseVideoAutoplayViewHolder extends PostBaseViewHolder implements ToroPlayer {
         AspectRatioFrameLayout aspectRatioFrameLayout;
         GifImageView previewImageView;
         ImageView errorLoadingVideoImageView;
-        StyledPlayerView videoPlayer;
+        PlayerView videoPlayer;
         ImageView muteButton;
         ImageView fullscreenButton;
         ImageView playPauseButton;
@@ -3134,6 +3139,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         private Drawable playDrawable;
         private Drawable pauseDrawable;
 
+        @OptIn(markerClass = UnstableApi.class)
         PostBaseVideoAutoplayViewHolder(View rootView,
                                         AspectRatioGifImageView iconGifImageView,
                                         TextView subredditTextView,
@@ -3151,7 +3157,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
                                         AspectRatioFrameLayout aspectRatioFrameLayout,
                                         GifImageView previewImageView,
                                         ImageView errorLoadingVideoImageView,
-                                        StyledPlayerView videoPlayer,
+                                        PlayerView videoPlayer,
                                         ImageView muteButton,
                                         ImageView fullscreenButton,
                                         ImageView playPauseButton,
@@ -3446,6 +3452,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         }
     }
 
+    @UnstableApi
     class PostVideoAutoplayViewHolder extends PostBaseVideoAutoplayViewHolder {
         PostVideoAutoplayViewHolder(ItemPostVideoTypeAutoplayBinding binding) {
             super(binding.getRoot(),
@@ -3480,6 +3487,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         }
     }
 
+    @UnstableApi
     class PostVideoAutoplayLegacyControllerViewHolder extends PostBaseVideoAutoplayViewHolder {
         PostVideoAutoplayLegacyControllerViewHolder(ItemPostVideoTypeAutoplayLegacyControllerBinding binding) {
             super(binding.getRoot(),
@@ -4766,11 +4774,12 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         }
     }
 
+    @UnstableApi
     class PostCard2BaseVideoAutoplayViewHolder extends PostBaseViewHolder implements ToroPlayer {
         AspectRatioFrameLayout aspectRatioFrameLayout;
         GifImageView previewImageView;
         ImageView errorLoadingRedgifsImageView;
-        StyledPlayerView videoPlayer;
+        PlayerView videoPlayer;
         ImageView muteButton;
         ImageView fullscreenButton;
         ImageView playPauseButton;
@@ -4788,6 +4797,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         private Drawable playDrawable;
         private Drawable pauseDrawable;
 
+        @OptIn(markerClass = UnstableApi.class)
         PostCard2BaseVideoAutoplayViewHolder(View itemView,
                                              AspectRatioGifImageView iconGifImageView,
                                              TextView subredditTextView,
@@ -4805,7 +4815,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
                                              AspectRatioFrameLayout aspectRatioFrameLayout,
                                              GifImageView previewImageView,
                                              ImageView errorLoadingRedgifsImageView,
-                                             StyledPlayerView videoPlayer,
+                                             PlayerView videoPlayer,
                                              ImageView muteButton,
                                              ImageView fullscreenButton,
                                              ImageView playPauseButton,
@@ -5102,6 +5112,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         }
     }
 
+    @UnstableApi
     class PostCard2VideoAutoplayViewHolder extends PostCard2BaseVideoAutoplayViewHolder {
         PostCard2VideoAutoplayViewHolder(ItemPostCard2VideoAutoplayBinding binding) {
             super(binding.getRoot(),
@@ -5137,6 +5148,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         }
     }
 
+    @UnstableApi
     class PostCard2VideoAutoplayLegacyControllerViewHolder extends PostCard2BaseVideoAutoplayViewHolder {
         PostCard2VideoAutoplayLegacyControllerViewHolder(ItemPostCard2VideoAutoplayLegacyControllerBinding binding) {
             super(binding.getRoot(),
@@ -5792,11 +5804,12 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         }
     }
 
+    @UnstableApi
     class PostMaterial3CardBaseVideoAutoplayViewHolder extends PostMaterial3CardBaseViewHolder implements ToroPlayer {
         AspectRatioFrameLayout aspectRatioFrameLayout;
         GifImageView previewImageView;
         ImageView errorLoadingRedgifsImageView;
-        StyledPlayerView videoPlayer;
+        PlayerView videoPlayer;
         ImageView muteButton;
         ImageView fullscreenButton;
         ImageView playPauseButton;
@@ -5822,7 +5835,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
                                                  AspectRatioFrameLayout aspectRatioFrameLayout,
                                                  GifImageView previewImageView,
                                                  ImageView errorLoadingRedgifsImageView,
-                                                 StyledPlayerView videoPlayer,
+                                                 PlayerView videoPlayer,
                                                  ImageView muteButton,
                                                  ImageView fullscreenButton,
                                                  ImageView playPauseButton,
@@ -6134,6 +6147,7 @@ public class HistoryPostRecyclerViewAdapter extends PagingDataAdapter<Post, Recy
         }
     }
 
+    @UnstableApi
     class PostMaterial3CardVideoAutoplayLegacyControllerViewHolder extends PostMaterial3CardBaseVideoAutoplayViewHolder {
         PostMaterial3CardVideoAutoplayLegacyControllerViewHolder(ItemPostCard3VideoTypeAutoplayLegacyControllerBinding binding) {
             super(binding.getRoot(),

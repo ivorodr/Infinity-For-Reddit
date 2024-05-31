@@ -30,7 +30,14 @@ import androidx.constraintlayout.widget.Barrier;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.Player;
+import androidx.media3.common.Tracks;
+import androidx.media3.common.util.Util;
+import androidx.media3.ui.AspectRatioFrameLayout;
+import androidx.media3.ui.DefaultTimeBar;
+import androidx.media3.ui.PlayerView;
+import androidx.media3.ui.TimeBar;
 import androidx.paging.PagingDataAdapter;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -45,14 +52,6 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
-import com.google.android.exoplayer2.PlaybackException;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.Tracks;
-import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
-import com.google.android.exoplayer2.ui.DefaultTimeBar;
-import com.google.android.exoplayer2.ui.StyledPlayerView;
-import com.google.android.exoplayer2.ui.TimeBar;
-import com.google.android.exoplayer2.util.Util;
 import com.google.android.material.button.MaterialButton;
 import com.google.common.collect.ImmutableList;
 import com.libRG.CustomTextView;
@@ -3281,7 +3280,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
         AspectRatioFrameLayout aspectRatioFrameLayout;
         GifImageView previewImageView;
         ImageView errorLoadingRedgifsImageView;
-        StyledPlayerView videoPlayer;
+        PlayerView videoPlayer;
         ImageView muteButton;
         ImageView fullscreenButton;
         ImageView playPauseButton;
@@ -3314,7 +3313,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                                         AspectRatioFrameLayout aspectRatioFrameLayout,
                                         GifImageView previewImageView,
                                         ImageView errorLoadingRedgifsImageView,
-                                        StyledPlayerView videoPlayer,
+                                        PlayerView videoPlayer,
                                         ImageView muteButton,
                                         ImageView fullscreenButton,
                                         ImageView playPauseButton,
@@ -5002,7 +5001,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
         AspectRatioFrameLayout aspectRatioFrameLayout;
         GifImageView previewImageView;
         ImageView errorLoadingRedgifsImageView;
-        StyledPlayerView videoPlayer;
+        PlayerView videoPlayer;
         ImageView muteButton;
         ImageView fullscreenButton;
         ImageView playPauseButton;
@@ -5036,7 +5035,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                                              AspectRatioFrameLayout aspectRatioFrameLayout,
                                              GifImageView previewImageView,
                                              ImageView errorLoadingRedgifsImageView,
-                                             StyledPlayerView videoPlayer,
+                                             PlayerView videoPlayer,
                                              ImageView muteButton,
                                              ImageView fullscreenButton,
                                              ImageView playPauseButton,
@@ -6060,7 +6059,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
         AspectRatioFrameLayout aspectRatioFrameLayout;
         GifImageView previewImageView;
         ImageView errorLoadingRedgifsImageView;
-        StyledPlayerView videoPlayer;
+        PlayerView videoPlayer;
         ImageView muteButton;
         ImageView fullscreenButton;
         ImageView playPauseButton;
@@ -6086,7 +6085,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                                                      AspectRatioFrameLayout aspectRatioFrameLayout,
                                                      GifImageView previewImageView,
                                                      ImageView errorLoadingRedgifsImageView,
-                                                     StyledPlayerView videoPlayer,
+                                                     PlayerView videoPlayer,
                                                      ImageView muteButton,
                                                      ImageView fullscreenButton,
                                                      ImageView playPauseButton,
