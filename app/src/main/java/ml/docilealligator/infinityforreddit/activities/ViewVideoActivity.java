@@ -7,6 +7,9 @@ import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -22,6 +25,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PersistableBundle;
 import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,7 +35,9 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -60,6 +66,7 @@ import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.datasource.cache.CacheDataSource;
 import androidx.media3.datasource.cache.SimpleCache;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.hls.HlsMediaSource;
 import androidx.media3.exoplayer.source.ProgressiveMediaSource;
@@ -75,7 +82,6 @@ import com.otaliastudios.zoom.ZoomSurfaceView;
 
 import org.apache.commons.io.FilenameUtils;
 
-import java.util.List;
 import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
@@ -84,14 +90,11 @@ import javax.inject.Provider;
 
 import app.futured.hauler.DragDirection;
 import ml.docilealligator.infinityforreddit.CustomFontReceiver;
-import ml.docilealligator.infinityforreddit.FetchRedgifsVideoLinks;
-import ml.docilealligator.infinityforreddit.FetchStreamableVideo;
+import ml.docilealligator.infinityforreddit.FetchVideoLinkListener;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
-import ml.docilealligator.infinityforreddit.StreamableVideo;
-import ml.docilealligator.infinityforreddit.account.Account;
+import ml.docilealligator.infinityforreddit.VideoLinkFetcher;
 import ml.docilealligator.infinityforreddit.apis.StreamableAPI;
-import ml.docilealligator.infinityforreddit.apis.VReddIt;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.PlaybackSpeedBottomSheetFragment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.databinding.ActivityViewVideoBinding;
@@ -102,16 +105,13 @@ import ml.docilealligator.infinityforreddit.font.FontFamily;
 import ml.docilealligator.infinityforreddit.font.FontStyle;
 import ml.docilealligator.infinityforreddit.font.TitleFontFamily;
 import ml.docilealligator.infinityforreddit.font.TitleFontStyle;
-import ml.docilealligator.infinityforreddit.post.FetchPost;
 import ml.docilealligator.infinityforreddit.post.Post;
 import ml.docilealligator.infinityforreddit.services.DownloadMediaService;
 import ml.docilealligator.infinityforreddit.services.DownloadRedditVideoService;
+import ml.docilealligator.infinityforreddit.thing.StreamableVideo;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 import retrofit2.Retrofit;
 
 public class ViewVideoActivity extends AppCompatActivity implements CustomFontReceiver {
@@ -129,11 +129,11 @@ public class ViewVideoActivity extends AppCompatActivity implements CustomFontRe
     public static final String EXTRA_ID = "EI";
     public static final String EXTRA_POST = "EP";
     public static final String EXTRA_PROGRESS_SECONDS = "EPS";
-    public static final String EXTRA_VIDEO_TYPE = "EVT";
     public static final String EXTRA_REDGIFS_ID = "EGI";
     public static final String EXTRA_V_REDD_IT_URL = "EVRIU";
     public static final String EXTRA_STREAMABLE_SHORT_CODE = "ESSC";
     public static final String EXTRA_IS_NSFW = "EIN";
+    public static final String EXTRA_VIDEO_TYPE = "EVT";
     public static final int VIDEO_TYPE_IMGUR = 7;
     public static final int VIDEO_TYPE_STREAMABLE = 5;
     public static final int VIDEO_TYPE_V_REDD_IT = 4;
@@ -208,6 +208,8 @@ public class ViewVideoActivity extends AppCompatActivity implements CustomFontRe
     @UnstableApi
     @Inject
     SimpleCache mSimpleCache;
+
+    private Post post;
 
     @OptIn(markerClass = UnstableApi.class)
     @Override
@@ -347,6 +349,7 @@ public class ViewVideoActivity extends AppCompatActivity implements CustomFontRe
         }
 
         binding.getRoot().setOnDragDismissedListener(dragDirection -> {
+            player.stop();
             int slide = dragDirection == DragDirection.UP ? R.anim.slide_out_up : R.anim.slide_out_down;
             finish();
             overridePendingTransition(0, slide);
@@ -388,7 +391,7 @@ public class ViewVideoActivity extends AppCompatActivity implements CustomFontRe
             }
         }
 
-        Post post = intent.getParcelableExtra(EXTRA_POST);
+        post = intent.getParcelableExtra(EXTRA_POST);
         if (post != null) {
             binding.getTitleTextView().setText(post.getTitle());
             videoFallbackDirectUrl = post.getVideoFallBackDirectUrl();
@@ -400,7 +403,10 @@ public class ViewVideoActivity extends AppCompatActivity implements CustomFontRe
                     trackSelector.buildUponParameters()
                             .setMaxVideoSize(dataSavingModeDefaultResolution, dataSavingModeDefaultResolution));
         }
-        player = new ExoPlayer.Builder(this).setTrackSelector(trackSelector).build();
+        player = new ExoPlayer.Builder(this)
+                .setTrackSelector(trackSelector)
+                .setRenderersFactory(new DefaultRenderersFactory(this).setEnableDecoderFallback(true))
+                .build();
 
         if (zoomable) {
             PlayerControlView playerControlView = findViewById(R.id.player_control_view_view_video_activity);
@@ -469,25 +475,22 @@ public class ViewVideoActivity extends AppCompatActivity implements CustomFontRe
         } else {
             PlayerView videoPlayerView = findViewById(R.id.player_view_view_video_activity);
             videoPlayerView.setPlayer(player);
-            videoPlayerView.setControllerVisibilityListener(new PlayerView.ControllerVisibilityListener() {
-                @Override
-                public void onVisibilityChanged(int visibility) {
-                    switch (visibility) {
-                        case View.GONE:
-                            getWindow().getDecorView().setSystemUiVisibility(
-                                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                                            | View.SYSTEM_UI_FLAG_FULLSCREEN
-                                            | View.SYSTEM_UI_FLAG_IMMERSIVE);
-                            break;
-                        case View.VISIBLE:
-                            getWindow().getDecorView().setSystemUiVisibility(
-                                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-                    }
+            videoPlayerView.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) visibility -> {
+                switch (visibility) {
+                    case View.GONE:
+                        getWindow().getDecorView().setSystemUiVisibility(
+                                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
+                        break;
+                    case View.VISIBLE:
+                        getWindow().getDecorView().setSystemUiVisibility(
+                                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
                 }
             });
         }
@@ -589,6 +592,7 @@ public class ViewVideoActivity extends AppCompatActivity implements CustomFontRe
         // Produces DataSource instances through which media data is loaded.
         dataSourceFactory = new CacheDataSource.Factory().setCache(mSimpleCache)
                 .setUpstreamDataSourceFactory(new DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true).setUserAgent(APIUtils.USER_AGENT));
+        String redgifsId = null;
         if (videoType == VIDEO_TYPE_STREAMABLE) {
             if (savedInstanceState != null) {
                 videoDownloadUrl = savedInstanceState.getString(VIDEO_DOWNLOAD_URL_STATE);
@@ -598,15 +602,6 @@ public class ViewVideoActivity extends AppCompatActivity implements CustomFontRe
 
             String shortCode = intent.getStringExtra(EXTRA_STREAMABLE_SHORT_CODE);
             videoFileName = "Streamable-" + shortCode + ".mp4";
-            if (mVideoUri == null) {
-                loadStreamableVideo(shortCode, savedInstanceState);
-            } else {
-                player.prepare();
-                player.setMediaSource(new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
-                preparePlayer(savedInstanceState);
-            }
-        } else if (videoType == VIDEO_TYPE_V_REDD_IT) {
-            loadVReddItVideo(savedInstanceState);
         } else if (videoType == VIDEO_TYPE_REDGIFS) {
             if (savedInstanceState != null) {
                 videoDownloadUrl = savedInstanceState.getString(VIDEO_DOWNLOAD_URL_STATE);
@@ -614,40 +609,139 @@ public class ViewVideoActivity extends AppCompatActivity implements CustomFontRe
                 videoDownloadUrl = intent.getStringExtra(EXTRA_VIDEO_DOWNLOAD_URL);
             }
 
-            String redgifsId = intent.getStringExtra(EXTRA_REDGIFS_ID);
+            redgifsId = intent.getStringExtra(EXTRA_REDGIFS_ID);
             if (redgifsId != null && redgifsId.contains("-")) {
                 redgifsId = redgifsId.substring(0, redgifsId.indexOf('-'));
             }
             videoFileName = "Redgifs-" + redgifsId + ".mp4";
-
-            if (mVideoUri == null) {
-                loadRedgifsVideo(redgifsId, savedInstanceState);
-            } else {
-                player.prepare();
-                player.setMediaSource(new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
-                preparePlayer(savedInstanceState);
-            }
         } else if (videoType == VIDEO_TYPE_DIRECT || videoType == VIDEO_TYPE_IMGUR) {
             videoDownloadUrl = mVideoUri.toString();
             if (videoType == VIDEO_TYPE_DIRECT) {
                 videoFileName = FilenameUtils.getName(videoDownloadUrl);
             } else {
-                videoFileName = "imgur-" + FilenameUtils.getName(videoDownloadUrl);
+                videoFileName = "Imgur-" + FilenameUtils.getName(videoDownloadUrl);
             }
-            // Prepare the player with the source.
-            player.prepare();
-            player.setMediaSource(new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
-            preparePlayer(savedInstanceState);
         } else {
             videoDownloadUrl = intent.getStringExtra(EXTRA_VIDEO_DOWNLOAD_URL);
             subredditName = intent.getStringExtra(EXTRA_SUBREDDIT);
             id = intent.getStringExtra(EXTRA_ID);
             videoFileName = subredditName + "-" + id + ".mp4";
-            // Prepare the player with the source.
-            player.prepare();
-            player.setMediaSource(new HlsMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
-            preparePlayer(savedInstanceState);
         }
+
+        if (mVideoUri == null) {
+            binding.getProgressBar().setVisibility(View.VISIBLE);
+
+            VideoLinkFetcher.fetchVideoLink(mExecutor, new Handler(getMainLooper()), mRetrofit, mVReddItRetrofit,
+                    mRedgifsRetrofit, mStreamableApiProvider, mCurrentAccountSharedPreferences, videoType,
+                    redgifsId, getIntent().getStringExtra(EXTRA_V_REDD_IT_URL),
+                    intent.getStringExtra(EXTRA_STREAMABLE_SHORT_CODE),
+                    new FetchVideoLinkListener() {
+                        @Override
+                        public void onFetchRedditVideoLinkSuccess(Post post, String fileName) {
+                            videoType = VIDEO_TYPE_NORMAL;
+                            videoFileName = fileName;
+
+                            binding.getProgressBar().setVisibility(View.GONE);
+                            mVideoUri = Uri.parse(post.getVideoUrl());
+                            subredditName = post.getSubredditName();
+                            id = post.getId();
+                            ViewVideoActivity.this.videoDownloadUrl = post.getVideoDownloadUrl();
+
+                            videoFileName = subredditName + "-" + id + ".mp4";
+                            // Prepare the player with the source.
+                            preparePlayer(savedInstanceState);
+                            player.prepare();
+                            player.setMediaSource(new HlsMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
+                        }
+
+                        @Override
+                        public void onFetchImgurVideoLinkSuccess(String videoUrl, String videoDownloadUrl, String fileName) {
+                            videoType = VIDEO_TYPE_IMGUR;
+                            videoFileName = fileName;
+
+                            binding.getProgressBar().setVisibility(View.GONE);
+                            mVideoUri = Uri.parse(videoUrl);
+                            ViewVideoActivity.this.videoDownloadUrl = videoDownloadUrl;
+                            videoFileName = "Imgur-" + FilenameUtils.getName(videoDownloadUrl);
+                            // Prepare the player with the source.
+                            player.prepare();
+                            player.setMediaSource(new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
+                            preparePlayer(savedInstanceState);
+                        }
+
+                        @Override
+                        public void onFetchRedgifsVideoLinkSuccess(String webm, String mp4) {
+                            videoType = VIDEO_TYPE_REDGIFS;
+
+                            binding.getProgressBar().setVisibility(View.GONE);
+                            mVideoUri = Uri.parse(webm);
+                            videoDownloadUrl = mp4;
+                            preparePlayer(savedInstanceState);
+                            player.prepare();
+                            player.setMediaSource(new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
+                        }
+
+                        @Override
+                        public void onFetchStreamableVideoLinkSuccess(StreamableVideo streamableVideo) {
+                            videoType = VIDEO_TYPE_STREAMABLE;
+
+                            binding.getProgressBar().setVisibility(View.GONE);
+                            if (streamableVideo.mp4 == null && streamableVideo.mp4Mobile == null) {
+                                Toast.makeText(ViewVideoActivity.this, R.string.fetch_streamable_video_failed, Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            binding.getTitleTextView().setText(streamableVideo.title);
+                            videoDownloadUrl = streamableVideo.mp4 == null ? streamableVideo.mp4Mobile.url : streamableVideo.mp4.url;
+                            mVideoUri = Uri.parse(videoDownloadUrl);
+                            preparePlayer(savedInstanceState);
+                            player.prepare();
+                            player.setMediaSource(new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
+                        }
+
+                        @Override
+                        public void onChangeFileName(String fileName) {
+                            videoFileName = fileName;
+                        }
+
+                        @Override
+                        public void onFetchVideoFallbackDirectUrlSuccess(String videoFallbackDirectUrl) {
+                            ViewVideoActivity.this.videoFallbackDirectUrl = videoFallbackDirectUrl;
+                        }
+
+                        @Override
+                        public void failed(@Nullable Integer messageRes) {
+                            binding.getProgressBar().setVisibility(View.GONE);
+                            if (videoType == VIDEO_TYPE_V_REDD_IT) {
+                                if (messageRes != null) {
+                                    Toast.makeText(ViewVideoActivity.this, messageRes, Toast.LENGTH_LONG).show();
+                                }
+                            } else {
+                                loadFallbackVideo(savedInstanceState);
+                            }
+                        }
+                    });
+        } else {
+            if (videoType == VIDEO_TYPE_NORMAL) {
+                // Prepare the player with the source.
+                player.prepare();
+                player.setMediaSource(new HlsMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
+                preparePlayer(savedInstanceState);
+            } else {
+                // Prepare the player with the source.
+                player.prepare();
+                player.setMediaSource(new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
+                preparePlayer(savedInstanceState);
+            }
+        }
+
+        getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                player.stop();
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+        });
     }
 
     private void preparePlayer(Bundle savedInstanceState) {
@@ -710,134 +804,6 @@ public class ViewVideoActivity extends AppCompatActivity implements CustomFontRe
             return C.TRACK_TYPE_AUDIO;
         }
         return C.TRACK_TYPE_UNKNOWN;
-    }
-
-    private void loadRedgifsVideo(String redgifsId, Bundle savedInstanceState) {
-        binding.getProgressBar().setVisibility(View.VISIBLE);
-        FetchRedgifsVideoLinks.fetchRedgifsVideoLinks(mExecutor, new Handler(), mRedgifsRetrofit,
-                mCurrentAccountSharedPreferences, redgifsId, new FetchRedgifsVideoLinks.FetchRedgifsVideoLinksListener() {
-                    @OptIn(markerClass = UnstableApi.class)
-                    @Override
-                    public void success(String webm, String mp4) {
-                        binding.getProgressBar().setVisibility(View.GONE);
-                        mVideoUri = Uri.parse(webm);
-                        videoDownloadUrl = mp4;
-                        preparePlayer(savedInstanceState);
-                        player.prepare();
-                        player.setMediaSource(new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
-                    }
-
-                    @Override
-                    public void failed(int errorCode) {
-                        binding.getProgressBar().setVisibility(View.GONE);
-                        loadFallbackVideo(savedInstanceState);
-                        //Toast.makeText(ViewVideoActivity.this, R.string.fetch_redgifs_video_failed, Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    private void loadVReddItVideo(Bundle savedInstanceState) {
-        binding.getProgressBar().setVisibility(View.VISIBLE);
-        mVReddItRetrofit.create(VReddIt.class).getRedirectUrl(getIntent().getStringExtra(EXTRA_V_REDD_IT_URL)).enqueue(new Callback<>() {
-            @Override
-            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
-                Uri redirectUri = Uri.parse(response.raw().request().url().toString());
-                String redirectPath = redirectUri.getPath();
-                if (redirectPath != null && (redirectPath.matches("/r/\\w+/comments/\\w+/?\\w+/?") || redirectPath.matches("/user/\\w+/comments/\\w+/?\\w+/?"))) {
-                    List<String> segments = redirectUri.getPathSegments();
-                    int commentsIndex = segments.lastIndexOf("comments");
-                    String postId = segments.get(commentsIndex + 1);
-                    FetchPost.fetchPost(mExecutor, new Handler(), mRetrofit, postId, null, Account.ANONYMOUS_ACCOUNT,
-                            new FetchPost.FetchPostListener() {
-                                @OptIn(markerClass = UnstableApi.class)
-                                @Override
-                                public void fetchPostSuccess(Post post) {
-                                    videoFallbackDirectUrl = post.getVideoFallBackDirectUrl();
-                                    if (post.isRedgifs()) {
-                                        videoType = VIDEO_TYPE_REDGIFS;
-                                        String redgifsId = post.getRedgifsId();
-                                        if (redgifsId != null && redgifsId.contains("-")) {
-                                            redgifsId = redgifsId.substring(0, redgifsId.indexOf('-'));
-                                        }
-                                        videoFileName = "Redgifs-" + redgifsId + ".mp4";
-                                        loadRedgifsVideo(redgifsId, savedInstanceState);
-                                    } else if (post.isStreamable()) {
-                                        videoType = VIDEO_TYPE_STREAMABLE;
-                                        String shortCode = post.getStreamableShortCode();
-                                        videoFileName = "Streamable-" + shortCode + ".mp4";
-                                        loadStreamableVideo(shortCode, savedInstanceState);
-                                    } else if (post.isImgur()) {
-                                        mVideoUri = Uri.parse(post.getVideoUrl());
-                                        videoDownloadUrl = post.getVideoDownloadUrl();
-                                        videoType = VIDEO_TYPE_IMGUR;
-                                        videoFileName = "imgur-" + FilenameUtils.getName(videoDownloadUrl);
-                                        // Prepare the player with the source.
-                                        player.prepare();
-                                        player.setMediaSource(new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
-                                        preparePlayer(savedInstanceState);
-                                    } else {
-                                        binding.getProgressBar().setVisibility(View.GONE);
-                                        if (post.getVideoUrl() != null) {
-                                            mVideoUri = Uri.parse(post.getVideoUrl());
-                                            subredditName = post.getSubredditName();
-                                            id = post.getId();
-                                            videoDownloadUrl = post.getVideoDownloadUrl();
-
-                                            videoFileName = subredditName + "-" + id + ".mp4";
-                                            // Prepare the player with the source.
-                                            preparePlayer(savedInstanceState);
-                                            player.prepare();
-                                            player.setMediaSource(new HlsMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
-                                        } else {
-                                            Toast.makeText(ViewVideoActivity.this, R.string.error_fetching_v_redd_it_video_cannot_get_video_url, Toast.LENGTH_LONG).show();
-                                        }
-                                    }
-                                }
-
-                                @Override
-                                public void fetchPostFailed() {
-                                    Toast.makeText(ViewVideoActivity.this, R.string.error_fetching_v_redd_it_video_cannot_get_post, Toast.LENGTH_LONG).show();
-                                }
-                            });
-                } else {
-                    Toast.makeText(ViewVideoActivity.this, R.string.error_fetching_v_redd_it_video_cannot_get_post_id, Toast.LENGTH_LONG).show();
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
-                Toast.makeText(ViewVideoActivity.this, R.string.error_fetching_v_redd_it_video_cannot_get_redirect_url, Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
-    private void loadStreamableVideo(String shortCode, Bundle savedInstanceState) {
-        binding.getProgressBar().setVisibility(View.VISIBLE);
-        FetchStreamableVideo.fetchStreamableVideo(mExecutor, new Handler(), mStreamableApiProvider, shortCode,
-                new FetchStreamableVideo.FetchStreamableVideoListener() {
-                    @OptIn(markerClass = UnstableApi.class)
-                    @Override
-                    public void success(StreamableVideo streamableVideo) {
-                        if (streamableVideo.mp4 == null && streamableVideo.mp4Mobile == null) {
-                            Toast.makeText(ViewVideoActivity.this, R.string.fetch_streamable_video_failed, Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                        binding.getTitleTextView().setText(streamableVideo.title);
-                        binding.getProgressBar().setVisibility(View.GONE);
-                        videoDownloadUrl = streamableVideo.mp4 == null ? streamableVideo.mp4Mobile.url : streamableVideo.mp4.url;
-                        mVideoUri = Uri.parse(videoDownloadUrl);
-                        preparePlayer(savedInstanceState);
-                        player.prepare();
-                        player.setMediaSource(new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(MediaItem.fromUri(mVideoUri)));
-                    }
-
-                    @Override
-                    public void failed() {
-                        binding.getProgressBar().setVisibility(View.GONE);
-                        loadFallbackVideo(savedInstanceState);
-                        //Toast.makeText(ViewVideoActivity.this, R.string.fetch_streamable_video_failed, Toast.LENGTH_SHORT).show();
-                    }
-                });
     }
 
     @OptIn(markerClass = UnstableApi.class)
@@ -961,22 +927,37 @@ public class ViewVideoActivity extends AppCompatActivity implements CustomFontRe
     private void download() {
         isDownloading = false;
 
-        Intent intent;
         if (videoType != VIDEO_TYPE_NORMAL) {
-            intent = new Intent(this, DownloadMediaService.class);
-            intent.putExtra(DownloadMediaService.EXTRA_URL, videoDownloadUrl);
-            intent.putExtra(DownloadMediaService.EXTRA_MEDIA_TYPE, DownloadMediaService.EXTRA_MEDIA_TYPE_VIDEO);
-            intent.putExtra(DownloadMediaService.EXTRA_FILE_NAME, videoFileName);
-            intent.putExtra(DownloadMediaService.EXTRA_SUBREDDIT_NAME, subredditName);
-            intent.putExtra(DownloadMediaService.EXTRA_IS_NSFW, isNSFW);
+            PersistableBundle extras = new PersistableBundle();
+            if (post.getPostType() == Post.GIF_TYPE) {
+                extras.putString(DownloadMediaService.EXTRA_URL, post.getVideoUrl());
+                extras.putInt(DownloadMediaService.EXTRA_MEDIA_TYPE, DownloadMediaService.EXTRA_MEDIA_TYPE_GIF);
+                extras.putString(DownloadMediaService.EXTRA_FILE_NAME, post.getSubredditName()
+                        + "-" + post.getId() + ".gif");
+            } else {
+                extras.putString(DownloadMediaService.EXTRA_URL, videoDownloadUrl);
+                extras.putInt(DownloadMediaService.EXTRA_MEDIA_TYPE, DownloadMediaService.EXTRA_MEDIA_TYPE_VIDEO);
+                extras.putString(DownloadMediaService.EXTRA_FILE_NAME, videoFileName);
+            }
+
+            extras.putString(DownloadMediaService.EXTRA_SUBREDDIT_NAME, subredditName);
+            extras.putInt(DownloadMediaService.EXTRA_IS_NSFW, isNSFW ? 1 : 0);
+
+            //TODO: contentEstimatedBytes
+            JobInfo jobInfo = DownloadMediaService.constructJobInfo(this, 5000000, extras);
+            ((JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE)).schedule(jobInfo);
         } else {
-            intent = new Intent(this, DownloadRedditVideoService.class);
-            intent.putExtra(DownloadRedditVideoService.EXTRA_VIDEO_URL, videoDownloadUrl);
-            intent.putExtra(DownloadRedditVideoService.EXTRA_POST_ID, id);
-            intent.putExtra(DownloadRedditVideoService.EXTRA_SUBREDDIT, subredditName);
-            intent.putExtra(DownloadRedditVideoService.EXTRA_IS_NSFW, isNSFW);
+            PersistableBundle extras = new PersistableBundle();
+            extras.putString(DownloadRedditVideoService.EXTRA_VIDEO_URL, videoDownloadUrl);
+            extras.putString(DownloadRedditVideoService.EXTRA_POST_ID, id);
+            extras.putString(DownloadRedditVideoService.EXTRA_SUBREDDIT, subredditName);
+            extras.putInt(DownloadRedditVideoService.EXTRA_IS_NSFW, isNSFW ? 1 : 0);
+
+            //TODO: contentEstimatedBytes
+            JobInfo jobInfo = DownloadRedditVideoService.constructJobInfo(this, 5000000, extras);
+            ((JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE)).schedule(jobInfo);
         }
-        ContextCompat.startForegroundService(this, intent);
+
         Toast.makeText(this, R.string.download_started, Toast.LENGTH_SHORT).show();
     }
 

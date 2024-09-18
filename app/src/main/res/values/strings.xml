@@ -46,7 +46,7 @@
     <string name="history_activity_label">History</string>
     <string name="subscription_activity_label">Subscription</string>
     <string name="comment_filter_preference_activity_label">Comment Filter</string>
-    <string name="customize_comment_filter_activity_label">Customize Post Filter</string>
+    <string name="customize_comment_filter_activity_label">Customize Comment Filter</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -98,6 +98,9 @@
     <string name="action_contact_mods">Contact Mods</string>
     <string name="action_more_options">More Options</string>
     <string name="action_add_to_home_screen">Add to Home screen</string>
+    <string name="action_reset_fab_position">Reset FAB position</string>
+    <string name="action_download_all_gallery_media">Download All Gallery Media</string>
+    <string name="action_download_all_imgur_album_media">Download All Imgur Album Media</string>
 
     <string name="parse_json_response_error">Error occurred when parsing the JSON response</string>
     <string name="retrieve_token_error">Error Retrieving the token</string>
@@ -166,12 +169,11 @@
     <string name="unfollowed">Unfollowed</string>
     <string name="unfollow_failed">Unfollowing Failed</string>
 
-    <string name="content_description_banner_imageview">Subreddit Banner Image</string>
-
     <string name="app_label">Infinity</string>
     <string name="search_hint">Search anything</string>
     <string name="search_only_subreddits_hint">Search subreddits</string>
     <string name="search_only_users_hint">Search users</string>
+    <string name="search_subreddits_and_users_hint">Search subreddits and users</string>
 
     <string name="no_posts_no_lazy_mode">No posts available</string>
     <string name="lazy_mode_start">Lazy Mode starts in %1$.1fs</string>
@@ -265,6 +267,9 @@
 
     <string name="confirm">Confirm</string>
     <string name="confirm_delete_all_recent_searches">Are you sure you want to delete all recent search queries?</string>
+    <string name="all_recent_searches_deleted">All recent searches deleted</string>
+    <string name="recent_search_deleted">Recent search Deleted</string>
+    <string name="undo">Undo</string>
 
     <string name="sort_best">Best</string>
     <string name="sort_hot">Hot</string>
@@ -308,6 +313,7 @@
     <string name="posting_video">Posting Video</string>
     <string name="posting_image">Posting Image</string>
     <string name="posting_gallery">Posting Gallery</string>
+    <string name="posting_poll">Posting Poll</string>
     <string name="please_wait">Please wait</string>
 
     <string name="add_account">Add an account</string>
@@ -642,6 +648,7 @@
     <string name="settings_hide_fab_in_post_feed">Hide FAB in Post Feed</string>
     <string name="settings_comment_divider_type">Comment Divider Type</string>
     <string name="settings_comment_filter_title">Comment Filter</string>
+    <string name="settings_embedded_media_type_title">Embedded Media Type</string>
 
     <string name="no_link_available">Cannot get the link</string>
 
@@ -731,6 +738,7 @@
     <string name="device_default">Device Default</string>
     <string name="set_by_battery_saver">Set by Battery Saver</string>
 
+    <string name="multi_reddit_name_explanation">The name should be unique.</string>
     <string name="multi_reddit_name_hint">Name (Max 50 Characters)</string>
     <string name="multi_reddit_description_hint">Description</string>
     <string name="private_multi_reddit">Private</string>
@@ -956,6 +964,7 @@
     <string name="theme_copied">Copied! Paste and share it to other people.</string>
     <string name="copy_theme_faied">Cannot copy the theme configuration</string>
     <string name="cannot_find_theme">Cannot find this theme</string>
+    <string name="cannot_download_theme_data">Cannot download theme data</string>
     <string name="import_theme">Import Theme</string>
     <string name="no_data_in_clipboard">Cannot find data in clipboard</string>
     <string name="import_theme_success">Import theme successfully</string>
@@ -964,6 +973,14 @@
     <string name="duplicate_theme_name_dialog_message">A theme in the database is also called %1$s. Do you want to change the name of this imported theme?</string>
     <string name="rename">Rename</string>
     <string name="override">Override</string>
+    <string name="save_theme_options_title">Save options</string>
+    <string name="save_theme_options_message">You uploaded this theme so you can make changes.</string>
+    <string name="save_locally">Save locally</string>
+    <string name="save_online">Save online</string>
+    <string name="save_locally_and_online">Save both locally and online</string>
+    <string name="theme_saved_locally">Theme saved locally</string>
+    <string name="theme_saved_online">Theme saved online</string>
+    <string name="upload_theme_failed">Failed to upload this theme. Try again later.</string>
 
     <string name="color_picker">Color Picker</string>
     <string name="invalid_color">Invalid Color</string>
@@ -1035,6 +1052,12 @@
     <string name="downloading_image_or_gif_failed_cannot_get_destination_directory">Download failed: cannot access destination directory</string>
     <string name="downloading_media_failed_cannot_download_media">Download failed</string>
     <string name="downloading_media_failed_cannot_save_to_destination_directory">Download failed: cannot save the file to destination directory</string>
+    <string name="download_media_failed_cannot_fetch_redgifs_url">Download failed: cannot fetch Redgifs video url</string>
+    <string name="download_media_failed_cannot_fetch_streamable_url">Download failed: cannot fetch Streamable video url</string>
+    <string name="download_media_failed_invalid_argument">Invalid argument</string>
+    <string name="download_all_gallery_media_notification_title">All Gallery Media</string>
+    <string name="download_all_imgur_album_media_notification_title">All Imgur Album Media</string>
+    <string name="download_gallery_failed_some_images">Downloaded. Some media failed to download.</string>
 
     <string name="wallpaper_set">Wallpaper set</string>
     <string name="error_set_wallpaper">Cannot set wallpaper</string>
@@ -1139,6 +1162,23 @@
     <string name="edit_post_filter_name_of_usage_info">Leave it blank to apply this post filter to all the subreddits / users / multireddits</string>
     <string name="click_to_apply_post_filter">Click here to apply it to some post feeds</string>
     <string name="post_filter_usage_embedded_more_count">and %1$d more</string>
+    <string name="post_filter_name_explanation">The post filter name should be unique.</string>
+    <string name="post_filter_post_type_explanation">To see certain types of posts, please turn on the switch corresponding to the types.</string>
+    <string name="post_filter_only_nsfw_spoiler_explanation">To only see NSFW or spoiler posts, please turn on the corresponding switch.</string>
+    <string name="post_filter_title_excludes_strings_explanation">Posts will be filtered out if they contain the following keywords in their title.</string>
+    <string name="post_filter_title_contains_strings_explanation">Posts will be filtered out if they do not contain the following keywords in their title.</string>
+    <string name="post_filter_title_excludes_regex_explanation">Posts will be filtered out if their title matches the following regular expression.</string>
+    <string name="post_filter_title_contains_regex_explanation">Posts will be filtered out if their title does not match the following regular expression.</string>
+    <string name="post_filter_exclude_subreddits_explanation">Posts from the following subreddits will be filtered out.</string>
+    <string name="post_filter_exclude_users_explanation">Posts submitted by the following users will be filtered out.</string>
+    <string name="post_filter_exclude_flairs_explanation">Posts that have the following flairs will be filtered out.</string>
+    <string name="post_filter_contain_flairs_explanation">Posts that do not have the following flairs will be filtered out.</string>
+    <string name="post_filter_exclude_domains_explanation">Link posts that have the following urls will be filtered out.</string>
+    <string name="post_filter_contain_domains_explanation">Link posts that do not have the following urls will be filtered out.</string>
+    <string name="post_filter_min_vote_explanation">Posts that have a score lower than the following value will be filtered out (-1 means no restriction).</string>
+    <string name="post_filter_max_vote_explanation">Posts that have a score higher than the following value will be filtered out (-1 means no restriction).</string>
+    <string name="post_filter_min_comments_explanation">Posts will be filtered out if the number of their comments is less than the following value. (-1 means no restriction).</string>
+    <string name="post_filter_max_comments_explanation">Posts will be filtered out if the number of their comments is larger than the following value. (-1 means no restriction).</string>
 
     <string name="excludes_strings_hint">Exclude keywords (key1,key2)</string>
     <string name="comment_filter_name_hint">Comment Filter Name</string>
@@ -1264,9 +1304,9 @@
     <string name="app_lock_timeout_24_hours">24 hours</string>
 
     <!--EditProfileService Notification-->
-    <string name="submit_change_avatar">Submit Change Avatar</string>
-    <string name="submit_change_banner">Submit Change Banner</string>
-    <string name="submit_save_profile">Submit Save Profile</string>
+    <string name="submit_change_avatar">Changing Avatar</string>
+    <string name="submit_change_banner">Changing Banner</string>
+    <string name="submit_save_profile">Saving Profile</string>
 
     <!--EditProfileActivity-->
     <string name="action_edit_profile">Edit Profile</string>
@@ -1283,7 +1323,7 @@
     <string name="message_remove_banner_failed">Failed to remove banner %s</string>
     <string name="message_change_avatar_success">Change avatar successfully</string>
     <string name="message_change_avatar_failed">Failed to change avatar %s</string>
-    <string name="message_change_banner_success">Changing banner successfully</string>
+    <string name="message_change_banner_success">Change banner successfully</string>
     <string name="message_change_banner_failed">Failed to change banner %s</string>
     <string name="message_save_profile_success">Save profile successfully</string>
     <string name="message_save_profile_failed">Failed to save profile %s</string>
@@ -1383,5 +1423,90 @@
 
     <string name="local">Local</string>
     <string name="online">Online</string>
+
+    <string name="image_and_gif">Image and GIF</string>
+    <string name="image_and_emote">Image and emote</string>
+    <string name="gif_and_emote">GIF and emote</string>
+    <string name="image_embedded_media">Image</string>
+    <string name="emote">Emote</string>
+    <string name="none">None</string>
+
+    <string name="comment_filter_display_mode">Display mode</string>
+    <string name="comment_filter_display_mode_remove_comments">Remove comments</string>
+    <string name="comment_filter_display_mode_fully_collapse_comments">Fully collapse comments</string>
+    <string name="comment_filter_name_explanation">The comment filter name should be unique.</string>
+    <string name="comment_filter_display_mode_explanation">Filtered out comments will be shown as the following selected option.</string>
+    <string name="comment_filter_exclude_strings_explanation">Comments will be filtered out if they contain the following keywords.</string>
+    <string name="comment_filter_exclude_users_explanation">Comments will be filtered out if they were submitted by the following users.</string>
+    <string name="comment_filter_min_vote_explanation">Comments that have a score lower than the following value will be filtered out (-1 means no restriction).</string>
+    <string name="comment_filter_max_vote_explanation">Comments that have a score higher than the following value will be filtered out (-1 means no restriction).</string>
+
+    <string name="content_description_banner_imageview">Banner Image</string>
+    <string name="content_description_create_comment_filter">Create comment filter</string>
+    <string name="content_description_add_comment_filter_usage">Apply comment filter to somewhere</string>
+    <string name="content_description_comment_filter_add_user">Add a user to comment filter</string>
+    <string name="content_description_create_custom_theme">Create custom theme</string>
+    <string name="content_description_create_post_filter">Create post filter</string>
+    <string name="content_description_add_post_filter_usage">Apply post filter to somewhere</string>
+    <string name="content_description_post_filter_add_subreddit">Add a subreddit to post filter</string>
+    <string name="content_description_post_filter_add_user">Add a user to post filter</string>
+    <string name="content_description_change_banner">Change banner</string>
+    <string name="content_description_change_avatar">Change avatar</string>
+    <string name="content_description_customize_post_filter">Customize post filter</string>
+    <string name="content_description_compose_message">Compose message</string>
+    <string name="content_description_alternative_login_method">Alternative login method</string>
+    <string name="content_description_capture_photo">Capture photo</string>
+    <string name="content_description_select_image">Select image</string>
+    <string name="content_description_selected_image">Selected image</string>
+    <string name="content_description_record_video">Record video</string>
+    <string name="content_description_select_video">Select video</string>
+    <string name="content_description_delete_texts">Delete texts</string>
+    <string name="content_description_handle_link">Handle link</string>
+    <string name="content_description_submit_post">Submit post</string>
+    <string name="content_description_refresh">Refresh</string>
+    <string name="content_description_change_sort_type">Change sort type</string>
+    <string name="content_description_change_post_layout">Change post layout</string>
+    <string name="content_description_search">Search</string>
+    <string name="content_description_go_to_subreddit">Go to subreddit</string>
+    <string name="content_description_go_to_user">Go to user</string>
+    <string name="content_description_random">Random</string>
+    <string name="content_description_filter_posts">Filter posts</string>
+    <string name="content_description_hide_read_posts">Hide read posts</string>
+    <string name="content_description_go_to_top">Go to top</string>
+    <string name="content_description_add_subreddit_or_user">Add subreddit or user</string>
+    <string name="content_description_video_indicator">Video indicator</string>
+    <string name="content_description_no_subscriptions_indicator">No subscriptions indicator</string>
+    <string name="content_description_create_multireddit">Create multireddit</string>
+    <string name="content_description_bottom_navigation_bar_button">Bottom navigation bar button</string>
+    <string name="content_description_fab">Floating action button</string>
+    <string name="content_description_download">Download</string>
+    <string name="content_description_share">Share</string>
+    <string name="content_description_set_as_wallpaper">Set as wallpaper</string>
+    <string name="content_description_previous_result">Go to previous result</string>
+    <string name="content_description_next_result">Go to next result</string>
+    <string name="content_description_close_search_panel">Close search panel</string>
+    <string name="content_description_send_message">Send message</string>
+    <string name="content_description_home">Home</string>
+    <string name="content_description_subscriptions">Subscriptions</string>
+    <string name="content_description_inbox">Inbox</string>
+    <string name="content_description_profile">Profile</string>
+    <string name="content_description_multireddits">Multireddits</string>
+    <string name="content_description_upvoted">Upvoted</string>
+    <string name="content_description_downvoted">Downvoted</string>
+    <string name="content_description_hidden">Hidden</string>
+    <string name="content_description_saved">Saved</string>
+
+    <string name="comment">Comment</string>
+    <string name="enable_reply_notifications">Receive reply notifications</string>
+    <string name="disable_reply_notifications">Disable reply notifications</string>
+    <string name="reply_notifications_enabled">Reply notifications enabled</string>
+    <string name="reply_notifications_disabled">Reply notifications disabled</string>
+    <string name="toggle_reply_notifications_failed">Toggle reply notifications failed</string>
+    <string name="cannot_find_comment">Cannot find comment</string>
+
+    <string name="download_image">Download Image</string>
+    <string name="download_gif">Download Gif</string>
+    <string name="download_video">Download Video</string>
+    <string name="download_all_gallery_images">Download All Gallery Images</string>
 
 </resources>

@@ -20,8 +20,8 @@ Infinity for Reddit is available on Google Play and F-Droid
   <a href="https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforreddit">
       <img alt="Get it on Google Play" height="80" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" />
       </a>  
-      <a href="https://f-droid.org/packages/ml.docilealligator.infinityforreddit/">
-          <img alt="Get it on F-Droid" height="80" src="https://f-droid.org/badge/get-it-on.png" />
+      <a href="https://apt.izzysoft.de/fdroid/index/apk/ml.docilealligator.infinityforreddit.patreon">
+          <img alt="Get it on F-Droid" height="80" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" />
   </a>
 
 </div>
@@ -49,11 +49,6 @@ Infinity for Reddit is available on Google Play and F-Droid
 [![GitHub issues](https://img.shields.io/github/issues/Docile-Alligator/Infinity-For-Reddit)](https://github.com/Docile-Alligator/Infinity-For-Reddit/issues)
 
 </div>
-
-## Seeking Job Referrals!
-<h3>I am looking for entry-level/new grad software engineer (or related) jobs in both Canada and Australia and will be so grateful if you are willing to refer me to your company. Thank you!</h3>
-
-You can send me an email at docilealligator.app@gmail.com or message [u/Hostilenemy](https://www.reddit.com/user/Hostilenemy) on Reddit.
 
 ## Donation
 <p>Infinity for Reddit+:</p>

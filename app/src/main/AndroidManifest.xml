@@ -23,6 +23,7 @@
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RUN_USER_INITIATED_JOBS" />
 
     <application
         android:name=".Infinity"
@@ -114,11 +115,6 @@
             android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".activities.MultiredditSelectionActivity"
-            android:label="@string/multireddit_selection_activity_label"
-            android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
             android:name=".activities.SearchUsersResultActivity"
             android:label="@string/search_users_result_activity_label"
             android:parentActivityName=".activities.MainActivity"
@@ -160,6 +156,7 @@
         <service
             android:name=".services.DownloadMediaService"
             android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="false" />
 
         <activity
@@ -177,6 +174,7 @@
         <service
             android:name=".services.DownloadRedditVideoService"
             android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="false" />
 
         <activity
@@ -377,11 +375,6 @@
             android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.Slidable" />
         <activity
-            android:name=".activities.SubredditSelectionActivity"
-            android:label="@string/subreddit_selection_activity_label"
-            android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/AppTheme.Slidable" />
-        <activity
             android:name=".activities.PostTextActivity"
             android:label="@string/post_text_activity_label"
             android:parentActivityName=".activities.MainActivity"
@@ -461,10 +454,12 @@
         <service
             android:name=".services.SubmitPostService"
             android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="false" />
         <service
             android:name=".services.EditProfileService"
             android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="false" />
 
         <receiver android:name=".broadcastreceivers.DownloadedMediaDeleteActionBroadcastReceiver" />

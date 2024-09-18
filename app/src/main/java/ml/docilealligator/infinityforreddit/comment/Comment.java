@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import ml.docilealligator.infinityforreddit.BuildConfig;
-import ml.docilealligator.infinityforreddit.MediaMetadata;
+import ml.docilealligator.infinityforreddit.thing.MediaMetadata;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 
 public class Comment implements Parcelable {
@@ -52,8 +52,10 @@ public class Comment implements Parcelable {
     private boolean hasReply;
     private boolean scoreHidden;
     private boolean saved;
+    private boolean sendReplies;
     private boolean isExpanded;
     private boolean hasExpandedBefore;
+    private boolean isFilteredOut;
     private ArrayList<Comment> children;
     private ArrayList<String> moreChildrenIds;
     private int placeholderType;
@@ -68,7 +70,7 @@ public class Comment implements Parcelable {
                    String linkId, String subredditName, String parentId, int score,
                    int voteType, boolean isSubmitter, String distinguished, String permalink,
                    int depth, boolean collapsed, boolean hasReply,
-                   boolean scoreHidden, boolean saved, long edited, Map<String, MediaMetadata> mediaMetadataMap) {
+                   boolean scoreHidden, boolean saved, boolean sendReplies, long edited, Map<String, MediaMetadata> mediaMetadataMap) {
         this.id = id;
         this.fullName = fullName;
         this.author = author;
@@ -91,6 +93,7 @@ public class Comment implements Parcelable {
         this.hasReply = hasReply;
         this.scoreHidden = scoreHidden;
         this.saved = saved;
+        this.sendReplies = sendReplies;
         this.isExpanded = false;
         this.hasExpandedBefore = false;
         this.editedTimeMillis = edited;
@@ -139,8 +142,11 @@ public class Comment implements Parcelable {
         collapsed = in.readByte() != 0;
         hasReply = in.readByte() != 0;
         scoreHidden = in.readByte() != 0;
+        saved = in.readByte() != 0;
+        sendReplies = in.readByte() != 0;
         isExpanded = in.readByte() != 0;
         hasExpandedBefore = in.readByte() != 0;
+        isFilteredOut = in.readByte() != 0;
         children = new ArrayList<>();
         in.readTypedList(children, Comment.CREATOR);
         moreChildrenIds = new ArrayList<>();
@@ -291,6 +297,14 @@ public class Comment implements Parcelable {
         this.saved = saved;
     }
 
+    public boolean isSendReplies() {
+        return sendReplies;
+    }
+
+    public void toggleSendReplies() {
+        sendReplies = !sendReplies;
+    }
+
     public boolean isExpanded() {
         return isExpanded;
     }
@@ -304,6 +318,14 @@ public class Comment implements Parcelable {
 
     public boolean hasExpandedBefore() {
         return hasExpandedBefore;
+    }
+
+    public boolean isFilteredOut() {
+        return isFilteredOut;
+    }
+
+    public void setIsFilteredOut(boolean isFilteredOut) {
+        this.isFilteredOut = isFilteredOut;
     }
 
     public int getVoteType() {
@@ -434,8 +456,11 @@ public class Comment implements Parcelable {
         parcel.writeByte((byte) (collapsed ? 1 : 0));
         parcel.writeByte((byte) (hasReply ? 1 : 0));
         parcel.writeByte((byte) (scoreHidden ? 1 : 0));
+        parcel.writeByte((byte) (saved ? 1 : 0));
+        parcel.writeByte((byte) (sendReplies ? 1 : 0));
         parcel.writeByte((byte) (isExpanded ? 1 : 0));
         parcel.writeByte((byte) (hasExpandedBefore ? 1 : 0));
+        parcel.writeByte((byte) (isFilteredOut ? 1 : 0));
         parcel.writeTypedList(children);
         parcel.writeStringList(moreChildrenIds);
         parcel.writeInt(placeholderType);

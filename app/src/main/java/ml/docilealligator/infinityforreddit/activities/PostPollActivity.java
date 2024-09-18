@@ -1,6 +1,9 @@
 package ml.docilealligator.infinityforreddit.activities;
 
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
@@ -12,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.PersistableBundle;
 import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,7 +26,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
@@ -47,13 +50,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
-import ml.docilealligator.infinityforreddit.Flair;
+import ml.docilealligator.infinityforreddit.subreddit.Flair;
 import ml.docilealligator.infinityforreddit.Infinity;
-import ml.docilealligator.infinityforreddit.PollPayload;
+import ml.docilealligator.infinityforreddit.post.PollPayload;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
-import ml.docilealligator.infinityforreddit.UploadImageEnabledActivity;
-import ml.docilealligator.infinityforreddit.UploadedImage;
+import ml.docilealligator.infinityforreddit.thing.SelectThingReturnKey;
+import ml.docilealligator.infinityforreddit.thing.UploadedImage;
 import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.adapters.MarkdownBottomBarRecyclerViewAdapter;
 import ml.docilealligator.infinityforreddit.asynctasks.LoadSubredditIcon;
@@ -249,8 +252,11 @@ public class PostPollActivity extends BaseActivity implements FlairBottomSheetFr
         });
 
         binding.subredditRelativeLayoutPostPollActivity.setOnClickListener(view -> {
-            Intent intent = new Intent(this, SubredditSelectionActivity.class);
-            intent.putExtra(SubredditSelectionActivity.EXTRA_SPECIFIED_ACCOUNT, selectedAccount);
+            Intent intent = new Intent(this, SubscribedThingListingActivity.class);
+            intent.putExtra(SubscribedThingListingActivity.EXTRA_SPECIFIED_ACCOUNT, selectedAccount);
+            intent.putExtra(SubscribedThingListingActivity.EXTRA_THING_SELECTION_MODE, true);
+            intent.putExtra(SubscribedThingListingActivity.EXTRA_THING_SELECTION_TYPE,
+                    SubscribedThingListingActivity.EXTRA_THING_SELECTION_TYPE_SUBREDDIT);
             startActivityForResult(intent, SUBREDDIT_SELECTION_REQUEST_CODE);
         });
 
@@ -429,13 +435,12 @@ public class PostPollActivity extends BaseActivity implements FlairBottomSheetFr
         binding.option6TextInputLayoutEditTextPostPollActivity.setTextColor(primaryTextColor);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            Drawable cursorDrawable = Utils.getTintedDrawable(this, R.drawable.edit_text_cursor, primaryTextColor);
-            binding.option1TextInputLayoutEditTextPostPollActivity.setTextCursorDrawable(cursorDrawable);
-            binding.option2TextInputLayoutEditTextPostPollActivity.setTextCursorDrawable(cursorDrawable);
-            binding.option3TextInputLayoutEditTextPostPollActivity.setTextCursorDrawable(cursorDrawable);
-            binding.option4TextInputLayoutEditTextPostPollActivity.setTextCursorDrawable(cursorDrawable);
-            binding.option5TextInputLayoutEditTextPostPollActivity.setTextCursorDrawable(cursorDrawable);
-            binding.option6TextInputLayoutEditTextPostPollActivity.setTextCursorDrawable(cursorDrawable);
+            binding.option1TextInputLayoutPostPollActivity.setCursorColor(ColorStateList.valueOf(primaryTextColor));
+            binding.option2TextInputLayoutPostPollActivity.setCursorColor(ColorStateList.valueOf(primaryTextColor));
+            binding.option3TextInputLayoutPostPollActivity.setCursorColor(ColorStateList.valueOf(primaryTextColor));
+            binding.option4TextInputLayoutPostPollActivity.setCursorColor(ColorStateList.valueOf(primaryTextColor));
+            binding.option5TextInputLayoutPostPollActivity.setCursorColor(ColorStateList.valueOf(primaryTextColor));
+            binding.option6TextInputLayoutPostPollActivity.setCursorColor(ColorStateList.valueOf(primaryTextColor));
         } else {
             setCursorDrawableColor(binding.option1TextInputLayoutEditTextPostPollActivity, primaryTextColor);
             setCursorDrawableColor(binding.option2TextInputLayoutEditTextPostPollActivity, primaryTextColor);
@@ -615,7 +620,7 @@ public class PostPollActivity extends BaseActivity implements FlairBottomSheetFr
 
         mPostingSnackbar.show();
 
-        Intent intent = new Intent(this, SubmitPostService.class);
+        /*Intent intent = new Intent(this, SubmitPostService.class);
         intent.putExtra(SubmitPostService.EXTRA_ACCOUNT, selectedAccount);
         intent.putExtra(SubmitPostService.EXTRA_SUBREDDIT_NAME, subredditName);
         intent.putExtra(SubmitPostService.EXTRA_POST_TYPE, SubmitPostService.EXTRA_POST_TYPE_POLL);
@@ -648,7 +653,45 @@ public class PostPollActivity extends BaseActivity implements FlairBottomSheetFr
         }
         intent.putExtra(SubmitPostService.EXTRA_POLL_PAYLOAD, new Gson().toJson(payload));
 
-        ContextCompat.startForegroundService(this, intent);
+        ContextCompat.startForegroundService(this, intent);*/
+
+        PersistableBundle extras = new PersistableBundle();
+        extras.putString(SubmitPostService.EXTRA_ACCOUNT, selectedAccount.getJSONModel());
+        extras.putString(SubmitPostService.EXTRA_SUBREDDIT_NAME, subredditName);
+        extras.putInt(SubmitPostService.EXTRA_POST_TYPE, SubmitPostService.EXTRA_POST_TYPE_POLL);
+
+        PollPayload payload;
+        if (!binding.postContentEditTextPostPollActivity.getText().toString().isEmpty()) {
+            if (uploadedImages.isEmpty()) {
+                payload = new PollPayload(subredditName, binding.postTitleEditTextPostPollActivity.getText().toString(),
+                        optionList.toArray(new String[0]), (int) binding.votingLengthSliderPostPollActivity.getValue(), isNSFW, isSpoiler, flair,
+                        null, binding.postContentEditTextPostPollActivity.getText().toString(),
+                        binding.receivePostReplyNotificationsSwitchMaterialPostPollActivity.isChecked(),
+                        subredditIsUser ? "profile" : "subreddit");
+            } else {
+                try {
+                    payload = new PollPayload(subredditName, binding.postTitleEditTextPostPollActivity.getText().toString(),
+                            optionList.toArray(new String[0]), (int) binding.votingLengthSliderPostPollActivity.getValue(), isNSFW, isSpoiler, flair,
+                            new RichTextJSONConverter().constructRichTextJSON(this,
+                                    binding.postContentEditTextPostPollActivity.getText().toString(), uploadedImages),
+                            null, binding.receivePostReplyNotificationsSwitchMaterialPostPollActivity.isChecked(),
+                            subredditIsUser ? "profile" : "subreddit");
+                } catch (JSONException e) {
+                    Snackbar.make(binding.coordinatorLayoutPostPollActivity, R.string.convert_to_richtext_json_failed, Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+        } else {
+            payload = new PollPayload(subredditName, binding.postTitleEditTextPostPollActivity.getText().toString(),
+                    optionList.toArray(new String[0]), (int) binding.votingLengthSliderPostPollActivity.getValue(), isNSFW, isSpoiler, flair,
+                    binding.receivePostReplyNotificationsSwitchMaterialPostPollActivity.isChecked(),
+                    subredditIsUser ? "profile" : "subreddit");
+        }
+        String payloadJSON = new Gson().toJson(payload);
+        extras.putString(SubmitPostService.EXTRA_POLL_PAYLOAD, payloadJSON);
+
+        JobInfo jobInfo = SubmitPostService.constructJobInfo(this, payloadJSON.length() * 2L, extras);
+        ((JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE)).schedule(jobInfo);
     }
 
     @Override
@@ -692,10 +735,10 @@ public class PostPollActivity extends BaseActivity implements FlairBottomSheetFr
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
             if (requestCode == SUBREDDIT_SELECTION_REQUEST_CODE) {
-                subredditName = data.getExtras().getString(SubredditSelectionActivity.EXTRA_RETURN_SUBREDDIT_NAME);
-                iconUrl = data.getExtras().getString(SubredditSelectionActivity.EXTRA_RETURN_SUBREDDIT_ICON_URL);
+                subredditName = data.getStringExtra(SelectThingReturnKey.RETURN_EXTRA_SUBREDDIT_OR_USER_NAME);
+                iconUrl = data.getStringExtra(SelectThingReturnKey.RETURN_EXTRA_SUBREDDIT_OR_USER_ICON);
                 subredditSelected = true;
-                subredditIsUser = data.getExtras().getBoolean(SubredditSelectionActivity.EXTRA_RETURN_SUBREDDIT_IS_USER);
+                subredditIsUser = data.getIntExtra(SelectThingReturnKey.RETURN_EXTRA_THING_TYPE, SelectThingReturnKey.THING_TYPE.SUBREDDIT) == SelectThingReturnKey.THING_TYPE.USER;
 
                 binding.subredditNameTextViewPostPollActivity.setTextColor(primaryTextColor);
                 binding.subredditNameTextViewPostPollActivity.setText(subredditName);

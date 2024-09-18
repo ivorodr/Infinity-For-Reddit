@@ -6,13 +6,16 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.KeyEvent;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -47,17 +50,16 @@ import java.util.concurrent.Executor;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ml.docilealligator.infinityforreddit.ActivityToolbarInterface;
 import ml.docilealligator.infinityforreddit.Infinity;
-import ml.docilealligator.infinityforreddit.LoadingMorePostsStatus;
+import ml.docilealligator.infinityforreddit.post.LoadingMorePostsStatus;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
-import ml.docilealligator.infinityforreddit.SaveThing;
-import ml.docilealligator.infinityforreddit.SortType;
-import ml.docilealligator.infinityforreddit.SortTypeSelectionCallback;
+import ml.docilealligator.infinityforreddit.thing.SaveThing;
+import ml.docilealligator.infinityforreddit.thing.SortType;
+import ml.docilealligator.infinityforreddit.thing.SortTypeSelectionCallback;
 import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.apis.RedditAPI;
-import ml.docilealligator.infinityforreddit.asynctasks.SwitchAccount;
+import ml.docilealligator.infinityforreddit.asynctasks.AccountManagement;
 import ml.docilealligator.infinityforreddit.comment.Comment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
@@ -107,6 +109,9 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
     @Inject
     @Named("current_account")
     SharedPreferences mCurrentAccountSharedPreferences;
+    @Inject
+    @Named("post_details")
+    SharedPreferences mPostDetailsSharedPreferences;
     @Inject
     CustomThemeWrapper mCustomThemeWrapper;
     @Inject
@@ -262,13 +267,27 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
             fetchMorePosts(false);
         }
 
+        binding.fabViewPostDetailActivity.bindRequiredData(
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? getDisplay() : null,
+                mPostDetailsSharedPreferences,
+                getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT
+        );
+
+        binding.fabViewPostDetailActivity.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                binding.fabViewPostDetailActivity.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                binding.fabViewPostDetailActivity.setCoordinates();
+            }
+        });
+
+        sectionsPagerAdapter = new SectionsPagerAdapter(this);
+
         checkNewAccountAndBindView(savedInstanceState);
     }
 
     public void setTitle(String title) {
-        if (binding.toolbarViewPostDetailActivity != null) {
-            binding.toolbarViewPostDetailActivity.setTitle(title);
-        }
+        binding.toolbarViewPostDetailActivity.setTitle(title);
     }
 
     public void showFab() {
@@ -321,12 +340,16 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
     private void checkNewAccountAndBindView(Bundle savedInstanceState) {
         if (mNewAccountName != null) {
             if (accountName.equals(Account.ANONYMOUS_ACCOUNT) || !accountName.equals(mNewAccountName)) {
-                SwitchAccount.switchAccount(mRedditDataRoomDatabase, mCurrentAccountSharedPreferences,
+                AccountManagement.switchAccount(mRedditDataRoomDatabase, mCurrentAccountSharedPreferences,
                         mExecutor, new Handler(), mNewAccountName, newAccount -> {
                             EventBus.getDefault().post(new SwitchAccountEvent(getClass().getName()));
                             Toast.makeText(this, R.string.account_switched, Toast.LENGTH_SHORT).show();
 
                             mNewAccountName = null;
+                            if (newAccount != null) {
+                                accessToken = newAccount.getAccessToken();
+                                accountName = newAccount.getAccountName();
+                            }
 
                             bindView(savedInstanceState);
                         });
@@ -339,7 +362,6 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
     }
 
     private void bindView(Bundle savedInstanceState) {
-        sectionsPagerAdapter = new SectionsPagerAdapter(this);
         binding.viewPager2ViewPostDetailActivity.setAdapter(sectionsPagerAdapter);
         if (savedInstanceState == null) {
             binding.viewPager2ViewPostDetailActivity.setCurrentItem(getIntent().getIntExtra(EXTRA_POST_LIST_POSITION, 0), false);
@@ -397,6 +419,15 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
             ViewPostDetailFragment fragment = sectionsPagerAdapter.getCurrentFragment();
             if (fragment != null) {
                 fragment.deleteComment(fullName, position);
+            }
+        }
+    }
+
+    public void toggleReplyNotifications(Comment comment, int position) {
+        if (sectionsPagerAdapter != null) {
+            ViewPostDetailFragment fragment = sectionsPagerAdapter.getCurrentFragment();
+            if (fragment != null) {
+                fragment.toggleReplyNotifications(comment, position);
             }
         }
     }
@@ -714,9 +745,19 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.view_post_detail_activity, menu);
+        applyMenuItemTheme(menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             onBackPressed();
+            return true;
+        } else if (item.getItemId() == R.id.action_reset_fab_position_view_post_detail_activity) {
+            binding.fabViewPostDetailActivity.resetCoordinates();
             return true;
         }
         return false;
