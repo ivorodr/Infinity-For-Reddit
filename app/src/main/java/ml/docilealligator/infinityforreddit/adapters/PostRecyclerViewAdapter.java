@@ -100,8 +100,6 @@ import ml.docilealligator.infinityforreddit.databinding.ItemPostCard3VideoTypeAu
 import ml.docilealligator.infinityforreddit.databinding.ItemPostCard3VideoTypeAutoplayLegacyControllerBinding;
 import ml.docilealligator.infinityforreddit.databinding.ItemPostCard3WithPreviewBinding;
 import ml.docilealligator.infinityforreddit.databinding.ItemPostCompactBinding;
-import ml.docilealligator.infinityforreddit.databinding.ItemPostCompactCardBinding;
-import ml.docilealligator.infinityforreddit.databinding.ItemPostCompactCardRightThumbnailBinding;
 import ml.docilealligator.infinityforreddit.databinding.ItemPostCompactRightThumbnailBinding;
 import ml.docilealligator.infinityforreddit.databinding.ItemPostGalleryBinding;
 import ml.docilealligator.infinityforreddit.databinding.ItemPostGalleryGalleryTypeBinding;
@@ -554,9 +552,9 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             return new PostTextTypeViewHolder(ItemPostTextBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
         } else if (viewType == VIEW_TYPE_POST_COMPACT) {
             if (mShowThumbnailOnTheRightInCompactLayout) {
-                return new PostCompactRightThumbnailViewHolder(ItemPostCompactCardRightThumbnailBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
+                return new PostCompactRightThumbnailViewHolder(ItemPostCompactRightThumbnailBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
             } else {
-                return new PostCompactLeftThumbnailViewHolder(ItemPostCompactCardBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
+                return new PostCompactLeftThumbnailViewHolder(ItemPostCompactBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
             }
         } else if (viewType == VIEW_TYPE_POST_GALLERY) {
             return new PostGalleryViewHolder(ItemPostGalleryBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
@@ -957,31 +955,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                     }
                 }
                 mCallback.currentlyBindItem(holder.getBindingAdapterPosition());
-<<<<<<< HEAD
-            }
-        } else if (holder instanceof PostCompactBaseViewHolder) {
-            Post post = getItem(position);
-            if (post != null) {
-                ((PostCompactBaseViewHolder) holder).post = post;
-                ((PostCompactBaseViewHolder) holder).currentPosition = position;
-                if (post.isRead()) {
-                    //holder.itemView.setBackgroundColor(mReadPostCardViewBackgroundColor);
-                    holder.itemView.setBackgroundTintList(ColorStateList.valueOf(mReadPostCardViewBackgroundColor));
-                    ((PostCompactBaseViewHolder) holder).titleTextView.setTextColor(mReadPostTitleColor);
-                }
-                final String subredditNamePrefixed = post.getSubredditNamePrefixed();
-                String subredditName = subredditNamePrefixed.substring(2);
-                String authorPrefixed = "u/" + post.getAuthor();
-                final String title = post.getTitle();
-                int voteType = post.getVoteType();
-                boolean nsfw = post.isNSFW();
-                boolean spoiler = post.isSpoiler();
-                String flair = post.getFlair();
-                boolean isArchived = post.isArchived();
-
-=======
             } else if (holder instanceof PostCompactBaseViewHolder) {
->>>>>>> master
                 if (mDisplaySubredditName) {
                     ((PostCompactBaseViewHolder) holder).nameTextView.setTextColor(mSubredditColor);
                     if (mHideSubredditAndUserPrefix) {
@@ -1622,33 +1596,6 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 ((PostCompactBaseViewHolder) holder).playButtonImageView.setVisibility(View.GONE);
                 ((PostCompactBaseViewHolder) holder).noPreviewPostImageFrameLayout.setVisibility(View.GONE);
             }
-<<<<<<< HEAD
-            //holder.itemView.setBackgroundColor(mCardViewBackgroundColor);
-            holder.itemView.setBackgroundTintList(ColorStateList.valueOf(mCardViewBackgroundColor));
-            ((PostCompactBaseViewHolder) holder).titleTextView.setTextColor(mPostTitleColor);
-            mGlide.clear(((PostCompactBaseViewHolder) holder).imageView);
-            mGlide.clear(((PostCompactBaseViewHolder) holder).iconGifImageView);
-            ((PostCompactBaseViewHolder) holder).stickiedPostImageView.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).relativeLayout.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).crosspostImageView.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).archivedImageView.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).lockedImageView.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).nsfwTextView.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).spoilerTextView.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).flairTextView.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).flairTextView.setText("");
-            ((PostCompactBaseViewHolder) holder).linkTextView.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).progressBar.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).imageView.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).playButtonImageView.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).noPreviewPostImageFrameLayout.setVisibility(View.GONE);
-            ((PostCompactBaseViewHolder) holder).upvoteButton.setIconResource(R.drawable.ic_upvote_24dp);
-            ((PostCompactBaseViewHolder) holder).upvoteButton.setIconTint(ColorStateList.valueOf(mPostIconAndInfoColor));
-            ((PostCompactBaseViewHolder) holder).scoreTextView.setTextColor(mPostIconAndInfoColor);
-            ((PostCompactBaseViewHolder) holder).downvoteButton.setIconResource(R.drawable.ic_downvote_24dp);
-            ((PostCompactBaseViewHolder) holder).downvoteButton.setIconTint(ColorStateList.valueOf(mPostIconAndInfoColor));
-=======
->>>>>>> master
         } else if (holder instanceof PostGalleryViewHolder) {
             if (mHandleReadPost && mMarkPostsAsReadOnScroll) {
                 int position = ((PostGalleryViewHolder) holder).currentPosition;
@@ -3777,8 +3724,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 titleTextView.setTypeface(mActivity.titleTypeface);
             }
 
-            //itemView.setBackgroundColor(mCardViewBackgroundColor);
-            itemView.setBackgroundTintList(ColorStateList.valueOf(mCardViewBackgroundColor));
+            itemView.setBackgroundColor(mCardViewBackgroundColor);
             postTimeTextView.setTextColor(mSecondaryTextColor);
             titleTextView.setTextColor(mPostTitleColor);
             stickiedPostImageView.setColorFilter(mStickiedPostIconTint, PorterDuff.Mode.SRC_IN);
@@ -3807,7 +3753,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             scoreTextView.setTextColor(mPostIconAndInfoColor);
             downvoteButton.setIconTint(ColorStateList.valueOf(mPostIconAndInfoColor));
             commentsCountButton.setTextColor(mPostIconAndInfoColor);
-            //commentsCountButton.setIcon(mCommentIcon); // HIDE COMMENTS ICON
+            commentsCountButton.setIconTint(ColorStateList.valueOf(mPostIconAndInfoColor));
             saveButton.setIconTint(ColorStateList.valueOf(mPostIconAndInfoColor));
             shareButton.setIconTint(ColorStateList.valueOf(mPostIconAndInfoColor));
             divider.setBackgroundColor(mDividerColor);
@@ -3898,7 +3844,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
     }
 
     class PostCompactLeftThumbnailViewHolder extends PostCompactBaseViewHolder {
-        PostCompactLeftThumbnailViewHolder(@NonNull ItemPostCompactCardBinding binding) {
+        PostCompactLeftThumbnailViewHolder(@NonNull ItemPostCompactBinding binding) {
             super(binding.getRoot());
 
             setBaseView(binding.iconGifImageViewItemPostCompact,
@@ -3934,7 +3880,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
     }
 
     class PostCompactRightThumbnailViewHolder extends PostCompactBaseViewHolder {
-        PostCompactRightThumbnailViewHolder(@NonNull ItemPostCompactCardRightThumbnailBinding binding) {
+        PostCompactRightThumbnailViewHolder(@NonNull ItemPostCompactRightThumbnailBinding binding) {
             super(binding.getRoot());
 
             setBaseView(binding.iconGifImageViewItemPostCompactRightThumbnail,
