@@ -44,6 +44,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.TextInputEditText;
 
+import ml.docilealligator.infinityforreddit.readpost.ReadPostsUtils;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
@@ -146,6 +147,9 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
     @Inject
     @Named("sort_type")
     SharedPreferences mSortTypeSharedPreferences;
+    @Inject
+    @Named("post_history")
+    SharedPreferences mPostHistorySharedPreferences;
     @Inject
     @Named("post_layout")
     SharedPreferences mPostLayoutSharedPreferences;
@@ -1229,9 +1233,15 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
             if (requestCode == EDIT_COMMENT_REQUEST_CODE) {
                 if (data != null) {
                     if (sectionsPagerAdapter != null) {
-                        sectionsPagerAdapter.editComment(
-                                data.getStringExtra(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT_CONTENT),
-                                data.getExtras().getInt(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT_POSITION));
+                        if (data.hasExtra(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT)) {
+                            sectionsPagerAdapter.editComment(
+                                    (Comment) data.getParcelableExtra(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT),
+                                    data.getIntExtra(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT_POSITION, -1));
+                        } else {
+                            sectionsPagerAdapter.editComment(
+                                    data.getStringExtra(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT_CONTENT),
+                                    data.getIntExtra(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT_POSITION, -1));
+                        }
                     }
                 }
             }
@@ -1544,7 +1554,8 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
 
     @Override
     public void markPostAsRead(Post post) {
-        InsertReadPost.insertReadPost(mRedditDataRoomDatabase, mExecutor, accountName, post.getId());
+        int readPostsLimit = ReadPostsUtils.GetReadPostsLimit(accountName, mPostHistorySharedPreferences);
+        InsertReadPost.insertReadPost(mRedditDataRoomDatabase, mExecutor, accountName, post.getId(), readPostsLimit);
     }
 
     @Override
@@ -1710,6 +1721,15 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
                 } else if (fragment instanceof CommentsListingFragment) {
                     SortType sortType = ((CommentsListingFragment) fragment).getSortType();
                     Utils.displaySortTypeInToolbar(sortType, binding.toolbarViewUserDetailActivity);
+                }
+            }
+        }
+
+        void editComment(Comment comment, int position) {
+            if (fragmentManager != null) {
+                Fragment fragment = fragmentManager.findFragmentByTag("f1");
+                if (fragment instanceof CommentsListingFragment) {
+                    ((CommentsListingFragment) fragment).editComment(comment, position);
                 }
             }
         }

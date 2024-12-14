@@ -30,9 +30,10 @@ public class AccessTokenAuthenticator implements Authenticator {
     private final RedditDataRoomDatabase mRedditDataRoomDatabase;
     private final SharedPreferences mCurrentAccountSharedPreferences;
 
-    public AccessTokenAuthenticator(Retrofit retrofit, RedditDataRoomDatabase accountRoomDatabase, SharedPreferences currentAccountSharedPreferences) {
+    public AccessTokenAuthenticator(Retrofit retrofit, RedditDataRoomDatabase redditDataRoomDatabase,
+                                    SharedPreferences currentAccountSharedPreferences) {
         mRetrofit = retrofit;
-        mRedditDataRoomDatabase = accountRoomDatabase;
+        mRedditDataRoomDatabase = redditDataRoomDatabase;
         mCurrentAccountSharedPreferences = currentAccountSharedPreferences;
     }
 

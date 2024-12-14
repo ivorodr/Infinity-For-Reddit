@@ -67,14 +67,9 @@ import io.noties.markwon.core.MarkwonTheme;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
 import ml.docilealligator.infinityforreddit.FetchVideoLinkListener;
-import ml.docilealligator.infinityforreddit.thing.FetchRedgifsVideoLinks;
-import ml.docilealligator.infinityforreddit.post.FetchStreamableVideo;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
 import ml.docilealligator.infinityforreddit.SaveMemoryCenterInisdeDownsampleStrategy;
-import ml.docilealligator.infinityforreddit.thing.SaveThing;
-import ml.docilealligator.infinityforreddit.thing.StreamableVideo;
-import ml.docilealligator.infinityforreddit.thing.VoteThing;
 import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.activities.BaseActivity;
 import ml.docilealligator.infinityforreddit.activities.CommentActivity;
@@ -91,6 +86,7 @@ import ml.docilealligator.infinityforreddit.apis.StreamableAPI;
 import ml.docilealligator.infinityforreddit.asynctasks.LoadSubredditIcon;
 import ml.docilealligator.infinityforreddit.asynctasks.LoadUserData;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.CopyTextBottomSheetFragment;
+import ml.docilealligator.infinityforreddit.bottomsheetfragments.PostOptionsBottomSheetFragment;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.ShareLinkBottomSheetFragment;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.UrlMenuBottomSheetFragment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
@@ -114,8 +110,13 @@ import ml.docilealligator.infinityforreddit.markdown.EvenBetterLinkMovementMetho
 import ml.docilealligator.infinityforreddit.markdown.ImageAndGifEntry;
 import ml.docilealligator.infinityforreddit.markdown.ImageAndGifPlugin;
 import ml.docilealligator.infinityforreddit.markdown.MarkdownUtils;
+import ml.docilealligator.infinityforreddit.post.FetchStreamableVideo;
 import ml.docilealligator.infinityforreddit.post.Post;
 import ml.docilealligator.infinityforreddit.post.PostPagingSource;
+import ml.docilealligator.infinityforreddit.thing.FetchRedgifsVideoLinks;
+import ml.docilealligator.infinityforreddit.thing.SaveThing;
+import ml.docilealligator.infinityforreddit.thing.StreamableVideo;
+import ml.docilealligator.infinityforreddit.thing.VoteThing;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
@@ -1256,6 +1257,18 @@ public class PostDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycler
             this.saveButton = saveButton;
             this.shareButton = shareButton;
 
+            itemView.setOnLongClickListener(v -> {
+                PostOptionsBottomSheetFragment postOptionsBottomSheetFragment;
+                if (mPost.getPostType() == Post.GALLERY_TYPE && this instanceof PostDetailGalleryViewHolder) {
+                    postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(mPost,
+                            ((LinearLayoutManagerBugFixed) ((PostDetailGalleryViewHolder) this).binding.galleryRecyclerViewItemPostDetailGallery.getLayoutManager()).findFirstVisibleItemPosition());
+                } else {
+                    postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(mPost);
+                }
+                postOptionsBottomSheetFragment.show(mActivity.getSupportFragmentManager(), postOptionsBottomSheetFragment.getTag());
+                return true;
+            });
+
             iconGifImageView.setOnClickListener(view -> subredditTextView.performClick());
 
             subredditTextView.setOnClickListener(view -> {
@@ -2097,6 +2110,11 @@ public class PostDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycler
             binding.imageViewItemPostDetailVideoAndGifPreview.setOnClickListener(view -> {
                 openMedia(mPost);
             });
+
+            binding.imageViewItemPostDetailVideoAndGifPreview.setOnLongClickListener(v -> {
+                itemView.performLongClick();
+                return true;
+            });
         }
     }
 
@@ -2134,6 +2152,11 @@ public class PostDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycler
 
             binding.imageViewItemPostDetailImageAndGifAutoplay.setOnClickListener(view -> {
                 openMedia(mPost);
+            });
+
+            binding.imageViewItemPostDetailImageAndGifAutoplay.setOnLongClickListener(view -> {
+                itemView.performLongClick();
+                return true;
             });
         }
     }
@@ -2181,6 +2204,11 @@ public class PostDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycler
                 intent.putExtra(LinkResolverActivity.EXTRA_IS_NSFW, mPost.isNSFW());
                 mActivity.startActivity(intent);
             });
+
+            binding.imageViewItemPostDetailLink.setOnLongClickListener(view -> {
+                itemView.performLongClick();
+                return true;
+            });
         }
     }
 
@@ -2222,6 +2250,11 @@ public class PostDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycler
 
             binding.imageViewNoPreviewPostTypeItemPostDetailNoPreview.setOnClickListener(view -> {
                 openMedia(mPost);
+            });
+
+            binding.imageViewNoPreviewPostTypeItemPostDetailNoPreview.setOnLongClickListener(view -> {
+                itemView.performLongClick();
+                return true;
             });
         }
     }
@@ -2271,27 +2304,6 @@ public class PostDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycler
                     mCardViewColor, mCommentColor, mScale);
             binding.galleryRecyclerViewItemPostDetailGallery.setAdapter(adapter);
             new PagerSnapHelper().attachToRecyclerView(binding.galleryRecyclerViewItemPostDetailGallery);
-            binding.galleryRecyclerViewItemPostDetailGallery.setOnTouchListener((v, motionEvent) -> {
-                if (motionEvent.getActionMasked() == MotionEvent.ACTION_UP || motionEvent.getActionMasked() == MotionEvent.ACTION_CANCEL) {
-                    if (mActivity.mSliderPanel != null) {
-                        mActivity.mSliderPanel.requestDisallowInterceptTouchEvent(false);
-                    }
-                    if (mActivity.mViewPager2 != null) {
-                        mActivity.mViewPager2.setUserInputEnabled(true);
-                    }
-                    mActivity.unlockSwipeRightToGoBack();
-                } else {
-                    if (mActivity.mSliderPanel != null) {
-                        mActivity.mSliderPanel.requestDisallowInterceptTouchEvent(true);
-                    }
-                    if (mActivity.mViewPager2 != null) {
-                        mActivity.mViewPager2.setUserInputEnabled(false);
-                    }
-                    mActivity.lockSwipeRightToGoBack();
-                }
-
-                return false;
-            });
             LinearLayoutManagerBugFixed layoutManager = new LinearLayoutManagerBugFixed(mActivity, RecyclerView.HORIZONTAL, false);
             binding.galleryRecyclerViewItemPostDetailGallery.setLayoutManager(layoutManager);
             binding.galleryRecyclerViewItemPostDetailGallery.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -2310,7 +2322,10 @@ public class PostDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycler
                 private float downX;
                 private float downY;
                 private boolean dragged;
+                private long downTime;
                 private final int minTouchSlop = ViewConfiguration.get(mActivity).getScaledTouchSlop();
+                private final int longClickThreshold = ViewConfiguration.getLongPressTimeout();
+                private boolean longPressed;
 
                 @Override
                 public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
@@ -2319,18 +2334,44 @@ public class PostDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycler
                         case MotionEvent.ACTION_DOWN:
                             downX = e.getRawX();
                             downY = e.getRawY();
+                            downTime = System.currentTimeMillis();
+
+                            if (mActivity.mSliderPanel != null) {
+                                mActivity.mSliderPanel.requestDisallowInterceptTouchEvent(true);
+                            }
+                            if (mActivity.mViewPager2 != null) {
+                                mActivity.mViewPager2.setUserInputEnabled(false);
+                            }
+                            mActivity.lockSwipeRightToGoBack();
                             break;
                         case MotionEvent.ACTION_MOVE:
-                            if(Math.abs(e.getRawX() - downX) > minTouchSlop || Math.abs(e.getRawY() - downY) > minTouchSlop) {
+                            if (Math.abs(e.getRawX() - downX) > minTouchSlop || Math.abs(e.getRawY() - downY) > minTouchSlop) {
                                 dragged = true;
                             }
+                            if (!dragged && !longPressed) {
+                                if (System.currentTimeMillis() - downTime >= longClickThreshold) {
+                                    itemView.performLongClick();
+                                    longPressed = true;
+                                }
+                            }
+
+                            if (mActivity.mSliderPanel != null) {
+                                mActivity.mSliderPanel.requestDisallowInterceptTouchEvent(true);
+                            }
+                            if (mActivity.mViewPager2 != null) {
+                                mActivity.mViewPager2.setUserInputEnabled(false);
+                            }
+                            mActivity.lockSwipeRightToGoBack();
                             break;
                         case MotionEvent.ACTION_UP:
-                            if (!dragged) {
-                                int position = getBindingAdapterPosition();
-                                if (position >= 0) {
-                                    if (mPost != null) {
-                                        openMedia(mPost, layoutManager.findFirstVisibleItemPosition());
+                        case MotionEvent.ACTION_CANCEL:
+                            if (e.getActionMasked() == MotionEvent.ACTION_UP && !dragged) {
+                                if (System.currentTimeMillis() - downTime < longClickThreshold) {
+                                    int position = getBindingAdapterPosition();
+                                    if (position >= 0) {
+                                        if (mPost != null) {
+                                            openMedia(mPost, layoutManager.findFirstVisibleItemPosition());
+                                        }
                                     }
                                 }
                             }
@@ -2338,6 +2379,17 @@ public class PostDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycler
                             downX = 0;
                             downY = 0;
                             dragged = false;
+                            longPressed = false;
+
+                            if (mActivity.mSliderPanel != null) {
+                                mActivity.mSliderPanel.requestDisallowInterceptTouchEvent(false);
+                            }
+
+                            if (mActivity.mViewPager2 != null) {
+                                mActivity.mViewPager2.setUserInputEnabled(true);
+                            }
+                            mActivity.unlockSwipeRightToGoBack();
+                            break;
                     }
                     return false;
                 }

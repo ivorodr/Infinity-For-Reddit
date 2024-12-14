@@ -51,12 +51,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import ml.docilealligator.infinityforreddit.Infinity;
-import ml.docilealligator.infinityforreddit.post.LoadingMorePostsStatus;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
-import ml.docilealligator.infinityforreddit.thing.SaveThing;
-import ml.docilealligator.infinityforreddit.thing.SortType;
-import ml.docilealligator.infinityforreddit.thing.SortTypeSelectionCallback;
 import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.apis.RedditAPI;
 import ml.docilealligator.infinityforreddit.asynctasks.AccountManagement;
@@ -70,11 +66,17 @@ import ml.docilealligator.infinityforreddit.events.SwitchAccountEvent;
 import ml.docilealligator.infinityforreddit.fragments.MorePostsInfoFragment;
 import ml.docilealligator.infinityforreddit.fragments.ViewPostDetailFragment;
 import ml.docilealligator.infinityforreddit.post.HistoryPostPagingSource;
+import ml.docilealligator.infinityforreddit.post.LoadingMorePostsStatus;
 import ml.docilealligator.infinityforreddit.post.ParsePost;
 import ml.docilealligator.infinityforreddit.post.Post;
 import ml.docilealligator.infinityforreddit.post.PostPagingSource;
 import ml.docilealligator.infinityforreddit.postfilter.PostFilter;
+import ml.docilealligator.infinityforreddit.readpost.NullReadPostsList;
 import ml.docilealligator.infinityforreddit.readpost.ReadPost;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostsListInterface;
+import ml.docilealligator.infinityforreddit.thing.SaveThing;
+import ml.docilealligator.infinityforreddit.thing.SortType;
+import ml.docilealligator.infinityforreddit.thing.SortTypeSelectionCallback;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import retrofit2.Call;
@@ -141,8 +143,6 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
     @State
     SortType.Time sortTime;
     @State
-    ArrayList<String> readPostList;
-    @State
     Post post;
     @State
     @LoadingMorePostsStatus
@@ -156,6 +156,8 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
     private boolean mVolumeKeysNavigateComments;
     private boolean isNsfwSubreddit;
     private ActivityViewPostDetailBinding binding;
+    @Nullable
+    private ReadPostsListInterface readPostsList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -212,6 +214,10 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
         } else {
             mViewPager2 = binding.viewPager2ViewPostDetailActivity;
         }
+
+        sectionsPagerAdapter = new SectionsPagerAdapter(this);
+        binding.viewPager2ViewPostDetailActivity.setAdapter(sectionsPagerAdapter);
+
         postFragmentId = getIntent().getLongExtra(EXTRA_POST_FRAGMENT_ID, -1);
         if (swipeBetweenPosts && posts == null && postFragmentId > 0) {
             EventBus.getDefault().post(new NeedForPostListFromPostFragmentEvent(postFragmentId));
@@ -280,8 +286,6 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
                 binding.fabViewPostDetailActivity.setCoordinates();
             }
         });
-
-        sectionsPagerAdapter = new SectionsPagerAdapter(this);
 
         checkNewAccountAndBindView(savedInstanceState);
     }
@@ -362,7 +366,6 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
     }
 
     private void bindView(Bundle savedInstanceState) {
-        binding.viewPager2ViewPostDetailActivity.setAdapter(sectionsPagerAdapter);
         if (savedInstanceState == null) {
             binding.viewPager2ViewPostDetailActivity.setCurrentItem(getIntent().getIntExtra(EXTRA_POST_LIST_POSITION, 0), false);
         }
@@ -405,11 +408,20 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
         return isNsfwSubreddit;
     }
 
-    private void editComment(String commentAuthor, String commentContentMarkdown, int position) {
+    private void editComment(Comment comment, int position) {
         if (sectionsPagerAdapter != null) {
             ViewPostDetailFragment fragment = sectionsPagerAdapter.getCurrentFragment();
             if (fragment != null) {
-                fragment.editComment(commentAuthor, commentContentMarkdown, position);
+                fragment.editComment(comment, position);
+            }
+        }
+    }
+
+    private void editComment(String commentContentMarkdown, int position) {
+        if (sectionsPagerAdapter != null) {
+            ViewPostDetailFragment fragment = sectionsPagerAdapter.getCurrentFragment();
+            if (fragment != null) {
+                fragment.editComment(commentContentMarkdown, position);
             }
         }
     }
@@ -572,7 +584,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
                     Response<String> response = call.execute();
                     if (response.isSuccessful()) {
                         String responseString = response.body();
-                        LinkedHashSet<Post> newPosts = ParsePost.parsePostsSync(responseString, -1, postFilter, readPostList);
+                        LinkedHashSet<Post> newPosts = ParsePost.parsePostsSync(responseString, -1, postFilter, readPostsList);
                         if (newPosts == null) {
                             handler.post(() -> {
                                 loadingMorePostsStatus = LoadingMorePostsStatus.NO_MORE_POSTS;
@@ -654,7 +666,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
                     Response<String> response = historyPosts.execute();
                     if (response.isSuccessful()) {
                         String responseString = response.body();
-                        LinkedHashSet<Post> newPosts = ParsePost.parsePostsSync(responseString, -1, postFilter, null);
+                        LinkedHashSet<Post> newPosts = ParsePost.parsePostsSync(responseString, -1, postFilter, NullReadPostsList.getInstance());
                         if (newPosts == null || newPosts.isEmpty()) {
                             handler.post(() -> {
                                 loadingMorePostsStatus = LoadingMorePostsStatus.NO_MORE_POSTS;
@@ -735,7 +747,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
             this.postFilter = event.postFilter;
             this.sortType = event.sortType.getType();
             this.sortTime = event.sortType.getTime();
-            this.readPostList = event.readPostList;
+            this.readPostsList = event.readPostsList;
 
             if (sectionsPagerAdapter != null) {
                 if (postListPosition > 0)
@@ -768,9 +780,13 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == EDIT_COMMENT_REQUEST_CODE) {
             if (data != null && resultCode == Activity.RESULT_OK) {
-                editComment(null,
-                        data.getStringExtra(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT_CONTENT),
-                        data.getExtras().getInt(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT_POSITION));
+                if (data.hasExtra(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT)) {
+                    editComment((Comment) data.getParcelableExtra(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT),
+                            data.getIntExtra(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT_POSITION, -1));
+                } else {
+                    editComment(data.getStringExtra(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT_CONTENT),
+                            data.getIntExtra(EditCommentActivity.RETURN_EXTRA_EDITED_COMMENT_POSITION, -1));
+                }
             }
         } else if (requestCode == CommentActivity.WRITE_COMMENT_REQUEST_CODE) {
             if (data != null && resultCode == Activity.RESULT_OK) {
@@ -850,6 +866,20 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
         ViewPostDetailFragment fragment = sectionsPagerAdapter.getCurrentFragment();
         if (fragment != null) {
             fragment.goToTop();
+        }
+    }
+
+    @Override
+    public void lockSwipeRightToGoBack() {
+        if (mSliderPanel != null) {
+            mSliderPanel.lock();
+        }
+    }
+
+    @Override
+    public void unlockSwipeRightToGoBack() {
+        if (mSliderPanel != null) {
+            mSliderPanel.unlock();
         }
     }
 

@@ -344,7 +344,7 @@ public class PostPollActivity extends BaseActivity implements FlairBottomSheetFr
                 });
 
         binding.markdownBottomBarRecyclerViewPostPollActivity.setLayoutManager(new LinearLayoutManagerBugFixed(this,
-                LinearLayoutManager.HORIZONTAL, false));
+                LinearLayoutManager.HORIZONTAL, true).setStackFromEndAndReturnCurrentObject());
         binding.markdownBottomBarRecyclerViewPostPollActivity.setAdapter(adapter);
     }
 
@@ -410,6 +410,7 @@ public class PostPollActivity extends BaseActivity implements FlairBottomSheetFr
         binding.postTitleEditTextPostPollActivity.setHintTextColor(secondaryTextColor);
         binding.postContentEditTextPostPollActivity.setTextColor(primaryTextColor);
         binding.postContentEditTextPostPollActivity.setHintTextColor(secondaryTextColor);
+        binding.votingLengthTextViewPostPollActivity.setTextColor(secondaryTextColor);
         binding.option1TextInputLayoutPostPollActivity.setBoxStrokeColor(primaryTextColor);
         binding.option1TextInputLayoutPostPollActivity.setDefaultHintTextColor(ColorStateList.valueOf(primaryTextColor));
         binding.option1TextInputLayoutEditTextPostPollActivity.setTextColor(primaryTextColor);
@@ -619,41 +620,6 @@ public class PostPollActivity extends BaseActivity implements FlairBottomSheetFr
         item.getIcon().setAlpha(130);
 
         mPostingSnackbar.show();
-
-        /*Intent intent = new Intent(this, SubmitPostService.class);
-        intent.putExtra(SubmitPostService.EXTRA_ACCOUNT, selectedAccount);
-        intent.putExtra(SubmitPostService.EXTRA_SUBREDDIT_NAME, subredditName);
-        intent.putExtra(SubmitPostService.EXTRA_POST_TYPE, SubmitPostService.EXTRA_POST_TYPE_POLL);
-
-        PollPayload payload;
-        if (!binding.postContentEditTextPostPollActivity.getText().toString().isEmpty()) {
-            if (uploadedImages.isEmpty()) {
-                payload = new PollPayload(subredditName, binding.postTitleEditTextPostPollActivity.getText().toString(),
-                        optionList.toArray(new String[0]), (int) binding.votingLengthSliderPostPollActivity.getValue(), isNSFW, isSpoiler, flair,
-                        null, binding.postContentEditTextPostPollActivity.getText().toString(),
-                        binding.receivePostReplyNotificationsSwitchMaterialPostPollActivity.isChecked(),
-                        subredditIsUser ? "profile" : "subreddit");
-            } else {
-                try {
-                    payload = new PollPayload(subredditName, binding.postTitleEditTextPostPollActivity.getText().toString(),
-                            optionList.toArray(new String[0]), (int) binding.votingLengthSliderPostPollActivity.getValue(), isNSFW, isSpoiler, flair,
-                            new RichTextJSONConverter().constructRichTextJSON(this, binding.postContentEditTextPostPollActivity.getText().toString(), uploadedImages),
-                            null, binding.receivePostReplyNotificationsSwitchMaterialPostPollActivity.isChecked(),
-                            subredditIsUser ? "profile" : "subreddit");
-                } catch (JSONException e) {
-                    Snackbar.make(binding.coordinatorLayoutPostPollActivity, R.string.convert_to_richtext_json_failed, Snackbar.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-        } else {
-            payload = new PollPayload(subredditName, binding.postTitleEditTextPostPollActivity.getText().toString(),
-                    optionList.toArray(new String[0]), (int) binding.votingLengthSliderPostPollActivity.getValue(), isNSFW, isSpoiler, flair,
-                    binding.receivePostReplyNotificationsSwitchMaterialPostPollActivity.isChecked(),
-                    subredditIsUser ? "profile" : "subreddit");
-        }
-        intent.putExtra(SubmitPostService.EXTRA_POLL_PAYLOAD, new Gson().toJson(payload));
-
-        ContextCompat.startForegroundService(this, intent);*/
 
         PersistableBundle extras = new PersistableBundle();
         extras.putString(SubmitPostService.EXTRA_ACCOUNT, selectedAccount.getJSONModel());

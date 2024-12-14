@@ -8,8 +8,8 @@ android {
         applicationId "ir.docilealligator.infinityforreddit"
         minSdk 21
         targetSdk 34
-        versionCode 179
-        versionName "7.3.0"
+        versionCode 189
+        versionName "7.4.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
@@ -190,6 +190,8 @@ dependencies {
     implementation 'com.otaliastudios:zoomlayout:1.9.0'
 
     implementation 'androidx.core:core-splashscreen:1.0.1'
+
+    implementation 'com.giphy.sdk:ui:2.3.15'
 
 
 /**** Builds and flavors ****/
