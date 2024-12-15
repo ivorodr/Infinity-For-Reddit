@@ -3726,7 +3726,8 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 titleTextView.setTypeface(mActivity.titleTypeface);
             }
 
-            itemView.setBackgroundColor(mCardViewBackgroundColor);
+            //itemView.setBackgroundColor(mCardViewBackgroundColor);
+            itemView.setBackgroundTintList(ColorStateList.valueOf(mCardViewBackgroundColor));
             postTimeTextView.setTextColor(mSecondaryTextColor);
             titleTextView.setTextColor(mPostTitleColor);
             stickiedPostImageView.setColorFilter(mStickiedPostIconTint, PorterDuff.Mode.SRC_IN);
