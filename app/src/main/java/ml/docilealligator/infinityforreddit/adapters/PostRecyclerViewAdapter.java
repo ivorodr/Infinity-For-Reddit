@@ -100,6 +100,8 @@ import ml.docilealligator.infinityforreddit.databinding.ItemPostCard3VideoTypeAu
 import ml.docilealligator.infinityforreddit.databinding.ItemPostCard3VideoTypeAutoplayLegacyControllerBinding;
 import ml.docilealligator.infinityforreddit.databinding.ItemPostCard3WithPreviewBinding;
 import ml.docilealligator.infinityforreddit.databinding.ItemPostCompactBinding;
+import ml.docilealligator.infinityforreddit.databinding.ItemPostCompactCardBinding;
+import ml.docilealligator.infinityforreddit.databinding.ItemPostCompactCardRightThumbnailBinding;
 import ml.docilealligator.infinityforreddit.databinding.ItemPostCompactRightThumbnailBinding;
 import ml.docilealligator.infinityforreddit.databinding.ItemPostGalleryBinding;
 import ml.docilealligator.infinityforreddit.databinding.ItemPostGalleryGalleryTypeBinding;
@@ -552,9 +554,9 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             return new PostTextTypeViewHolder(ItemPostTextBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
         } else if (viewType == VIEW_TYPE_POST_COMPACT) {
             if (mShowThumbnailOnTheRightInCompactLayout) {
-                return new PostCompactRightThumbnailViewHolder(ItemPostCompactRightThumbnailBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
+                return new PostCompactRightThumbnailViewHolder(ItemPostCompactCardRightThumbnailBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
             } else {
-                return new PostCompactLeftThumbnailViewHolder(ItemPostCompactBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
+                return new PostCompactLeftThumbnailViewHolder(ItemPostCompactCardBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
             }
         } else if (viewType == VIEW_TYPE_POST_GALLERY) {
             return new PostGalleryViewHolder(ItemPostGalleryBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
@@ -3844,7 +3846,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
     }
 
     class PostCompactLeftThumbnailViewHolder extends PostCompactBaseViewHolder {
-        PostCompactLeftThumbnailViewHolder(@NonNull ItemPostCompactBinding binding) {
+        PostCompactLeftThumbnailViewHolder(@NonNull ItemPostCompactCardBinding binding) {
             super(binding.getRoot());
 
             setBaseView(binding.iconGifImageViewItemPostCompact,
@@ -3880,7 +3882,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
     }
 
     class PostCompactRightThumbnailViewHolder extends PostCompactBaseViewHolder {
-        PostCompactRightThumbnailViewHolder(@NonNull ItemPostCompactRightThumbnailBinding binding) {
+        PostCompactRightThumbnailViewHolder(@NonNull ItemPostCompactCardRightThumbnailBinding binding) {
             super(binding.getRoot());
 
             setBaseView(binding.iconGifImageViewItemPostCompactRightThumbnail,
