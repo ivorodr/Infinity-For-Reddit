@@ -3823,7 +3823,8 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
 
         @Override
         void setItemViewBackgroundColor(boolean isReadPost) {
-            itemView.setBackgroundColor(isReadPost ? mReadPostCardViewBackgroundColor : mCardViewBackgroundColor);
+            //itemView.setBackgroundColor(isReadPost ? mReadPostCardViewBackgroundColor : mCardViewBackgroundColor);
+            itemView.setBackgroundTintList(isReadPost ? ColorStateList.valueOf(mReadPostCardViewBackgroundColor) : ColorStateList.valueOf(mCardViewBackgroundColor));
         }
 
         @Override
