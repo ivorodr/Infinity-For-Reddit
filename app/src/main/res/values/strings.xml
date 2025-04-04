@@ -652,6 +652,12 @@
     <string name="settings_comment_divider_type">Comment Divider Type</string>
     <string name="settings_comment_filter_title">Comment Filter</string>
     <string name="settings_embedded_media_type_title">Embedded Media Type</string>
+    <string name="settings_proxy_title">Proxy</string>
+    <string name="settings_proxy_enabled">Proxy Enabled</string>
+    <string name="settings_proxy_type">Proxy Type</string>
+    <string name="settings_proxy_hostname">Hostname</string>
+    <string name="settings_proxy_port">Port</string>
+    <string name="settings_hide_fab_in_post_details">Hide Floating Action Button</string>
 
     <string name="no_link_available">Cannot get the link</string>
 
@@ -688,6 +694,7 @@
     <string name="link_post_layout_auto">Auto</string>
     <string name="post_layout_card">Card Layout</string>
     <string name="post_layout_compact">Compact Layout</string>
+    <string name="post_layout_compact_2">Compact Layout 2</string>
     <string name="post_layout_gallery">Gallery Layout</string>
     <string name="post_layout_card_2">Card Layout 2</string>
     <string name="post_layout_card_3">Card Layout 3</string>
@@ -1363,6 +1370,8 @@
     <string name="option_6_hint">Option 6</string>
 
     <string name="not_a_valid_number">Not a valid number</string>
+    <string name="not_a_valid_ip_or_hostname">Not a valid IP or host name</string>
+    <string name="not_a_valid_port">Not a valid port (0 - 65535)</string>
 
     <string name="post_karma">Post Karma:</string>
     <string name="comment_karma">Comment Karma:</string>
@@ -1523,4 +1532,7 @@
     <string name="download_video">Download Video</string>
     <string name="download_all_gallery_images">Download All Gallery Images</string>
 
+    <string name="proxy_http">HTTP</string>
+    <string name="proxy_socks">SOCKS</string>
+    <string name="proxy_direct">Direct</string>
 </resources>
