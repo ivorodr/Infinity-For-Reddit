@@ -18,13 +18,22 @@ import androidx.paging.PagingData;
 import androidx.paging.PagingDataTransforms;
 import androidx.paging.PagingLiveData;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
+import ml.docilealligator.infinityforreddit.SingleLiveEvent;
+import ml.docilealligator.infinityforreddit.account.Account;
+import ml.docilealligator.infinityforreddit.apis.RedditAPI;
+import ml.docilealligator.infinityforreddit.moderation.ModerationEvent;
+import ml.docilealligator.infinityforreddit.postfilter.PostFilter;
 import ml.docilealligator.infinityforreddit.readpost.ReadPostsListInterface;
 import ml.docilealligator.infinityforreddit.thing.SortType;
-import ml.docilealligator.infinityforreddit.account.Account;
-import ml.docilealligator.infinityforreddit.postfilter.PostFilter;
+import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 
 public class PostViewModel extends ViewModel {
@@ -50,6 +59,8 @@ public class PostViewModel extends ViewModel {
     private final MutableLiveData<SortType> sortTypeLiveData;
     private final MutableLiveData<PostFilter> postFilterLiveData;
     private final SortTypeAndPostFilterLiveData sortTypeAndPostFilterLiveData;
+
+    public final SingleLiveEvent<ModerationEvent> moderationEventLiveData = new SingleLiveEvent<>();
 
     // PostPagingSource.TYPE_FRONT_PAGE
     public PostViewModel(Executor executor, Retrofit retrofit, @Nullable String accessToken, @NonNull String accountName,
@@ -481,5 +492,157 @@ public class PostViewModel extends ViewModel {
             addSource(sortTypeLiveData, sortType -> setValue(Pair.create(postFilterLiveData.getValue(), sortType)));
             addSource(postFilterLiveData, postFilter -> setValue(Pair.create(postFilter, sortTypeLiveData.getValue())));
         }
+    }
+
+    public void approvePost(@NonNull Post post, int position) {
+        Map<String, String> params = new HashMap<>();
+        params.put(APIUtils.ID_KEY, post.getFullName());
+        retrofit.create(RedditAPI.class).approveThing(APIUtils.getOAuthHeader(accessToken), params).enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                if (response.isSuccessful()) {
+                    moderationEventLiveData.postValue(new ModerationEvent.Approved(post, position));
+                } else {
+                    moderationEventLiveData.postValue(new ModerationEvent.ApproveFailed(post, position));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable throwable) {
+                moderationEventLiveData.postValue(new ModerationEvent.ApproveFailed(post, position));
+            }
+        });
+    }
+
+    public void removePost(@NonNull Post post, int position, boolean isSpam) {
+        Map<String, String> params = new HashMap<>();
+        params.put(APIUtils.ID_KEY, post.getFullName());
+        params.put(APIUtils.SPAM_KEY, Boolean.toString(isSpam));
+        retrofit.create(RedditAPI.class).removeThing(APIUtils.getOAuthHeader(accessToken), params).enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                if (response.isSuccessful()) {
+                    moderationEventLiveData.postValue(isSpam ? new ModerationEvent.MarkedAsSpam(post, position): new ModerationEvent.Removed(post, position));
+                } else {
+                    moderationEventLiveData.postValue(isSpam ? new ModerationEvent.MarkAsSpamFailed(post, position) : new ModerationEvent.RemoveFailed(post, position));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable throwable) {
+                moderationEventLiveData.postValue(isSpam ? new ModerationEvent.MarkAsSpamFailed(post, position) : new ModerationEvent.RemoveFailed(post, position));
+            }
+        });
+    }
+
+    public void toggleSticky(@NonNull Post post, int position) {
+        Map<String, String> params = new HashMap<>();
+        params.put(APIUtils.ID_KEY, post.getFullName());
+        params.put(APIUtils.STATE_KEY, Boolean.toString(!post.isStickied()));
+        params.put(APIUtils.API_TYPE_KEY, APIUtils.API_TYPE_JSON);
+        retrofit.create(RedditAPI.class).toggleStickyPost(APIUtils.getOAuthHeader(accessToken), params).enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                if (response.isSuccessful()) {
+                    post.setIsStickied(!post.isStickied());
+                    moderationEventLiveData.postValue(post.isStickied() ? new ModerationEvent.SetStickyPost(post, position): new ModerationEvent.UnsetStickyPost(post, position));
+                } else {
+                    moderationEventLiveData.postValue(post.isStickied() ? new ModerationEvent.UnsetStickyPostFailed(post, position) : new ModerationEvent.SetStickyPostFailed(post, position));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable throwable) {
+                moderationEventLiveData.postValue(post.isStickied() ? new ModerationEvent.UnsetStickyPostFailed(post, position) : new ModerationEvent.SetStickyPostFailed(post, position));
+            }
+        });
+    }
+
+    public void toggleLock(@NonNull Post post, int position) {
+        Map<String, String> params = new HashMap<>();
+        params.put(APIUtils.ID_KEY, post.getFullName());
+        Call<String> call = post.isLocked() ? retrofit.create(RedditAPI.class).unLockThing(APIUtils.getOAuthHeader(accessToken), params) : retrofit.create(RedditAPI.class).lockThing(APIUtils.getOAuthHeader(accessToken), params);
+        call.enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                if (response.isSuccessful()) {
+                    post.setIsLocked(!post.isLocked());
+                    moderationEventLiveData.postValue(post.isLocked() ? new ModerationEvent.Locked(post, position): new ModerationEvent.Unlocked(post, position));
+                } else {
+                    moderationEventLiveData.postValue(post.isLocked() ? new ModerationEvent.UnlockFailed(post, position) : new ModerationEvent.LockFailed(post, position));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable throwable) {
+                moderationEventLiveData.postValue(post.isLocked() ? new ModerationEvent.UnlockFailed(post, position) : new ModerationEvent.LockFailed(post, position));
+            }
+        });
+    }
+
+    public void toggleNSFW(@NonNull Post post, int position) {
+        Map<String, String> params = new HashMap<>();
+        params.put(APIUtils.ID_KEY, post.getFullName());
+        Call<String> call = post.isNSFW() ? retrofit.create(RedditAPI.class).unmarkNSFW(APIUtils.getOAuthHeader(accessToken), params) : retrofit.create(RedditAPI.class).markNSFW(APIUtils.getOAuthHeader(accessToken), params);
+        call.enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                if (response.isSuccessful()) {
+                    post.setNSFW(!post.isNSFW());
+                    moderationEventLiveData.postValue(post.isNSFW() ? new ModerationEvent.MarkedNSFW(post, position): new ModerationEvent.UnmarkedNSFW(post, position));
+                } else {
+                    moderationEventLiveData.postValue(post.isNSFW() ? new ModerationEvent.UnmarkNSFWFailed(post, position) : new ModerationEvent.MarkNSFWFailed(post, position));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable throwable) {
+                moderationEventLiveData.postValue(post.isNSFW() ? new ModerationEvent.UnmarkNSFWFailed(post, position) : new ModerationEvent.MarkNSFWFailed(post, position));
+            }
+        });
+    }
+
+    public void toggleSpoiler(@NonNull Post post, int position) {
+        Map<String, String> params = new HashMap<>();
+        params.put(APIUtils.ID_KEY, post.getFullName());
+        Call<String> call = post.isSpoiler() ? retrofit.create(RedditAPI.class).unmarkSpoiler(APIUtils.getOAuthHeader(accessToken), params) : retrofit.create(RedditAPI.class).markSpoiler(APIUtils.getOAuthHeader(accessToken), params);
+        call.enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                if (response.isSuccessful()) {
+                    post.setSpoiler(!post.isSpoiler());
+                    moderationEventLiveData.postValue(post.isSpoiler() ? new ModerationEvent.MarkedSpoiler(post, position): new ModerationEvent.UnmarkedSpoiler(post, position));
+                } else {
+                    moderationEventLiveData.postValue(post.isSpoiler() ? new ModerationEvent.UnmarkSpoilerFailed(post, position) : new ModerationEvent.MarkSpoilerFailed(post, position));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable throwable) {
+                moderationEventLiveData.postValue(post.isSpoiler() ? new ModerationEvent.UnmarkSpoilerFailed(post, position) : new ModerationEvent.MarkSpoilerFailed(post, position));
+            }
+        });
+    }
+
+    public void toggleMod(@NonNull Post post, int position) {
+        Map<String, String> params = new HashMap<>();
+        params.put(APIUtils.ID_KEY, post.getFullName());
+        params.put(APIUtils.HOW_KEY, post.isModerator() ? APIUtils.HOW_NO : APIUtils.HOW_YES);
+        retrofit.create(RedditAPI.class).toggleDistinguishedThing(APIUtils.getOAuthHeader(accessToken), params).enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                if (response.isSuccessful()) {
+                    post.setIsModerator(!post.isModerator());
+                    moderationEventLiveData.postValue(post.isModerator() ? new ModerationEvent.DistinguishedAsMod(post, position): new ModerationEvent.UndistinguishedAsMod(post, position));
+                } else {
+                    moderationEventLiveData.postValue(post.isModerator() ? new ModerationEvent.UndistinguishAsModFailed(post, position) : new ModerationEvent.DistinguishAsModFailed(post, position));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable throwable) {
+                moderationEventLiveData.postValue(post.isModerator() ? new ModerationEvent.UndistinguishAsModFailed(post, position) : new ModerationEvent.DistinguishAsModFailed(post, position));
+            }
+        });
     }
 }

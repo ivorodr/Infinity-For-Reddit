@@ -156,6 +156,36 @@ public class PostOptionsBottomSheetFragment extends LandscapeExpandedRoundedBott
                 });
             }
 
+            binding.shareTextViewPostOptionsBottomSheetFragment.setOnClickListener(view -> {
+                Bundle bundle = new Bundle();
+                bundle.putString(ShareBottomSheetFragment.EXTRA_POST_LINK, mPost.getPermalink());
+                if (mPost.getPostType() != Post.TEXT_TYPE) {
+                    bundle.putInt(ShareBottomSheetFragment.EXTRA_MEDIA_TYPE, mPost.getPostType());
+                    switch (mPost.getPostType()) {
+                        case Post.IMAGE_TYPE:
+                        case Post.GIF_TYPE:
+                        case Post.LINK_TYPE:
+                        case Post.NO_PREVIEW_LINK_TYPE:
+                            bundle.putString(ShareBottomSheetFragment.EXTRA_MEDIA_LINK, mPost.getUrl());
+                            break;
+                        case Post.VIDEO_TYPE:
+                            bundle.putString(ShareBottomSheetFragment.EXTRA_MEDIA_LINK, mPost.getVideoDownloadUrl());
+                            break;
+                    }
+                }
+                bundle.putParcelable(ShareBottomSheetFragment.EXTRA_POST, mPost);
+                ShareBottomSheetFragment shareBottomSheetFragment = new ShareBottomSheetFragment();
+                shareBottomSheetFragment.setArguments(bundle);
+                Fragment parentFragment = getParentFragment();
+                if (parentFragment != null) {
+                    shareBottomSheetFragment.show(parentFragment.getChildFragmentManager(), shareBottomSheetFragment.getTag());
+                } else {
+                    shareBottomSheetFragment.show(mBaseActivity.getSupportFragmentManager(), shareBottomSheetFragment.getTag());
+                }
+
+                dismiss();
+            });
+
             binding.addToPostFilterTextViewPostOptionsBottomSheetFragment.setOnClickListener(view -> {
                 Intent intent = new Intent(mBaseActivity, PostFilterPreferenceActivity.class);
                 intent.putExtra(PostFilterPreferenceActivity.EXTRA_POST, mPost);
@@ -243,7 +273,23 @@ public class PostOptionsBottomSheetFragment extends LandscapeExpandedRoundedBott
                     intent.putExtra(ReportActivity.EXTRA_SUBREDDIT_NAME, mPost.getSubredditName());
                     intent.putExtra(ReportActivity.EXTRA_THING_FULLNAME, mPost.getFullName());
                     startActivity(intent);
+
+                    dismiss();
                 });
+
+                if (mPost.isCanModPost()) {
+                    binding.modTextViewPostOptionsBottomSheetFragment.setVisibility(View.VISIBLE);
+                    binding.modTextViewPostOptionsBottomSheetFragment.setOnClickListener(view -> {
+                        ModerationActionBottomSheetFragment moderationActionBottomSheetFragment = ModerationActionBottomSheetFragment.newInstance(mPost, getArguments().getInt(EXTRA_POST_LIST_POSITION, 0));
+                        Fragment parentFragment = getParentFragment();
+                        if (parentFragment != null) {
+                            moderationActionBottomSheetFragment.show(parentFragment.getChildFragmentManager(), moderationActionBottomSheetFragment.getTag());
+                        } else {
+                            moderationActionBottomSheetFragment.show(mBaseActivity.getSupportFragmentManager(), moderationActionBottomSheetFragment.getTag());
+                        }
+                        dismiss();
+                    });
+                }
             }
         }
 

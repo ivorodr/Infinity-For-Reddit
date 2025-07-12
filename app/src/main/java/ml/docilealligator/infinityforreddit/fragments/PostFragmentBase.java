@@ -27,8 +27,14 @@ import android.widget.Toast;
 import androidx.annotation.DimenRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.media3.common.util.UnstableApi;
 import androidx.paging.ItemSnapshotList;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearSmoothScroller;
@@ -96,6 +102,7 @@ import ml.docilealligator.infinityforreddit.events.PostUpdateEventToPostList;
 import ml.docilealligator.infinityforreddit.events.ShowDividerInCompactLayoutPreferenceEvent;
 import ml.docilealligator.infinityforreddit.events.ShowThumbnailOnTheLeftInCompactLayoutEvent;
 import ml.docilealligator.infinityforreddit.post.Post;
+import ml.docilealligator.infinityforreddit.utils.SharedPreferencesLiveDataKt;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
 import retrofit2.Retrofit;
@@ -315,6 +322,35 @@ public abstract class PostFragmentBase extends Fragment {
                 pauseLazyMode(true);
             }
             return false;
+        });
+
+        if (activity.isImmersiveInterface()) {
+            ViewCompat.setOnApplyWindowInsetsListener(activity.getWindow().getDecorView(), new OnApplyWindowInsetsListener() {
+                @NonNull
+                @Override
+                public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                    Insets allInsets = insets.getInsets(
+                            WindowInsetsCompat.Type.systemBars()
+                                    | WindowInsetsCompat.Type.displayCutout()
+                    );
+                    getPostRecyclerView().setPadding(
+                            0, 0, 0, allInsets.bottom
+                    );
+                    return insets;
+                }
+            });
+        }
+
+        SharedPreferencesLiveDataKt.stringLiveData(mSharedPreferences, SharedPreferencesUtils.LONG_PRESS_POST_NON_MEDIA_AREA, SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS).observe(getViewLifecycleOwner(), s -> {
+            if (getPostAdapter() != null) {
+                getPostAdapter().setLongPressPostNonMediaAreaAction(s);
+            }
+        });
+
+        SharedPreferencesLiveDataKt.stringLiveData(mSharedPreferences, SharedPreferencesUtils.LONG_PRESS_POST_MEDIA, SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS).observe(getViewLifecycleOwner(), s -> {
+            if (getPostAdapter() != null) {
+                getPostAdapter().setLongPressPostMediaAction(s);
+            }
         });
 
         return super.onCreateView(inflater, container, savedInstanceState);
@@ -586,6 +622,9 @@ public abstract class PostFragmentBase extends Fragment {
                 post.setSpoiler(event.post.isSpoiler());
                 post.setFlair(event.post.getFlair());
                 post.setSaved(event.post.isSaved());
+                post.setIsStickied(event.post.isStickied());
+                post.setIsLocked(event.post.isLocked());
+                post.setIsModerator(event.post.isModerator());
                 if (event.post.isRead()) {
                     post.markAsRead();
                 }
@@ -919,18 +958,25 @@ public abstract class PostFragmentBase extends Fragment {
 
     protected static class StaggeredGridLayoutManagerItemOffsetDecoration extends RecyclerView.ItemDecoration {
 
-        private final int mItemOffset;
+        private final int mHalfOffset;
+        private final int mQuaterOffset;
+        private final int mCard3HorizontalSpace;
+        private final int mCard3VerticalSpace;
         private final int mNColumns;
 
         StaggeredGridLayoutManagerItemOffsetDecoration(int itemOffset, int nColumns) {
-            mItemOffset = itemOffset;
             mNColumns = nColumns;
+            mCard3HorizontalSpace = -itemOffset / 4 * 3;
+            mCard3VerticalSpace = -itemOffset / 4;
+            mHalfOffset = itemOffset / 2;
+            mQuaterOffset = itemOffset / 4;
         }
 
         StaggeredGridLayoutManagerItemOffsetDecoration(@NonNull Context context, @DimenRes int itemOffsetId, int nColumns) {
             this(context.getResources().getDimensionPixelSize(itemOffsetId), nColumns);
         }
 
+        @OptIn(markerClass = UnstableApi.class)
         @Override
         public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent,
                                    @NonNull RecyclerView.State state) {
@@ -940,21 +986,45 @@ public abstract class PostFragmentBase extends Fragment {
 
             int spanIndex = layoutParams.getSpanIndex();
 
-            int halfOffset = mItemOffset / 2;
+            if (parent.getAdapter() != null) {
+                RecyclerView.ViewHolder viewHolder = parent.getChildViewHolder(view);
+                if (viewHolder instanceof PostRecyclerViewAdapter.PostMaterial3CardVideoAutoplayViewHolder ||
+                        viewHolder instanceof PostRecyclerViewAdapter.PostMaterial3CardVideoAutoplayLegacyControllerViewHolder ||
+                        viewHolder instanceof PostRecyclerViewAdapter.PostMaterial3CardWithPreviewViewHolder ||
+                        viewHolder instanceof PostRecyclerViewAdapter.PostMaterial3CardGalleryTypeViewHolder ||
+                        viewHolder instanceof PostRecyclerViewAdapter.PostMaterial3CardTextTypeViewHolder) {
+                    if (mNColumns == 2) {
+                        if (spanIndex == 0) {
+                            outRect.set(-mHalfOffset, mCard3VerticalSpace, mCard3HorizontalSpace, mCard3VerticalSpace);
+                        } else {
+                            outRect.set(mCard3HorizontalSpace, mCard3VerticalSpace, -mHalfOffset, mCard3VerticalSpace);
+                        }
+                    } else if (mNColumns == 3) {
+                        if (spanIndex == 0) {
+                            outRect.set(-mHalfOffset, mCard3VerticalSpace, mCard3HorizontalSpace, mCard3VerticalSpace);
+                        } else if (spanIndex == 1) {
+                            outRect.set(mCard3HorizontalSpace, mCard3VerticalSpace, mCard3HorizontalSpace, mCard3VerticalSpace);
+                        } else {
+                            outRect.set(mCard3HorizontalSpace, mCard3VerticalSpace, -mHalfOffset, mCard3VerticalSpace);
+                        }
+                    }
+                    return;
+                }
+            }
 
             if (mNColumns == 2) {
                 if (spanIndex == 0) {
-                    outRect.set(halfOffset, 0, halfOffset / 2, 0);
+                    outRect.set(mHalfOffset, 0, mQuaterOffset, 0);
                 } else {
-                    outRect.set(halfOffset / 2, 0, halfOffset, 0);
+                    outRect.set(mQuaterOffset, 0, mHalfOffset, 0);
                 }
             } else if (mNColumns == 3) {
                 if (spanIndex == 0) {
-                    outRect.set(halfOffset, 0, halfOffset / 2, 0);
+                    outRect.set(mHalfOffset, 0, mQuaterOffset, 0);
                 } else if (spanIndex == 1) {
-                    outRect.set(halfOffset / 2, 0, halfOffset / 2, 0);
+                    outRect.set(mQuaterOffset, 0, mQuaterOffset, 0);
                 } else {
-                    outRect.set(halfOffset / 2, 0, halfOffset, 0);
+                    outRect.set(mQuaterOffset, 0, mHalfOffset, 0);
                 }
             }
         }

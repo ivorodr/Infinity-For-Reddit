@@ -13,6 +13,10 @@ import android.widget.CompoundButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.inputmethod.EditorInfoCompat;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -60,7 +64,7 @@ public class CreateMultiRedditActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         ((Infinity) getApplication()).getAppComponent().inject(this);
 
-        setImmersiveModeNotApplicable();
+        setImmersiveModeNotApplicableBelowAndroid16();
         
         super.onCreate(savedInstanceState);
         binding = ActivityCreateMultiRedditBinding.inflate(getLayoutInflater());
@@ -68,8 +72,37 @@ public class CreateMultiRedditActivity extends BaseActivity {
 
         applyCustomTheme();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && isChangeStatusBarIconColor()) {
-            addOnOffsetChangedListener(binding.appbarLayoutCreateMultiRedditActivity);
+        if (isImmersiveInterface()) {
+            if (isChangeStatusBarIconColor()) {
+                addOnOffsetChangedListener(binding.appbarLayoutCreateMultiRedditActivity);
+            }
+
+            ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                @NonNull
+                @Override
+                public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                    Insets allInsets = insets.getInsets(
+                            WindowInsetsCompat.Type.systemBars()
+                                    | WindowInsetsCompat.Type.displayCutout()
+                                    | WindowInsetsCompat.Type.ime()
+                    );
+
+                    setMargins(binding.toolbarCreateMultiRedditActivity,
+                            allInsets.left,
+                            allInsets.top,
+                            allInsets.right,
+                            BaseActivity.IGNORE_MARGIN);
+
+                    binding.nestedScrollViewCreateMultiRedditActivity.setPadding(
+                            allInsets.left,
+                            0,
+                            allInsets.right,
+                            allInsets.bottom
+                    );
+
+                    return WindowInsetsCompat.CONSUMED;
+                }
+            });
         }
 
         setSupportActionBar(binding.toolbarCreateMultiRedditActivity);
@@ -133,8 +166,8 @@ public class CreateMultiRedditActivity extends BaseActivity {
             if (!accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                 String jsonModel = new MultiRedditJSONModel(binding.multiRedditNameEditTextCreateMultiRedditActivity.getText().toString(), binding.descriptionEditTextCreateMultiRedditActivity.getText().toString(),
                         binding.visibilityChipCreateMultiRedditActivity.isChecked(), mSubreddits).createJSONModel();
-                CreateMultiReddit.createMultiReddit(mOauthRetrofit, mRedditDataRoomDatabase, accessToken,
-                        "/user/" + accountName + "/m/" + binding.multiRedditNameEditTextCreateMultiRedditActivity.getText().toString(),
+                CreateMultiReddit.createMultiReddit(mExecutor, mHandler, mOauthRetrofit, mRedditDataRoomDatabase,
+                        accessToken, "/user/" + accountName + "/m/" + binding.multiRedditNameEditTextCreateMultiRedditActivity.getText().toString(),
                         jsonModel, new CreateMultiReddit.CreateMultiRedditListener() {
                             @Override
                             public void success() {

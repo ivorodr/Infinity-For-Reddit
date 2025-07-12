@@ -11,6 +11,10 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/comment_text_view_post_options_bottom_sheet_fragment"
             android:layout_width="match_parent"
@@ -27,6 +31,26 @@
             android:paddingEnd="32dp"
             android:paddingBottom="16dp"
             android:text="@string/comment"
+            android:textColor="?attr/primaryTextColor"
+            android:textSize="?attr/font_default"
+            app:drawableTint="?attr/primaryTextColor" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/share_text_view_post_options_bottom_sheet_fragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:drawableStart="@drawable/ic_share_day_night_24dp"
+            android:drawablePadding="48dp"
+            android:focusable="true"
+            android:fontFamily="?attr/font_family"
+            android:paddingStart="32dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="32dp"
+            android:paddingBottom="16dp"
+            android:text="@string/share"
             android:textColor="?attr/primaryTextColor"
             android:textSize="?attr/font_default"
             app:drawableTint="?attr/primaryTextColor" />
@@ -150,6 +174,27 @@
             android:text="@string/report"
             android:textColor="?attr/primaryTextColor"
             android:textSize="?attr/font_default"
+            app:drawableTint="?attr/primaryTextColor" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/mod_text_view_post_options_bottom_sheet_fragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:drawableStart="@drawable/ic_mod_24dp"
+            android:drawablePadding="48dp"
+            android:focusable="true"
+            android:fontFamily="?attr/font_family"
+            android:paddingStart="32dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="32dp"
+            android:paddingBottom="16dp"
+            android:text="@string/moderation"
+            android:textColor="?attr/primaryTextColor"
+            android:textSize="?attr/font_default"
+            android:visibility="gone"
             app:drawableTint="?attr/primaryTextColor" />
 
     </LinearLayout>

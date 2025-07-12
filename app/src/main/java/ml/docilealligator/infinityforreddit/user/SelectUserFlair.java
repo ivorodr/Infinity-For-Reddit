@@ -1,6 +1,6 @@
 package ml.docilealligator.infinityforreddit.user;
 
-import android.os.AsyncTask;
+import android.os.Handler;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,6 +11,7 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 import ml.docilealligator.infinityforreddit.apis.RedditAPI;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
@@ -26,8 +27,9 @@ public class SelectUserFlair {
         void failed(String errorMessage);
     }
 
-    public static void selectUserFlair(Retrofit oauthRetrofit, String accessToken, @Nullable UserFlair userFlair,
+    public static void selectUserFlair(Executor executor, Handler handler, Retrofit oauthRetrofit, String accessToken, @Nullable UserFlair userFlair,
                                        String subredditName, @NonNull String accountName, SelectUserFlairListener selectUserFlairListener) {
+
         Map<String, String> params = new HashMap<>();
         params.put(APIUtils.API_TYPE_KEY, APIUtils.API_TYPE_JSON);
         if (userFlair != null) {
@@ -35,69 +37,46 @@ public class SelectUserFlair {
             params.put(APIUtils.TEXT_KEY, userFlair.getText());
         }
         params.put(APIUtils.NAME_KEY, accountName);
-        oauthRetrofit.create(RedditAPI.class).selectUserFlair(APIUtils.getOAuthHeader(accessToken), params, subredditName)
-                .enqueue(new Callback<>() {
-                    @Override
-                    public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
-                        if (response.isSuccessful()) {
-                            new ParseErrorAsyncTask(response.body(), selectUserFlairListener).execute();
-                        } else {
-                            selectUserFlairListener.failed(response.message());
+
+        oauthRetrofit.create(RedditAPI.class).selectUserFlair(APIUtils.getOAuthHeader(accessToken), params, subredditName).enqueue(new Callback<>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                if (response.isSuccessful()) {
+                    executor.execute(() -> {
+                        try {
+                            JSONObject responseObject = new JSONObject(response.body()).getJSONObject(JSONUtils.JSON_KEY);
+
+                            if (responseObject.getJSONArray(JSONUtils.ERRORS_KEY).length() != 0) {
+                                JSONArray error = responseObject.getJSONArray(JSONUtils.ERRORS_KEY)
+                                        .getJSONArray(responseObject.getJSONArray(JSONUtils.ERRORS_KEY).length() - 1);
+                                if (error.length() != 0) {
+                                    String errorString;
+                                    if (error.length() >= 2) {
+                                        errorString = error.getString(1);
+                                    } else {
+                                        errorString = error.getString(0);
+                                    }
+
+                                    handler.post(() -> selectUserFlairListener.failed(errorString.substring(0, 1).toUpperCase() + errorString.substring(1)));
+                                } else {
+                                    handler.post(selectUserFlairListener::success);
+                                }
+                            } else {
+                                handler.post(selectUserFlairListener::success);
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
-                    }
-
-                    @Override
-                    public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
-                        selectUserFlairListener.failed(t.getMessage());
-                    }
-                });
-    }
-
-    private static class ParseErrorAsyncTask extends AsyncTask<Void, Void, Void> {
-
-        private final String response;
-        @Nullable
-        private String errorMessage;
-        private final SelectUserFlairListener selectUserFlairListener;
-
-        ParseErrorAsyncTask(String response, SelectUserFlairListener selectUserFlairListener) {
-            this.response = response;
-            this.selectUserFlairListener = selectUserFlairListener;
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            try {
-                JSONObject responseObject = new JSONObject(response).getJSONObject(JSONUtils.JSON_KEY);
-
-                if (responseObject.getJSONArray(JSONUtils.ERRORS_KEY).length() != 0) {
-                    JSONArray error = responseObject.getJSONArray(JSONUtils.ERRORS_KEY)
-                            .getJSONArray(responseObject.getJSONArray(JSONUtils.ERRORS_KEY).length() - 1);
-                    if (error.length() != 0) {
-                        String errorString;
-                        if (error.length() >= 2) {
-                            errorString = error.getString(1);
-                        } else {
-                            errorString = error.getString(0);
-                        }
-                        errorMessage = errorString.substring(0, 1).toUpperCase() + errorString.substring(1);
-                    }
+                    });
+                } else {
+                    selectUserFlairListener.failed(response.message());
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
 
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            if (errorMessage == null) {
-                selectUserFlairListener.success();
-            } else {
-                selectUserFlairListener.failed(errorMessage);
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable throwable) {
+                selectUserFlairListener.failed(throwable.getMessage());
             }
-        }
+        });
     }
 }

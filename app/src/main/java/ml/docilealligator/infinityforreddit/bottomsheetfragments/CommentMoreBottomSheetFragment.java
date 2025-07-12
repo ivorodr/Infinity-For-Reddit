@@ -31,6 +31,7 @@ import ml.docilealligator.infinityforreddit.activities.ViewUserDetailActivity;
 import ml.docilealligator.infinityforreddit.comment.Comment;
 import ml.docilealligator.infinityforreddit.customviews.LandscapeExpandedRoundedBottomSheetDialogFragment;
 import ml.docilealligator.infinityforreddit.databinding.FragmentCommentMoreBottomSheetBinding;
+import ml.docilealligator.infinityforreddit.utils.ShareScreenshotUtilsKt;
 import ml.docilealligator.infinityforreddit.utils.Utils;
 
 
@@ -172,6 +173,11 @@ public class CommentMoreBottomSheetFragment extends LandscapeExpandedRoundedBott
             return true;
         });
 
+        binding.shareAsImageTextViewCommentMoreBottomSheetFragment.setOnClickListener(view -> {
+            dismiss();
+            ShareScreenshotUtilsKt.shareCommentAsScreenshot(activity, comment);
+        });
+
         binding.copyTextViewCommentMoreBottomSheetFragment.setOnClickListener(view -> {
             dismiss();
             CopyTextBottomSheetFragment.show(activity.getSupportFragmentManager(),
@@ -191,7 +197,20 @@ public class CommentMoreBottomSheetFragment extends LandscapeExpandedRoundedBott
             Intent intent = new Intent(activity, CommentFilterPreferenceActivity.class);
             intent.putExtra(CommentFilterPreferenceActivity.EXTRA_COMMENT, comment);
             activity.startActivity(intent);
+
+            dismiss();
         });
+
+        if (comment.getDepth() > 0 && activity instanceof ViewPostDetailActivity) {
+            binding.jumpToParentCommentCommentMoreBottomSheetFragment.setVisibility(View.VISIBLE);
+            binding.jumpToParentCommentCommentMoreBottomSheetFragment.setOnClickListener(view -> {
+                if (activity instanceof ViewPostDetailActivity) {
+                    ((ViewPostDetailActivity) activity).scrollToParentComment(bundle.getInt(EXTRA_POSITION), comment.getDepth());
+                }
+
+                dismiss();
+            });
+        }
 
         if (activity.typeface != null) {
             Utils.setFontToAllTextViews(binding.getRoot(), activity.typeface);

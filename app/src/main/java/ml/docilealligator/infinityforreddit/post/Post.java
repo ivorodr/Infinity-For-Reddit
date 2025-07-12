@@ -62,20 +62,21 @@ public class Post implements Parcelable {
     private boolean hidden;
     private boolean spoiler;
     private boolean nsfw;
-    private final boolean stickied;
+    private boolean stickied;
     private final boolean archived;
-    private final boolean locked;
+    private boolean locked;
     private boolean saved;
     private final boolean isCrosspost;
     private boolean isRead;
     private String crosspostParentId;
-    private final String distinguished;
+    private String distinguished;
     private final String suggestedSort;
     private String mp4Variant;
     private ArrayList<Preview> previews = new ArrayList<>();
     @Nullable
     private Map<String, MediaMetadata> mediaMetadataMap;
     private ArrayList<Gallery> gallery = new ArrayList<>();
+    private boolean canModPost;
 
     //Text and video posts
     public Post(String id, String fullName, String subredditName, String subredditNamePrefixed,
@@ -83,7 +84,7 @@ public class Post implements Parcelable {
                 String title, String permalink, int score, int postType, int voteType, int nComments,
                 int upvoteRatio, String flair, boolean hidden, boolean spoiler,
                 boolean nsfw, boolean stickied, boolean archived, boolean locked, boolean saved,
-                boolean isCrosspost, String distinguished, String suggestedSort) {
+                boolean isCrosspost, boolean canModPost, String distinguished, String suggestedSort) {
         this.id = id;
         this.fullName = fullName;
         this.subredditName = subredditName;
@@ -109,6 +110,7 @@ public class Post implements Parcelable {
         this.locked = locked;
         this.saved = saved;
         this.isCrosspost = isCrosspost;
+        this.canModPost = canModPost;
         this.distinguished = distinguished;
         this.suggestedSort = suggestedSort;
         isRead = false;
@@ -119,7 +121,7 @@ public class Post implements Parcelable {
                 String url, String permalink, int score, int postType, int voteType, int nComments,
                 int upvoteRatio, String flair, boolean hidden, boolean spoiler,
                 boolean nsfw, boolean stickied, boolean archived, boolean locked, boolean saved,
-                boolean isCrosspost, String distinguished, String suggestedSort) {
+                boolean isCrosspost, boolean canModPost, String distinguished, String suggestedSort) {
         this.id = id;
         this.fullName = fullName;
         this.subredditName = subredditName;
@@ -146,6 +148,7 @@ public class Post implements Parcelable {
         this.locked = locked;
         this.saved = saved;
         this.isCrosspost = isCrosspost;
+        this.canModPost = canModPost;
         this.distinguished = distinguished;
         this.suggestedSort = suggestedSort;
         isRead = false;
@@ -192,6 +195,7 @@ public class Post implements Parcelable {
         locked = in.readByte() != 0;
         saved = in.readByte() != 0;
         isCrosspost = in.readByte() != 0;
+        canModPost = in.readByte() != 0;
         isRead = in.readByte() != 0;
         crosspostParentId = in.readString();
         distinguished = in.readString();
@@ -404,6 +408,10 @@ public class Post implements Parcelable {
         return distinguished != null && distinguished.equals("moderator");
     }
 
+    public void setIsModerator(boolean value) {
+        distinguished = value ? "moderator" : null;
+    }
+
     public boolean isAdmin() {
         return distinguished != null && distinguished.equals("admin");
     }
@@ -523,6 +531,7 @@ public class Post implements Parcelable {
         dest.writeByte((byte) (locked ? 1 : 0));
         dest.writeByte((byte) (saved ? 1 : 0));
         dest.writeByte((byte) (isCrosspost ? 1 : 0));
+        dest.writeByte((byte) (canModPost ? 1 : 0));
         dest.writeByte((byte) (isRead ? 1 : 0));
         dest.writeString(crosspostParentId);
         dest.writeString(distinguished);
@@ -537,12 +546,20 @@ public class Post implements Parcelable {
         return stickied;
     }
 
+    public void setIsStickied(boolean value) {
+        stickied = value;
+    }
+
     public boolean isArchived() {
         return archived;
     }
 
     public boolean isLocked() {
         return locked;
+    }
+
+    public void setIsLocked(boolean value) {
+        locked = value;
     }
 
     public boolean isSaved() {
@@ -555,6 +572,10 @@ public class Post implements Parcelable {
 
     public boolean isCrosspost() {
         return isCrosspost;
+    }
+
+    public boolean isCanModPost() {
+        return canModPost;
     }
 
     public void markAsRead() {

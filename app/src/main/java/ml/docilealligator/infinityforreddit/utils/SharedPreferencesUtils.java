@@ -226,6 +226,11 @@ public class SharedPreferencesUtils {
     private static final String POST_DETAIL_FAB_LANDSCAPE_Y_BASE = "fab_landscape_y_";
     public static final String REDDIT_VIDEO_DEFAULT_RESOLUTION_NO_DATA_SAVING = "reddit_video_default_resolution_no_data_saving";
     public static final String HIDE_FAB_IN_POST_DETAILS = "hide_fab_in_post_details";
+    public static final String LONG_PRESS_POST_NON_MEDIA_AREA = "long_press_post_non_media_area";
+    public static final String LONG_PRESS_POST_MEDIA = "long_press_post_media";
+    public static final String LONG_PRESS_POST_VALUE_NONE = "0";
+    public static final String LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS = "1";
+    public static final String LONG_PRESS_POST_VALUE_PREVIEW_IN_FULLSCREEN = "2";
 
     public static String getPostDetailFabPortraitX(@Nullable Display display) {
         if (display == null) {
@@ -426,6 +431,7 @@ public class SharedPreferencesUtils {
     public static final String INTERNAL_SHARED_PREFERENCES_FILE = "ml.docilealligator.infinityforreddit.internal";
     public static final String HAS_REQUESTED_NOTIFICATION_PERMISSION = "has_requested_notification_permission";
     public static final String DO_NOT_SHOW_REDDIT_API_INFO_V2_AGAIN = "do_not_show_reddit_api_info_v2_again";
+    public static final String MATERIAL_YOU_SENTRY_COLOR = "material_you_sentry_color";
 
     public static final String PROXY_SHARED_PREFERENCES_FILE = "ml.docilealligator.infinityforreddit.proxy";
     public static final String PROXY_ENABLED = "proxy_enabled";

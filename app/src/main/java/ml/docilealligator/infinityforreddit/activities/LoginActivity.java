@@ -12,6 +12,7 @@ import android.text.util.Linkify;
 import android.util.Log;
 import android.view.InflateException;
 import android.view.MenuItem;
+import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -19,6 +20,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -34,14 +39,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
-import ml.docilealligator.infinityforreddit.account.FetchMyInfo;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
+import ml.docilealligator.infinityforreddit.account.FetchMyInfo;
 import ml.docilealligator.infinityforreddit.apis.RedditAPI;
 import ml.docilealligator.infinityforreddit.asynctasks.ParseAndInsertNewAccount;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
-import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
 import ml.docilealligator.infinityforreddit.databinding.ActivityLoginBinding;
 import ml.docilealligator.infinityforreddit.events.NewUserLoggedInEvent;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
@@ -82,7 +86,7 @@ public class LoginActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         ((Infinity) getApplication()).getAppComponent().inject(this);
 
-        setImmersiveModeNotApplicable();
+        setImmersiveModeNotApplicableBelowAndroid16();
 
         super.onCreate(savedInstanceState);
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
@@ -98,8 +102,43 @@ public class LoginActivity extends BaseActivity {
 
         applyCustomTheme();
 
-        if (mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
-            Slidr.attach(this);
+        if (isImmersiveInterface()) {
+            if (isChangeStatusBarIconColor()) {
+                addOnOffsetChangedListener(binding.appbarLayoutLoginActivity);
+            }
+
+            ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                @NonNull
+                @Override
+                public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                    Insets allInsets = insets.getInsets(
+                            WindowInsetsCompat.Type.systemBars()
+                                    | WindowInsetsCompat.Type.displayCutout()
+                            | WindowInsetsCompat.Type.ime()
+                    );
+
+                    setMargins(binding.toolbarLoginActivity,
+                            allInsets.left,
+                            allInsets.top,
+                            allInsets.right,
+                            BaseActivity.IGNORE_MARGIN);
+
+                    binding.linearLayoutLoginActivity.setPadding(
+                            allInsets.left,
+                            0,
+                            allInsets.right,
+                            allInsets.bottom
+                    );
+
+                    setMargins(binding.fabLoginActivity,
+                            BaseActivity.IGNORE_MARGIN,
+                            BaseActivity.IGNORE_MARGIN,
+                            (int) Utils.convertDpToPixel(16, LoginActivity.this) + allInsets.right,
+                            (int) Utils.convertDpToPixel(16, LoginActivity.this) + allInsets.bottom);
+
+                    return WindowInsetsCompat.CONSUMED;
+                }
+            });
         }
 
         setSupportActionBar(binding.toolbarLoginActivity);
@@ -164,16 +203,17 @@ public class LoginActivity extends BaseActivity {
                                         String accessToken = responseJSON.getString(APIUtils.ACCESS_TOKEN_KEY);
                                         String refreshToken = responseJSON.getString(APIUtils.REFRESH_TOKEN_KEY);
 
-                                        FetchMyInfo.fetchAccountInfo(mOauthRetrofit, mRedditDataRoomDatabase,
-                                                accessToken, new FetchMyInfo.FetchMyInfoListener() {
+                                        FetchMyInfo.fetchAccountInfo(mExecutor, mHandler, mOauthRetrofit,
+                                                mRedditDataRoomDatabase, accessToken,
+                                                new FetchMyInfo.FetchMyInfoListener() {
                                                     @Override
-                                                    public void onFetchMyInfoSuccess(String name, String profileImageUrl, String bannerImageUrl, int karma) {
+                                                    public void onFetchMyInfoSuccess(String name, String profileImageUrl, String bannerImageUrl, int karma, boolean isMod) {
                                                         mCurrentAccountSharedPreferences.edit().putString(SharedPreferencesUtils.ACCESS_TOKEN, accessToken)
                                                                 .putString(SharedPreferencesUtils.ACCOUNT_NAME, name)
                                                                 .putString(SharedPreferencesUtils.ACCOUNT_IMAGE_URL, profileImageUrl).apply();
                                                         mCurrentAccountSharedPreferences.edit().remove(SharedPreferencesUtils.SUBSCRIBED_THINGS_SYNC_TIME).apply();
                                                         ParseAndInsertNewAccount.parseAndInsertNewAccount(mExecutor, new Handler(), name, accessToken, refreshToken, profileImageUrl, bannerImageUrl,
-                                                                karma, authCode, mRedditDataRoomDatabase.accountDao(),
+                                                                karma, isMod, authCode, mRedditDataRoomDatabase.accountDao(),
                                                                 () -> {
                                                                     EventBus.getDefault().post(new NewUserLoggedInEvent());
                                                                     finish();

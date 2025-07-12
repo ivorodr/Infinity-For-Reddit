@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,7 +25,12 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
@@ -109,7 +113,6 @@ import ml.docilealligator.infinityforreddit.thing.SortType;
 import ml.docilealligator.infinityforreddit.thing.SortTypeSelectionCallback;
 import ml.docilealligator.infinityforreddit.user.BlockUser;
 import ml.docilealligator.infinityforreddit.user.FetchUserData;
-import ml.docilealligator.infinityforreddit.user.UserDao;
 import ml.docilealligator.infinityforreddit.user.UserData;
 import ml.docilealligator.infinityforreddit.user.UserFollowing;
 import ml.docilealligator.infinityforreddit.user.UserViewModel;
@@ -188,6 +191,7 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
     private int unsubscribedColor;
     private int subscribedColor;
     private int fabOption;
+    private int topSystemBarHeight;
     private boolean showToast = false;
     private boolean hideFab;
     private boolean showBottomAppBar;
@@ -270,7 +274,85 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
                 } else {
                     window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
                 }
-                adjustToolbar(binding.toolbarViewUserDetailActivity);
+
+                ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                    @NonNull
+                    @Override
+                    public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                        Insets allInsets = insets.getInsets(
+                                WindowInsetsCompat.Type.systemBars()
+                                        | WindowInsetsCompat.Type.displayCutout()
+                        );
+
+                        topSystemBarHeight = allInsets.top;
+
+                        int padding16 = (int) Utils.convertDpToPixel(16, ViewUserDetailActivity.this);
+
+                        if (navigationWrapper.navigationRailView == null) {
+                            if (navigationWrapper.bottomAppBar.getVisibility() != View.VISIBLE) {
+                                setMargins(navigationWrapper.floatingActionButton,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        padding16 + allInsets.right,
+                                        padding16 + allInsets.bottom);
+                            } else {
+                                setMargins(navigationWrapper.floatingActionButton,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        allInsets.bottom);
+                            }
+                        } else {
+                            if (navigationWrapper.navigationRailView.getVisibility() != View.VISIBLE) {
+                                setMargins(navigationWrapper.floatingActionButton,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        padding16 + allInsets.right,
+                                        padding16 + allInsets.bottom);
+
+                                binding.viewPagerViewUserDetailActivity.setPadding(allInsets.left, 0, allInsets.right, 0);
+                            } else {
+                                navigationWrapper.navigationRailView.setFitsSystemWindows(false);
+                                navigationWrapper.navigationRailView.setPadding(0, 0, 0, allInsets.bottom);
+
+                                setMargins(navigationWrapper.navigationRailView,
+                                        allInsets.left,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN
+                                );
+
+                                binding.viewPagerViewUserDetailActivity.setPadding(0, 0, allInsets.right, 0);
+                            }
+                        }
+
+                        binding.toolbarConstraintLayoutViewUserDetailActivity.setPadding(
+                                padding16 + allInsets.left,
+                                binding.toolbarConstraintLayoutViewUserDetailActivity.getPaddingTop(),
+                                padding16 + allInsets.right,
+                                binding.toolbarConstraintLayoutViewUserDetailActivity.getPaddingBottom());
+
+                        if (navigationWrapper.bottomAppBar != null) {
+                            navigationWrapper.linearLayoutBottomAppBar.setPadding(
+                                    navigationWrapper.linearLayoutBottomAppBar.getPaddingLeft(),
+                                    navigationWrapper.linearLayoutBottomAppBar.getPaddingTop(),
+                                    navigationWrapper.linearLayoutBottomAppBar.getPaddingRight(),
+                                    allInsets.bottom
+                            );
+                        }
+
+                        setMargins(binding.toolbarViewUserDetailActivity,
+                                allInsets.left,
+                                allInsets.top,
+                                allInsets.right,
+                                BaseActivity.IGNORE_MARGIN);
+
+                        binding.tabLayoutViewUserDetailActivity.setPadding(allInsets.left, 0, allInsets.right, 0);
+
+                        return WindowInsetsCompat.CONSUMED;
+                    }
+                });
+                /*adjustToolbar(binding.toolbarViewUserDetailActivity);
 
                 int navBarHeight = getNavBarHeight();
                 if (navBarHeight > 0) {
@@ -279,7 +361,7 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
                         params.bottomMargin += navBarHeight;
                         navigationWrapper.floatingActionButton.setLayoutParams(params);
                     }
-                }
+                }*/
                 showToast = true;
             }
 
@@ -430,7 +512,7 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
                                                 }
                                             });
                                 } else {
-                                    UserFollowing.followUser(mOauthRetrofit, mRetrofit, accessToken,
+                                    UserFollowing.followUser(mExecutor, mHandler, mOauthRetrofit, mRetrofit, accessToken,
                                             username, accountName, mRedditDataRoomDatabase, new UserFollowing.UserFollowingListener() {
                                                 @Override
                                                 public void onUserFollowingSuccess() {
@@ -465,7 +547,7 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
                                                 }
                                             });
                                 } else {
-                                    UserFollowing.unfollowUser(mOauthRetrofit, mRetrofit, accessToken,
+                                    UserFollowing.unfollowUser(mExecutor, mHandler, mOauthRetrofit, mRetrofit, accessToken,
                                             username, accountName, mRedditDataRoomDatabase, new UserFollowing.UserFollowingListener() {
                                                 @Override
                                                 public void onUserFollowingSuccess() {
@@ -608,7 +690,7 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
             @Override
             public void onGlobalLayout() {
                 binding.appbarLayoutViewUserDetail.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                binding.collapsingToolbarLayoutViewUserDetailActivity.setScrimVisibleHeightTrigger(binding.toolbarViewUserDetailActivity.getHeight() + binding.tabLayoutViewUserDetailActivity.getHeight() + getStatusBarHeight() * 2);
+                binding.collapsingToolbarLayoutViewUserDetailActivity.setScrimVisibleHeightTrigger(binding.toolbarViewUserDetailActivity.getHeight() + binding.tabLayoutViewUserDetailActivity.getHeight() + topSystemBarHeight * 2);
             }
         });
         applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutViewUserDetail,
@@ -639,6 +721,7 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
         }
     }
 
+    @OptIn(markerClass = ExperimentalBadgeUtils.class)
     private void checkNewAccountAndInitializeViewPager() {
         if (mNewAccountName != null) {
             if (accountName.equals(Account.ANONYMOUS_ACCOUNT) || !accountName.equals(mNewAccountName)) {
@@ -1090,11 +1173,15 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
 
     private void fetchUserInfo() {
         if (!mFetchUserInfoSuccess) {
-            FetchUserData.fetchUserData(mRetrofit, username, new FetchUserData.FetchUserDataListener() {
+            FetchUserData.fetchUserData(mExecutor, mHandler, mRetrofit, username, new FetchUserData.FetchUserDataListener() {
                 @Override
                 public void onFetchUserDataSuccess(UserData userData, int inboxCount) {
-                    new ViewUserDetailActivity.InsertUserDataAsyncTask(mRedditDataRoomDatabase.userDao(), userData,
-                            () -> mFetchUserInfoSuccess = true).execute();
+                    mExecutor.execute(() -> {
+                        mRedditDataRoomDatabase.userDao().insert(userData);
+                        mHandler.post(() -> {
+                            mFetchUserInfoSuccess = true;
+                        });
+                    });
                 }
 
                 @Override
@@ -1609,34 +1696,6 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
             case PostTypeBottomSheetFragment.TYPE_POLL:
                 intent = new Intent(this, PostPollActivity.class);
                 startActivity(intent);
-        }
-    }
-
-    private static class InsertUserDataAsyncTask extends AsyncTask<Void, Void, Void> {
-
-        private final UserDao userDao;
-        private final UserData subredditData;
-        private final InsertUserDataAsyncTaskListener insertUserDataAsyncTaskListener;
-        InsertUserDataAsyncTask(UserDao userDao, UserData userData,
-                                InsertUserDataAsyncTaskListener insertUserDataAsyncTaskListener) {
-            this.userDao = userDao;
-            this.subredditData = userData;
-            this.insertUserDataAsyncTaskListener = insertUserDataAsyncTaskListener;
-        }
-
-        @Override
-        protected Void doInBackground(final Void... params) {
-            userDao.insert(subredditData);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            insertUserDataAsyncTaskListener.insertSuccess();
-        }
-
-        interface InsertUserDataAsyncTaskListener {
-            void insertSuccess();
         }
     }
 

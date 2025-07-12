@@ -179,7 +179,7 @@ public class CommentsRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerVi
         mActivity = activity;
         mFragment = fragment;
         mExecutor = executor;
-        mRetrofit =
+        mRetrofit = retrofit;
         mOauthRetrofit = oauthRetrofit;
         mAccessToken = accessToken;
         mAccountName = accountName;
@@ -1142,7 +1142,7 @@ public class CommentsRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerVi
             if (mIsSingleCommentThreadMode) {
                 for (int i = currentPosition + 1; i - 1 < mVisibleComments.size() && i - 1 >= 0; i++) {
                     if (mVisibleComments.get(i - 1).getDepth() == 0) {
-                        return i;
+                        return i + 1;
                     }
                 }
             } else {
@@ -1161,12 +1161,31 @@ public class CommentsRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerVi
             if (mIsSingleCommentThreadMode) {
                 for (int i = currentPosition - 1; i - 1 >= 0; i--) {
                     if (mVisibleComments.get(i - 1).getDepth() == 0) {
-                        return i;
+                        return i + 1;
                     }
                 }
             } else {
                 for (int i = currentPosition - 1; i >= 0; i--) {
                     if (mVisibleComments.get(i).getDepth() == 0) {
+                        return i;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
+    public int getParentCommentPosition(int currentPosition, int currentDepth) {
+        if (mVisibleComments != null && !mVisibleComments.isEmpty()) {
+            if (mIsSingleCommentThreadMode) {
+                for (int i = currentPosition - 1; i - 1 >= 0; i--) {
+                    if (mVisibleComments.get(i - 1).getDepth() == currentDepth - 1) {
+                        return i + 1;
+                    }
+                }
+            } else {
+                for (int i = currentPosition - 1; i >= 0; i--) {
+                    if (mVisibleComments.get(i).getDepth() == currentDepth - 1) {
                         return i;
                     }
                 }
@@ -2011,7 +2030,7 @@ public class CommentsRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerVi
         IsLoadingMoreCommentsViewHolder(@NonNull ItemCommentFooterLoadingBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
-            binding.progressBarItemCommentFooterLoading.setIndeterminateTintList(ColorStateList.valueOf(mColorAccent));
+            binding.progressBarItemCommentFooterLoading.setIndicatorColor(mColorAccent);
         }
     }
 

@@ -4,18 +4,24 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.giphy.sdk.core.models.Media;
@@ -40,8 +46,10 @@ import java.util.concurrent.Executor;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import kotlin.Unit;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
+import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
 import ml.docilealligator.infinityforreddit.adapters.MarkdownBottomBarRecyclerViewAdapter;
 import ml.docilealligator.infinityforreddit.apis.RedditAPI;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.UploadedImagesBottomSheetFragment;
@@ -52,12 +60,14 @@ import ml.docilealligator.infinityforreddit.customviews.LinearLayoutManagerBugFi
 import ml.docilealligator.infinityforreddit.databinding.ActivityEditCommentBinding;
 import ml.docilealligator.infinityforreddit.events.SwitchAccountEvent;
 import ml.docilealligator.infinityforreddit.markdown.RichTextJSONConverter;
+import ml.docilealligator.infinityforreddit.repositories.EditCommentActivityRepository;
 import ml.docilealligator.infinityforreddit.thing.GiphyGif;
 import ml.docilealligator.infinityforreddit.thing.MediaMetadata;
 import ml.docilealligator.infinityforreddit.thing.UploadedImage;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
+import ml.docilealligator.infinityforreddit.viewmodels.EditCommentActivityViewModel;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 
@@ -86,6 +96,8 @@ public class EditCommentActivity extends BaseActivity implements UploadImageEnab
     @Named("upload_media")
     Retrofit mUploadMediaRetrofit;
     @Inject
+    RedditDataRoomDatabase mRedditDataRoomDatabase;
+    @Inject
     @Named("default")
     SharedPreferences mSharedPreferences;
     @Inject
@@ -103,12 +115,13 @@ public class EditCommentActivity extends BaseActivity implements UploadImageEnab
     private ArrayList<UploadedImage> uploadedImages = new ArrayList<>();
     private GiphyGif giphyGif;
     private ActivityEditCommentBinding binding;
+    public EditCommentActivityViewModel editCommentActivityViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ((Infinity) getApplication()).getAppComponent().inject(this);
 
-        setImmersiveModeNotApplicable();
+        setImmersiveModeNotApplicableBelowAndroid16();
 
         super.onCreate(savedInstanceState);
 
@@ -119,8 +132,37 @@ public class EditCommentActivity extends BaseActivity implements UploadImageEnab
 
         applyCustomTheme();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && isChangeStatusBarIconColor()) {
-            addOnOffsetChangedListener(binding.appbarLayoutEditCommentActivity);
+        if (isImmersiveInterface()) {
+            if (isChangeStatusBarIconColor()) {
+                addOnOffsetChangedListener(binding.appbarLayoutEditCommentActivity);
+            }
+
+            ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                @NonNull
+                @Override
+                public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                    Insets allInsets = insets.getInsets(
+                            WindowInsetsCompat.Type.systemBars()
+                                    | WindowInsetsCompat.Type.displayCutout()
+                                    | WindowInsetsCompat.Type.ime()
+                    );
+
+                    setMargins(binding.toolbarEditCommentActivity,
+                            allInsets.left,
+                            allInsets.top,
+                            allInsets.right,
+                            BaseActivity.IGNORE_MARGIN);
+
+                    binding.linearLayoutEditCommentActivity.setPadding(
+                            allInsets.left,
+                            0,
+                            allInsets.right,
+                            allInsets.bottom
+                    );
+
+                    return WindowInsetsCompat.CONSUMED;
+                }
+            });
         }
         setSupportActionBar(binding.toolbarEditCommentActivity);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -187,6 +229,39 @@ public class EditCommentActivity extends BaseActivity implements UploadImageEnab
         Utils.showKeyboard(this, new Handler(), binding.commentEditTextEditCommentActivity);
 
         Giphy.INSTANCE.configure(this, APIUtils.GIPHY_GIF_API_KEY);
+
+        editCommentActivityViewModel = new ViewModelProvider(
+                this,
+                EditCommentActivityViewModel.Companion.provideFactory(new EditCommentActivityRepository(mRedditDataRoomDatabase.commentDraftDao()))
+        ).get(EditCommentActivityViewModel.class);
+
+        if (savedInstanceState == null) {
+            editCommentActivityViewModel.getCommentDraft(mFullName).observe(this, commentDraft -> {
+                if (commentDraft != null && !commentDraft.getContent().isEmpty()) {
+                    binding.commentEditTextEditCommentActivity.setText(commentDraft.getContent());
+                }
+            });
+        }
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (isSubmitting) {
+                    promptAlertDialog(R.string.exit_when_submit, R.string.exit_when_edit_comment_detail, false);
+                } else {
+                    String content = binding.commentEditTextEditCommentActivity.getText().toString();
+                    if (content.isEmpty() || content.equals(mCommentContent)) {
+                        editCommentActivityViewModel.deleteCommentDraft(mFullName, () -> {
+                            setEnabled(false);
+                            triggerBackPress();
+                            return Unit.INSTANCE;
+                        });
+                    } else {
+                        promptAlertDialog(R.string.save_comment_draft, R.string.save_comment_draft_detail, true);
+                    }
+                }
+            }
+        });
     }
 
     @Override
@@ -239,7 +314,7 @@ public class EditCommentActivity extends BaseActivity implements UploadImageEnab
             editComment();
             return true;
         } else if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+            triggerBackPress();
             return true;
         }
         return false;
@@ -284,7 +359,10 @@ public class EditCommentActivity extends BaseActivity implements UploadImageEnab
                             returnIntent.putExtra(RETURN_EXTRA_EDITED_COMMENT_POSITION, getIntent().getExtras().getInt(EXTRA_POSITION));
                             setResult(RESULT_OK, returnIntent);
 
-                            finish();
+                            editCommentActivityViewModel.deleteCommentDraft(mFullName, () -> {
+                                finish();
+                                return Unit.INSTANCE;
+                            });
                         });
                     } else {
                         handler.post(() -> {
@@ -309,20 +387,37 @@ public class EditCommentActivity extends BaseActivity implements UploadImageEnab
                         returnIntent.putExtra(RETURN_EXTRA_EDITED_COMMENT_POSITION, getIntent().getExtras().getInt(EXTRA_POSITION));
                         setResult(RESULT_OK, returnIntent);
 
-                        finish();
+                        editCommentActivityViewModel.deleteCommentDraft(mFullName, () -> {
+                            finish();
+                            return Unit.INSTANCE;
+                        });
                     });
                 }
             });
         }
     }
 
-    private void promptAlertDialog(int titleResId, int messageResId) {
+    private void promptAlertDialog(int titleResId, int messageResId, boolean canSaveDraft) {
         new MaterialAlertDialogBuilder(this, R.style.MaterialAlertDialogTheme)
                 .setTitle(titleResId)
                 .setMessage(messageResId)
-                .setPositiveButton(R.string.discard_dialog_button, (dialogInterface, i)
-                        -> finish())
-                .setNegativeButton(R.string.no, null)
+                .setPositiveButton(R.string.yes, (dialogInterface, i)
+                        -> {
+                    if (canSaveDraft) {
+                        editCommentActivityViewModel.saveCommentDraft(mFullName, binding.commentEditTextEditCommentActivity.getText().toString(), () -> {
+                            finish();
+                            return Unit.INSTANCE;
+                        });
+                    } else {
+                        finish();
+                    }
+                })
+                .setNegativeButton(R.string.no, (dialog, which) -> {
+                    if (canSaveDraft) {
+                        finish();
+                    }
+                })
+                .setNeutralButton(R.string.cancel, null)
                 .show();
     }
 
@@ -351,19 +446,6 @@ public class EditCommentActivity extends BaseActivity implements UploadImageEnab
         super.onSaveInstanceState(outState);
         outState.putParcelableArrayList(UPLOADED_IMAGES_STATE, uploadedImages);
         outState.putParcelable(GIPHY_GIF_STATE, giphyGif);
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (isSubmitting) {
-            promptAlertDialog(R.string.exit_when_submit, R.string.exit_when_edit_comment_detail);
-        } else {
-            if (binding.commentEditTextEditCommentActivity.getText().toString().equals(mCommentContent)) {
-                finish();
-            } else {
-                promptAlertDialog(R.string.discard, R.string.discard_detail);
-            }
-        }
     }
 
     @Override

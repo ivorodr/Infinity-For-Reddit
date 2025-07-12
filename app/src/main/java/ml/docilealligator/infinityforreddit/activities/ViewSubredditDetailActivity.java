@@ -28,7 +28,12 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
@@ -197,6 +202,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
     private int unsubscribedColor;
     private int subscribedColor;
     private int fabOption;
+    private int topSystemBarHeight;
     private MaterialAlertDialogBuilder nsfwWarningBuilder;
     private Bitmap subredditIconBitmap;
     private ActivityViewSubredditDetailBinding binding;
@@ -238,7 +244,85 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
                 } else {
                     window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
                 }
-                adjustToolbar(binding.toolbar);
+
+                ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                    @NonNull
+                    @Override
+                    public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                        Insets allInsets = insets.getInsets(
+                                WindowInsetsCompat.Type.systemBars()
+                                        | WindowInsetsCompat.Type.displayCutout()
+                        );
+
+                        topSystemBarHeight = allInsets.top;
+
+                        int padding16 = (int) Utils.convertDpToPixel(16, ViewSubredditDetailActivity.this);
+
+                        if (navigationWrapper.navigationRailView == null) {
+                            if (navigationWrapper.bottomAppBar.getVisibility() != View.VISIBLE) {
+                                setMargins(navigationWrapper.floatingActionButton,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        padding16 + allInsets.right,
+                                        padding16 + allInsets.bottom);
+                            } else {
+                                setMargins(navigationWrapper.floatingActionButton,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        allInsets.bottom);
+                            }
+                        } else {
+                            if (navigationWrapper.navigationRailView.getVisibility() != View.VISIBLE) {
+                                setMargins(navigationWrapper.floatingActionButton,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        padding16 + allInsets.right,
+                                        padding16 + allInsets.bottom);
+
+                                binding.viewPagerViewSubredditDetailActivity.setPadding(allInsets.left, 0, allInsets.right, 0);
+                            } else {
+                                navigationWrapper.navigationRailView.setFitsSystemWindows(false);
+                                navigationWrapper.navigationRailView.setPadding(0, 0, 0, allInsets.bottom);
+
+                                setMargins(navigationWrapper.navigationRailView,
+                                        allInsets.left,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN
+                                );
+
+                                binding.viewPagerViewSubredditDetailActivity.setPadding(0, 0, allInsets.right, 0);
+                            }
+                        }
+
+                        binding.toolbarConstraintLayoutViewSubredditDetailActivity.setPadding(
+                                padding16 + allInsets.left,
+                                binding.toolbarConstraintLayoutViewSubredditDetailActivity.getPaddingTop(),
+                                padding16 + allInsets.right,
+                                binding.toolbarConstraintLayoutViewSubredditDetailActivity.getPaddingBottom());
+
+                        if (navigationWrapper.bottomAppBar != null) {
+                            navigationWrapper.linearLayoutBottomAppBar.setPadding(
+                                    navigationWrapper.linearLayoutBottomAppBar.getPaddingLeft(),
+                                    navigationWrapper.linearLayoutBottomAppBar.getPaddingTop(),
+                                    navigationWrapper.linearLayoutBottomAppBar.getPaddingRight(),
+                                    allInsets.bottom
+                            );
+                        }
+
+                        setMargins(binding.toolbar,
+                                allInsets.left,
+                                allInsets.top,
+                                allInsets.right,
+                                BaseActivity.IGNORE_MARGIN);
+
+                        binding.tabLayoutViewSubredditDetailActivity.setPadding(allInsets.left, 0, allInsets.right, 0);
+
+                        return WindowInsetsCompat.CONSUMED;
+                    }
+                });
+                /*adjustToolbar(binding.toolbar);
 
                 int navBarHeight = getNavBarHeight();
                 if (navBarHeight > 0) {
@@ -247,7 +331,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
                         params.bottomMargin += navBarHeight;
                         navigationWrapper.floatingActionButton.setLayoutParams(params);
                     }
-                }
+                }*/
 
                 showToast = true;
             }
@@ -517,7 +601,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
             @Override
             public void onGlobalLayout() {
                 binding.appbarLayoutViewSubredditDetailActivity.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                binding.collapsingToolbarLayoutViewSubredditDetailActivity.setScrimVisibleHeightTrigger(binding.toolbar.getHeight() + binding.tabLayoutViewSubredditDetailActivity.getHeight() + getStatusBarHeight() * 2);
+                binding.collapsingToolbarLayoutViewSubredditDetailActivity.setScrimVisibleHeightTrigger(binding.toolbar.getHeight() + binding.tabLayoutViewSubredditDetailActivity.getHeight() + topSystemBarHeight * 2);
             }
         });
         applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutViewSubredditDetailActivity,
@@ -553,6 +637,7 @@ public class ViewSubredditDetailActivity extends BaseActivity implements SortTyp
         subscribedColor = mCustomThemeWrapper.getSubscribed();
     }
 
+    @OptIn(markerClass = ExperimentalBadgeUtils.class)
     private void checkNewAccountAndBindView() {
         if (mNewAccountName != null) {
             if (accountName.equals(Account.ANONYMOUS_ACCOUNT) || !accountName.equals(mNewAccountName)) {

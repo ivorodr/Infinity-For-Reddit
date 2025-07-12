@@ -23,6 +23,7 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -32,7 +33,11 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -210,6 +215,7 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
     private int inboxCount;
     private ActivityMainBinding binding;
 
+    @ExperimentalBadgeUtils
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
@@ -253,7 +259,84 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
                 } else {
                     window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
                 }
-                adjustToolbar(binding.includedAppBar.toolbar);
+
+                ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                    @NonNull
+                    @Override
+                    public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                        Insets allInsets = insets.getInsets(
+                                WindowInsetsCompat.Type.systemBars()
+                                        | WindowInsetsCompat.Type.displayCutout()
+                        );
+
+                        binding.navigationViewMainActivity.setPadding(allInsets.left, 0, 0, 0);
+
+                        if (navigationWrapper.navigationRailView == null) {
+                            if (navigationWrapper.bottomAppBar.getVisibility() != View.VISIBLE) {
+                                setMargins(navigationWrapper.floatingActionButton,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        (int) Utils.convertDpToPixel(16, MainActivity.this) + allInsets.right,
+                                        (int) Utils.convertDpToPixel(16, MainActivity.this) + allInsets.bottom);
+                            } else {
+                                setMargins(navigationWrapper.floatingActionButton,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        allInsets.bottom);
+                            }
+                        } else {
+                            if (navigationWrapper.navigationRailView.getVisibility() != View.VISIBLE) {
+                                setMargins(navigationWrapper.floatingActionButton,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        (int) Utils.convertDpToPixel(16, MainActivity.this) + allInsets.right,
+                                        (int) Utils.convertDpToPixel(16, MainActivity.this) + allInsets.bottom);
+
+                                binding.includedAppBar.viewPagerMainActivity.setPadding(allInsets.left, 0, allInsets.right, 0);
+                            } else {
+                                navigationWrapper.navigationRailView.setFitsSystemWindows(false);
+                                navigationWrapper.navigationRailView.setPadding(0, 0, 0, allInsets.bottom);
+
+                                setMargins(navigationWrapper.navigationRailView,
+                                        allInsets.left,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN,
+                                        BaseActivity.IGNORE_MARGIN
+                                );
+
+                                binding.includedAppBar.viewPagerMainActivity.setPadding(0, 0, allInsets.right, 0);
+                            }
+                        }
+
+                        if (navigationWrapper.bottomAppBar != null) {
+                            navigationWrapper.linearLayoutBottomAppBar.setPadding(
+                                    navigationWrapper.linearLayoutBottomAppBar.getPaddingLeft(),
+                                    navigationWrapper.linearLayoutBottomAppBar.getPaddingTop(),
+                                    navigationWrapper.linearLayoutBottomAppBar.getPaddingRight(),
+                                    allInsets.bottom
+                            );
+                        }
+
+                        setMargins(binding.includedAppBar.toolbar,
+                                allInsets.left,
+                                allInsets.top,
+                                allInsets.right,
+                                BaseActivity.IGNORE_MARGIN);
+
+                        setMargins(binding.includedAppBar.tabLayoutMainActivity,
+                                allInsets.left,
+                                BaseActivity.IGNORE_MARGIN,
+                                allInsets.right,
+                                BaseActivity.IGNORE_MARGIN);
+
+                        binding.navDrawerRecyclerViewMainActivity.setPadding(0, 0, 0, allInsets.bottom);
+
+                        return WindowInsetsCompat.CONSUMED;
+                    }
+                });
+
+                /*adjustToolbar(binding.includedAppBar.toolbar);
 
                 int navBarHeight = getNavBarHeight();
                 if (navBarHeight > 0) {
@@ -267,7 +350,7 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
                                 navigationWrapper.linearLayoutBottomAppBar.getPaddingTop(), navigationWrapper.linearLayoutBottomAppBar.getPaddingRight(), navBarHeight);
                     }
                     binding.navDrawerRecyclerViewMainActivity.setPadding(0, 0, 0, navBarHeight);
-                }
+                }*/
             } else {
                 binding.drawerLayout.setStatusBarBackgroundColor(mCustomThemeWrapper.getColorPrimaryDark());
             }
@@ -316,6 +399,32 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
             fragment.show(getSupportFragmentManager(), fragment.getTag());
         }*/
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (binding.drawerLayout.isOpen()) {
+                    binding.drawerLayout.close();
+                } else {
+                    if (mBackButtonAction == SharedPreferencesUtils.MAIN_PAGE_BACK_BUTTON_ACTION_CONFIRM_EXIT) {
+                        new MaterialAlertDialogBuilder(MainActivity.this, R.style.MaterialAlertDialogTheme)
+                                .setTitle(R.string.exit_app)
+                                .setPositiveButton(R.string.yes, (dialogInterface, i)
+                                        -> {
+                                    setEnabled(false);
+                                    triggerBackPress();
+                                })
+                                .setNegativeButton(R.string.no, null)
+                                .show();
+                    } else if (mBackButtonAction == SharedPreferencesUtils.MAIN_PAGE_BACK_BUTTON_ACTION_OPEN_NAVIGATION_DRAWER) {
+                        binding.drawerLayout.open();
+                    } else {
+                        setEnabled(false);
+                        triggerBackPress();
+                    }
+                }
+            }
+        });
+
         initializeNotificationAndBindView();
     }
 
@@ -345,6 +454,7 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
         applyFABTheme(navigationWrapper.floatingActionButton);
     }
 
+    @ExperimentalBadgeUtils
     private void initializeNotificationAndBindView() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityResultLauncher<String> requestNotificationPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), result -> mInternalSharedPreferences.edit().putBoolean(SharedPreferencesUtils.HAS_REQUESTED_NOTIFICATION_PERMISSION, true).apply());
@@ -973,7 +1083,7 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
         });
 
         accountViewModel = new ViewModelProvider(this,
-                new AccountViewModel.Factory(mRedditDataRoomDatabase)).get(AccountViewModel.class);
+                new AccountViewModel.Factory(mExecutor, mRedditDataRoomDatabase)).get(AccountViewModel.class);
         accountViewModel.getAccountsExceptCurrentAccountLiveData().observe(this, adapter::changeAccountsDataset);
         accountViewModel.getCurrentAccountLiveData().observe(this, account -> {
             if (account != null) {
@@ -1069,7 +1179,7 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
         }
 
         if (!accountName.equals(Account.ANONYMOUS_ACCOUNT) && !mFetchSubscriptionsSuccess) {
-            FetchSubscribedThing.fetchSubscribedThing(mOauthRetrofit, accessToken, accountName, null,
+            FetchSubscribedThing.fetchSubscribedThing(mExecutor, mHandler, mOauthRetrofit, accessToken, accountName, null,
                     new ArrayList<>(), new ArrayList<>(),
                     new ArrayList<>(),
                     new FetchSubscribedThing.FetchSubscribedThingListener() {
@@ -1099,7 +1209,7 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
 
     private void loadUserData() {
         if (!mFetchUserInfoSuccess) {
-            FetchUserData.fetchUserData(mRedditDataRoomDatabase, mOauthRetrofit, accessToken,
+            FetchUserData.fetchUserData(mExecutor, mHandler, mRedditDataRoomDatabase, mOauthRetrofit, accessToken,
                     accountName, new FetchUserData.FetchUserDataListener() {
                         @ExperimentalBadgeUtils
                         @Override
@@ -1137,9 +1247,7 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
         if (adapter != null) {
             adapter.setInboxCount(inboxCount);
         }
-        mHandler.post(() -> {
-            navigationWrapper.setInboxCount(this, inboxCount);
-        });
+        mHandler.post(() -> navigationWrapper.setInboxCount(this, inboxCount));
     }
 
     @Override
@@ -1179,26 +1287,6 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
             return true;
         }
         return false;
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (binding.drawerLayout.isOpen()) {
-            binding.drawerLayout.close();
-        } else {
-            if (mBackButtonAction == SharedPreferencesUtils.MAIN_PAGE_BACK_BUTTON_ACTION_CONFIRM_EXIT) {
-                new MaterialAlertDialogBuilder(this, R.style.MaterialAlertDialogTheme)
-                        .setTitle(R.string.exit_app)
-                        .setPositiveButton(R.string.yes, (dialogInterface, i)
-                                -> finish())
-                        .setNegativeButton(R.string.no, null)
-                        .show();
-            } else if (mBackButtonAction == SharedPreferencesUtils.MAIN_PAGE_BACK_BUTTON_ACTION_OPEN_NAVIGATION_DRAWER) {
-                binding.drawerLayout.open();
-            } else {
-                super.onBackPressed();
-            }
-        }
     }
 
     @Override

@@ -10,15 +10,16 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -54,6 +55,7 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.loadingindicator.LoadingIndicator;
 import com.google.common.collect.ImmutableList;
 import com.libRG.CustomTextView;
 
@@ -83,7 +85,7 @@ import ml.docilealligator.infinityforreddit.activities.ViewVideoActivity;
 import ml.docilealligator.infinityforreddit.apis.RedgifsAPI;
 import ml.docilealligator.infinityforreddit.apis.StreamableAPI;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.PostOptionsBottomSheetFragment;
-import ml.docilealligator.infinityforreddit.bottomsheetfragments.ShareLinkBottomSheetFragment;
+import ml.docilealligator.infinityforreddit.bottomsheetfragments.ShareBottomSheetFragment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.customviews.AspectRatioGifImageView;
 import ml.docilealligator.infinityforreddit.customviews.LinearLayoutManagerBugFixed;
@@ -182,6 +184,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
     private RequestManager mGlide;
     private int mMaxResolution;
     private SaveMemoryCenterInisdeDownsampleStrategy mSaveMemoryCenterInsideDownsampleStrategy;
+    private CustomThemeWrapper mCustomThemeWrapper;
     private Locale mLocale;
     private boolean canStartActivity = true;
     private int mPostType;
@@ -255,6 +258,8 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
     private boolean mFixedHeightPreviewInCard;
     private boolean mHideTextPostContent;
     private boolean mEasierToWatchInFullScreen;
+    private String mLongPressPostNonMediaAreaAction = SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS;
+    private String mLongPressPostMediaAction = SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS;
     private boolean mHandleReadPost;
     private ExoCreator mExoCreator;
     private Callback mCallback;
@@ -383,6 +388,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             mGlide = Glide.with(mActivity);
             mMaxResolution = Integer.parseInt(mSharedPreferences.getString(SharedPreferencesUtils.POST_FEED_MAX_RESOLUTION, "5000000"));
             mSaveMemoryCenterInsideDownsampleStrategy = new SaveMemoryCenterInisdeDownsampleStrategy(mMaxResolution);
+            mCustomThemeWrapper = customThemeWrapper;
             mLocale = locale;
             mExoCreator = exoCreator;
             mCallback = callback;
@@ -1036,7 +1042,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                     }
                     if (post.getPreviews() != null && !post.getPreviews().isEmpty()) {
                         ((PostCompactBaseViewHolder) holder).imageView.setVisibility(View.VISIBLE);
-                        ((PostCompactBaseViewHolder) holder).progressBar.setVisibility(View.VISIBLE);
+                        ((PostCompactBaseViewHolder) holder).loadingIndicator.setVisibility(View.VISIBLE);
                         loadImage(holder);
                     }
                 }
@@ -1347,7 +1353,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
 
     private void loadImage(final RecyclerView.ViewHolder holder) {
         if (holder instanceof PostWithPreviewTypeViewHolder) {
-            ((PostWithPreviewTypeViewHolder) holder).progressBar.setVisibility(View.VISIBLE);
+            ((PostWithPreviewTypeViewHolder) holder).loadingIndicator.setVisibility(View.VISIBLE);
             Post post = ((PostWithPreviewTypeViewHolder) holder).post;
             Post.Preview preview = ((PostWithPreviewTypeViewHolder) holder).preview;
             if (preview != null) {
@@ -1412,24 +1418,25 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
 
     private void shareLink(Post post) {
         Bundle bundle = new Bundle();
-        bundle.putString(ShareLinkBottomSheetFragment.EXTRA_POST_LINK, post.getPermalink());
+        bundle.putString(ShareBottomSheetFragment.EXTRA_POST_LINK, post.getPermalink());
         if (post.getPostType() != Post.TEXT_TYPE) {
-            bundle.putInt(ShareLinkBottomSheetFragment.EXTRA_MEDIA_TYPE, post.getPostType());
+            bundle.putInt(ShareBottomSheetFragment.EXTRA_MEDIA_TYPE, post.getPostType());
             switch (post.getPostType()) {
                 case Post.IMAGE_TYPE:
                 case Post.GIF_TYPE:
                 case Post.LINK_TYPE:
                 case Post.NO_PREVIEW_LINK_TYPE:
-                    bundle.putString(ShareLinkBottomSheetFragment.EXTRA_MEDIA_LINK, post.getUrl());
+                    bundle.putString(ShareBottomSheetFragment.EXTRA_MEDIA_LINK, post.getUrl());
                     break;
                 case Post.VIDEO_TYPE:
-                    bundle.putString(ShareLinkBottomSheetFragment.EXTRA_MEDIA_LINK, post.getVideoDownloadUrl());
+                    bundle.putString(ShareBottomSheetFragment.EXTRA_MEDIA_LINK, post.getVideoDownloadUrl());
                     break;
             }
         }
-        ShareLinkBottomSheetFragment shareLinkBottomSheetFragment = new ShareLinkBottomSheetFragment();
-        shareLinkBottomSheetFragment.setArguments(bundle);
-        shareLinkBottomSheetFragment.show(mActivity.getSupportFragmentManager(), shareLinkBottomSheetFragment.getTag());
+        bundle.putParcelable(ShareBottomSheetFragment.EXTRA_POST, post);
+        ShareBottomSheetFragment shareBottomSheetFragment = new ShareBottomSheetFragment();
+        shareBottomSheetFragment.setArguments(bundle);
+        shareBottomSheetFragment.show(mActivity.getSupportFragmentManager(), shareBottomSheetFragment.getTag());
     }
 
     @Nullable
@@ -1565,6 +1572,14 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
         this.mEasierToWatchInFullScreen = easierToWatchInFullScreen;
     }
 
+    public void setLongPressPostNonMediaAreaAction(String value) {
+        mLongPressPostNonMediaAreaAction = value;
+    }
+
+    public void setLongPressPostMediaAction(String value) {
+        mLongPressPostMediaAction = value;
+    }
+
     @OptIn(markerClass = UnstableApi.class)
     @Override
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
@@ -1633,7 +1648,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                     ((PostWithPreviewTypeViewHolder) holder).imageView.setVisibility(View.GONE);
                     ((PostWithPreviewTypeViewHolder) holder).loadImageErrorTextView.setVisibility(View.GONE);
                     ((PostWithPreviewTypeViewHolder) holder).imageViewNoPreviewGallery.setVisibility(View.GONE);
-                    ((PostWithPreviewTypeViewHolder) holder).progressBar.setVisibility(View.GONE);
+                    ((PostWithPreviewTypeViewHolder) holder).loadingIndicator.setVisibility(View.GONE);
                     ((PostWithPreviewTypeViewHolder) holder).videoOrGifIndicator.setVisibility(View.GONE);
                     ((PostWithPreviewTypeViewHolder) holder).linkTextView.setVisibility(View.GONE);
                 } else if (holder instanceof PostBaseGalleryTypeViewHolder) {
@@ -1651,7 +1666,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 if (((PostCompactBaseViewHolder) holder).linkTextView != null) {
                     ((PostCompactBaseViewHolder) holder).linkTextView.setVisibility(View.GONE);
                 }
-                ((PostCompactBaseViewHolder) holder).progressBar.setVisibility(View.GONE);
+                ((PostCompactBaseViewHolder) holder).loadingIndicator.setVisibility(View.GONE);
                 ((PostCompactBaseViewHolder) holder).imageView.setVisibility(View.GONE);
                 ((PostCompactBaseViewHolder) holder).playButtonImageView.setVisibility(View.GONE);
                 ((PostCompactBaseViewHolder) holder).noPreviewPostImageFrameLayout.setVisibility(View.GONE);
@@ -1764,21 +1779,29 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
     }
 
     private void openMedia(Post post) {
-        openMedia(post, 0);
+        openMedia(post, 0, false);
     }
 
-    private void openMedia(Post post, int galleryItemIndex) {
-        openMedia(post, galleryItemIndex, -1);
+    private void openMedia(Post post, boolean peekMedia) {
+        openMedia(post, 0, peekMedia);
+    }
+
+    private void openMedia(Post post, int galleryItemIndex, boolean peekMedia) {
+        openMedia(post, galleryItemIndex, -1, peekMedia);
     }
 
     private void openMedia(Post post, long videoProgress) {
-        openMedia(post, 0, videoProgress);
+        openMedia(post, 0, videoProgress, false);
     }
 
-    private void openMedia(Post post, int galleryItemIndex, long videoProgress) {
+    private void openMedia(Post post, int galleryItemIndex, long videoProgress, boolean peekMedia) {
         if (canStartActivity) {
             canStartActivity = false;
             if (post.getPostType() == Post.VIDEO_TYPE) {
+                if (peekMedia) {
+                    mActivity.setShouldTrackFullscreenMediaPeekTouchEvent(true);
+                }
+
                 Intent intent = new Intent(mActivity, ViewVideoActivity.class);
                 if (post.isImgur()) {
                     intent.setData(Uri.parse(post.getVideoUrl()));
@@ -1810,6 +1833,10 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 intent.putExtra(ViewVideoActivity.EXTRA_IS_NSFW, post.isNSFW());
                 mActivity.startActivity(intent);
             } else if (post.getPostType() == Post.IMAGE_TYPE) {
+                if (peekMedia) {
+                    mActivity.setShouldTrackFullscreenMediaPeekTouchEvent(true);
+                }
+
                 Intent intent = new Intent(mActivity, ViewImageOrGifActivity.class);
                 intent.putExtra(ViewImageOrGifActivity.EXTRA_IMAGE_URL_KEY, post.getUrl());
                 intent.putExtra(ViewImageOrGifActivity.EXTRA_FILE_NAME_KEY, post.getSubredditName()
@@ -1819,6 +1846,10 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 intent.putExtra(ViewImageOrGifActivity.EXTRA_IS_NSFW, post.isNSFW());
                 mActivity.startActivity(intent);
             } else if (post.getPostType() == Post.GIF_TYPE) {
+                if (peekMedia) {
+                    mActivity.setShouldTrackFullscreenMediaPeekTouchEvent(true);
+                }
+
                 if (post.getMp4Variant() != null) {
                     Intent intent = new Intent(mActivity, ViewVideoActivity.class);
                     intent.setData(Uri.parse(post.getMp4Variant()));
@@ -1840,12 +1871,20 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                     mActivity.startActivity(intent);
                 }
             } else if (post.getPostType() == Post.LINK_TYPE || post.getPostType() == Post.NO_PREVIEW_LINK_TYPE) {
-                Intent intent = new Intent(mActivity, LinkResolverActivity.class);
-                Uri uri = Uri.parse(post.getUrl());
-                intent.setData(uri);
-                intent.putExtra(LinkResolverActivity.EXTRA_IS_NSFW, post.isNSFW());
-                mActivity.startActivity(intent);
+                if (peekMedia) {
+                    canStartActivity = true;
+                } else {
+                    Intent intent = new Intent(mActivity, LinkResolverActivity.class);
+                    Uri uri = Uri.parse(post.getUrl());
+                    intent.setData(uri);
+                    intent.putExtra(LinkResolverActivity.EXTRA_IS_NSFW, post.isNSFW());
+                    mActivity.startActivity(intent);
+                }
             } else if (post.getPostType() == Post.GALLERY_TYPE) {
+                if (peekMedia) {
+                    mActivity.setShouldTrackFullscreenMediaPeekTouchEvent(true);
+                }
+
                 Intent intent = new Intent(mActivity, ViewRedditGalleryActivity.class);
                 intent.putExtra(ViewRedditGalleryActivity.EXTRA_POST, post);
                 intent.putExtra(ViewRedditGalleryActivity.EXTRA_GALLERY_ITEM_INDEX, galleryItemIndex);
@@ -2934,21 +2973,30 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
 
             itemView.setOnLongClickListener(v -> {
                 Post post = getItem(getBindingAdapterPosition());
-                if (post == null) {
+                if (post == null || mLongPressPostNonMediaAreaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_NONE)) {
                     return false;
                 }
 
-                PostOptionsBottomSheetFragment postOptionsBottomSheetFragment;
-                if (post.getPostType() == Post.GALLERY_TYPE && this instanceof PostBaseGalleryTypeViewHolder) {
-                    postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(post,
-                            getBindingAdapterPosition(),
-                            ((LinearLayoutManagerBugFixed) ((PostBaseGalleryTypeViewHolder) this).galleryRecyclerView.getLayoutManager()).findFirstVisibleItemPosition());
-                } else {
-                    postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(post, getBindingAdapterPosition());
+                if (mLongPressPostNonMediaAreaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS)) {
+                    showPostOptions();
+                } else if (mLongPressPostNonMediaAreaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_PREVIEW_IN_FULLSCREEN)) {
+                    markPostRead(post, true);
+                    openMedia(post, true);
                 }
-                postOptionsBottomSheetFragment.show(mActivity.getSupportFragmentManager(), postOptionsBottomSheetFragment.getTag());
                 return true;
             });
+        }
+
+        void showPostOptions() {
+            PostOptionsBottomSheetFragment postOptionsBottomSheetFragment;
+            if (post.getPostType() == Post.GALLERY_TYPE && this instanceof PostBaseGalleryTypeViewHolder) {
+                postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(post,
+                        getBindingAdapterPosition(),
+                        ((LinearLayoutManagerBugFixed) ((PostBaseGalleryTypeViewHolder) this).galleryRecyclerView.getLayoutManager()).findFirstVisibleItemPosition());
+            } else {
+                postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(post, getBindingAdapterPosition());
+            }
+            postOptionsBottomSheetFragment.show(mFragment.getChildFragmentManager(), postOptionsBottomSheetFragment.getTag());
         }
 
         @Override
@@ -3078,11 +3126,13 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
         @Override
         public void play() {
             toroPlayer.play();
+            mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
 
         @Override
         public void pause() {
             toroPlayer.pause();
+            mActivity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
 
         @Override
@@ -3189,7 +3239,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
     class PostWithPreviewTypeViewHolder extends PostBaseViewHolder {
         TextView linkTextView;
         ImageView imageViewNoPreviewGallery;
-        ProgressBar progressBar;
+        LoadingIndicator loadingIndicator;
         ImageView videoOrGifIndicator;
         TextView loadImageErrorTextView;
         @Nullable
@@ -3255,7 +3305,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                          MaterialButton shareButton,
                          TextView linkTextView,
                          ImageView imageViewNoPreviewGallery,
-                         ProgressBar progressBar,
+                         LoadingIndicator loadingIndicator,
                          ImageView videoOrGifIndicator,
                          TextView loadImageErrorTextView,
                          @Nullable FrameLayout imageWrapperFrameLayout,
@@ -3284,7 +3334,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
 
             this.linkTextView = linkTextView;
             this.imageViewNoPreviewGallery = imageViewNoPreviewGallery;
-            this.progressBar = progressBar;
+            this.loadingIndicator = loadingIndicator;
             this.videoOrGifIndicator = videoOrGifIndicator;
             this.loadImageErrorTextView = loadImageErrorTextView;
             this.imageWrapperFrameLayout = imageWrapperFrameLayout;
@@ -3297,7 +3347,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             linkTextView.setTextColor(mSecondaryTextColor);
             imageViewNoPreviewGallery.setBackgroundColor(mNoPreviewPostTypeBackgroundColor);
             imageViewNoPreviewGallery.setColorFilter(mNoPreviewPostTypeIconTint, android.graphics.PorterDuff.Mode.SRC_IN);
-            progressBar.setIndeterminateTintList(ColorStateList.valueOf(mColorAccent));
+            loadingIndicator.setIndicatorColor(mColorAccent);
             videoOrGifIndicator.setColorFilter(mMediaIndicatorIconTint, PorterDuff.Mode.SRC_IN);
             videoOrGifIndicator.setBackgroundTintList(ColorStateList.valueOf(mMediaIndicatorBackgroundColor));
             loadImageErrorTextView.setTextColor(mPrimaryTextColor);
@@ -3314,10 +3364,20 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 }
             });
 
-            imageView.setOnLongClickListener(view -> itemView.performLongClick());
+            imageView.setOnLongClickListener(view -> {
+                if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS)) {
+                    showPostOptions();
+                    return true;
+                } else if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_PREVIEW_IN_FULLSCREEN)) {
+                    markPostRead(post, true);
+                    openMedia(post, true);
+                    return true;
+                }
+                return false;
+            });
 
             loadImageErrorTextView.setOnClickListener(view -> {
-                progressBar.setVisibility(View.VISIBLE);
+                loadingIndicator.setVisibility(View.VISIBLE);
                 loadImageErrorTextView.setVisibility(View.GONE);
                 loadImage(this);
             });
@@ -3326,12 +3386,12 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 imageView.performClick();
             });
 
-            imageViewNoPreviewGallery.setOnLongClickListener(view -> itemView.performLongClick());
+            imageViewNoPreviewGallery.setOnLongClickListener(view -> imageView.performLongClick());
 
             glideRequestListener = new RequestListener<>() {
                 @Override
                 public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                    progressBar.setVisibility(View.GONE);
+                    loadingIndicator.setVisibility(View.GONE);
                     loadImageErrorTextView.setVisibility(View.VISIBLE);
                     return false;
                 }
@@ -3339,7 +3399,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 @Override
                 public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
                     loadImageErrorTextView.setVisibility(View.GONE);
-                    progressBar.setVisibility(View.GONE);
+                    loadingIndicator.setVisibility(View.GONE);
                     return false;
                 }
             };
@@ -3476,8 +3536,16 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
 
                             if (!dragged && !longPressed) {
                                 if (System.currentTimeMillis() - downTime >= longClickThreshold) {
-                                    itemView.performLongClick();
-                                    longPressed = true;
+                                    if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS)) {
+                                        galleryRecyclerView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                                        showPostOptions();
+                                        longPressed = true;
+                                    } else if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_PREVIEW_IN_FULLSCREEN)) {
+                                        galleryRecyclerView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                                        markPostRead(post, true);
+                                        openMedia(post, layoutManager.findFirstVisibleItemPosition(), true);
+                                        longPressed = true;
+                                    }
                                 }
                             }
 
@@ -3544,7 +3612,17 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 }
             });
 
-            noPreviewImageView.setOnLongClickListener(view -> itemView.performLongClick());
+            noPreviewImageView.setOnLongClickListener(view -> {
+                if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS)) {
+                    showPostOptions();
+                    return true;
+                } else if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_PREVIEW_IN_FULLSCREEN)) {
+                    markPostRead(post, true);
+                    openMedia(post, layoutManager.findFirstVisibleItemPosition(), true);
+                    return true;
+                }
+                return false;
+            });
         }
 
         public boolean isSwipeLocked() {
@@ -3682,7 +3760,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
         TextView nameTextView;
         @Nullable TextView linkTextView;
         RelativeLayout relativeLayout;
-        ProgressBar progressBar;
+        LoadingIndicator loadingIndicator;
         ImageView imageView;
         ImageView playButtonImageView;
         FrameLayout noPreviewPostImageFrameLayout;
@@ -3709,7 +3787,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                          @Nullable CustomTextView flairTextView,
                          @Nullable TextView linkTextView,
                          RelativeLayout relativeLayout,
-                         ProgressBar progressBar,
+                         LoadingIndicator loadingIndicator,
                          ImageView imageView,
                          ImageView playButtonImageView,
                          FrameLayout noPreviewLinkImageFrameLayout,
@@ -3744,7 +3822,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             this.nameTextView = nameTextView;
             this.linkTextView = linkTextView;
             this.relativeLayout = relativeLayout;
-            this.progressBar = progressBar;
+            this.loadingIndicator = loadingIndicator;
             this.imageView = imageView;
             this.playButtonImageView = playButtonImageView;
             this.noPreviewPostImageFrameLayout = noPreviewLinkImageFrameLayout;
@@ -3843,7 +3921,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             }
             playButtonImageView.setColorFilter(mMediaIndicatorIconTint, PorterDuff.Mode.SRC_IN);
             playButtonImageView.setBackgroundTintList(ColorStateList.valueOf(mMediaIndicatorBackgroundColor));
-            progressBar.setIndeterminateTintList(ColorStateList.valueOf(mColorAccent));
+            loadingIndicator.setIndicatorColor(mColorAccent);
             noPreviewLinkImageView.setBackgroundColor(mNoPreviewPostTypeBackgroundColor);
             noPreviewLinkImageView.setColorFilter(mNoPreviewPostTypeIconTint, android.graphics.PorterDuff.Mode.SRC_IN);
             upvoteButton.setIconTint(ColorStateList.valueOf(mPostIconAndInfoColor));
@@ -3877,17 +3955,16 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                         params.height = 0;
                         bottomConstraintLayout.setLayoutParams(params);
                     }
-                } else {
-                    Post post = getItem(getBindingAdapterPosition());
-                    if (post == null) {
-                        return false;
-                    }
-
-                    PostOptionsBottomSheetFragment postOptionsBottomSheetFragment;
-                    postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(post, getBindingAdapterPosition());
-                    postOptionsBottomSheetFragment.show(mActivity.getSupportFragmentManager(), postOptionsBottomSheetFragment.getTag());
+                    return true;
+                } else if (mLongPressPostNonMediaAreaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS)) {
+                    showPostOptions();
+                    return true;
+                } else if (mLongPressPostNonMediaAreaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_PREVIEW_IN_FULLSCREEN)) {
+                    markPostRead(post, true);
+                    openMedia(post, true);
+                    return true;
                 }
-                return true;
+                return false;
             });
 
             imageView.setOnClickListener(view -> {
@@ -3902,23 +3979,48 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 }
             });
 
+            imageView.setOnLongClickListener(v -> {
+                if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS)) {
+                    showPostOptions();
+                    return true;
+                } else if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_PREVIEW_IN_FULLSCREEN)) {
+                    markPostRead(post, true);
+                    openMedia(post, true);
+                    return true;
+                }
+                return false;
+            });
+
             noPreviewLinkImageFrameLayout.setOnClickListener(view -> {
                 imageView.performClick();
             });
 
+            noPreviewLinkImageFrameLayout.setOnLongClickListener(view -> imageView.performLongClick());
+
             requestListener = new RequestListener<>() {
                 @Override
                 public boolean onLoadFailed(@Nullable GlideException e, Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
-                    progressBar.setVisibility(View.GONE);
+                    loadingIndicator.setVisibility(View.GONE);
                     return false;
                 }
 
                 @Override
                 public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                    progressBar.setVisibility(View.GONE);
+                    loadingIndicator.setVisibility(View.GONE);
                     return false;
                 }
             };
+        }
+
+        void showPostOptions() {
+            Post post = getItem(getBindingAdapterPosition());
+            if (post == null) {
+                return;
+            }
+
+            PostOptionsBottomSheetFragment postOptionsBottomSheetFragment;
+            postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(post, getBindingAdapterPosition());
+            postOptionsBottomSheetFragment.show(mFragment.getChildFragmentManager(), postOptionsBottomSheetFragment.getTag());
         }
 
         @Override
@@ -4103,7 +4205,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             }
             itemView.setBackgroundTintList(ColorStateList.valueOf(mCardViewBackgroundColor));
             binding.titleTextViewItemPostGallery.setTextColor(mPostTitleColor);
-            binding.progressBarItemPostGallery.setIndeterminateTintList(ColorStateList.valueOf(mColorAccent));
+            binding.progressBarItemPostGallery.setIndicatorColor(mColorAccent);
             binding.imageViewNoPreviewItemPostGallery.setBackgroundColor(mNoPreviewPostTypeBackgroundColor);
             binding.imageViewNoPreviewItemPostGallery.setColorFilter(mNoPreviewPostTypeIconTint, android.graphics.PorterDuff.Mode.SRC_IN);
             binding.videoOrGifIndicatorImageViewItemPostGallery.setColorFilter(mMediaIndicatorIconTint, PorterDuff.Mode.SRC_IN);
@@ -4597,7 +4699,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
     }
 
     @UnstableApi
-    class PostMaterial3CardVideoAutoplayViewHolder extends PostBaseVideoAutoplayViewHolder {
+    public class PostMaterial3CardVideoAutoplayViewHolder extends PostBaseVideoAutoplayViewHolder {
         PostMaterial3CardVideoAutoplayViewHolder(ItemPostCard3VideoTypeAutoplayBinding binding) {
             super(binding.getRoot(),
                     binding.iconGifImageViewItemPostCard3VideoTypeAutoplay,
@@ -4637,7 +4739,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
     }
 
     @UnstableApi
-    class PostMaterial3CardVideoAutoplayLegacyControllerViewHolder extends PostBaseVideoAutoplayViewHolder {
+    public class PostMaterial3CardVideoAutoplayLegacyControllerViewHolder extends PostBaseVideoAutoplayViewHolder {
         PostMaterial3CardVideoAutoplayLegacyControllerViewHolder(ItemPostCard3VideoTypeAutoplayLegacyControllerBinding binding) {
             super(binding.getRoot(),
                     binding.iconGifImageViewItemPostCard3VideoTypeAutoplay,
@@ -4749,7 +4851,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
         }
     }
 
-    class PostMaterial3CardTextTypeViewHolder extends PostTextTypeViewHolder {
+    public class PostMaterial3CardTextTypeViewHolder extends PostTextTypeViewHolder {
         PostMaterial3CardTextTypeViewHolder(@NonNull ItemPostCard3TextBinding binding) {
             super(binding.getRoot());
             setBaseView(
