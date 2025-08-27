@@ -572,7 +572,7 @@ public class CommentsRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerVi
                     ((CommentBaseViewHolder) holder).downvoteButton.setIconTint(ColorStateList.valueOf(mVoteAndReplyUnavailableVoteButtonColor));
                 }
 
-                if (mPost.isLocked()) {
+                if (mPost.isLocked() || comment.isLocked()) {
                     ((CommentBaseViewHolder) holder).replyButton.setIconTint(ColorStateList.valueOf(mVoteAndReplyUnavailableVoteButtonColor));
                 }
 
@@ -1137,6 +1137,40 @@ public class CommentsRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerVi
         //TODO The comment's position may change
     }
 
+    public void updateModdedStatus(Comment comment, int position) {
+        Comment originalComment = getCurrentComment(position);
+        if (originalComment != null && originalComment.getFullName().equals(comment.getFullName())) {
+            originalComment.setApproved(comment.isApproved());
+            originalComment.setApprovedAtUTC(comment.getApprovedAtUTC());
+            originalComment.setApprovedBy(comment.getApprovedBy());
+            originalComment.setRemoved(comment.isRemoved(), comment.isSpam());
+            originalComment.setLocked(comment.isLocked());
+
+            if (mIsSingleCommentThreadMode) {
+                notifyItemChanged(position + 1);
+            } else {
+                notifyItemChanged(position);
+            }
+        } else {
+            for (int i = 0; i < mVisibleComments.size(); i++) {
+                Comment currentComment = mVisibleComments.get(i);
+                if (currentComment.getFullName().equals(comment.getFullName()) && currentComment.getPlaceholderType() == comment.getPlaceholderType()) {
+                    currentComment.setApproved(comment.isApproved());
+                    currentComment.setApprovedAtUTC(comment.getApprovedAtUTC());
+                    currentComment.setApprovedBy(comment.getApprovedBy());
+                    currentComment.setRemoved(comment.isRemoved(), comment.isSpam());
+                    currentComment.setLocked(comment.isLocked());
+
+                    if (mIsSingleCommentThreadMode) {
+                        notifyItemChanged(i + 1);
+                    } else {
+                        notifyItemChanged(i);
+                    }
+                }
+            }
+        }
+    }
+
     public int getNextParentCommentPosition(int currentPosition) {
         if (mVisibleComments != null && !mVisibleComments.isEmpty()) {
             if (mIsSingleCommentThreadMode) {
@@ -1482,7 +1516,7 @@ public class CommentsRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerVi
                     }
                     CommentMoreBottomSheetFragment commentMoreBottomSheetFragment = new CommentMoreBottomSheetFragment();
                     commentMoreBottomSheetFragment.setArguments(bundle);
-                    commentMoreBottomSheetFragment.show(mActivity.getSupportFragmentManager(), commentMoreBottomSheetFragment.getTag());
+                    commentMoreBottomSheetFragment.show(mFragment.getChildFragmentManager(), commentMoreBottomSheetFragment.getTag());
                 }
             });
 
@@ -1504,6 +1538,11 @@ public class CommentsRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerVi
 
                 Comment comment = getCurrentComment(this);
                 if (comment != null) {
+                    if (comment.isLocked()) {
+                        Toast.makeText(mActivity, R.string.locked_comment_reply_unavailable, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
                     Intent intent = new Intent(mActivity, CommentActivity.class);
                     intent.putExtra(CommentActivity.EXTRA_PARENT_DEPTH_KEY, comment.getDepth() + 1);
                     intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_BODY_MARKDOWN_KEY, comment.getCommentMarkdown());

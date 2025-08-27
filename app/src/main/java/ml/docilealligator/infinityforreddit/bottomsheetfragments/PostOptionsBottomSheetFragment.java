@@ -34,6 +34,7 @@ import ml.docilealligator.infinityforreddit.post.HidePost;
 import ml.docilealligator.infinityforreddit.post.Post;
 import ml.docilealligator.infinityforreddit.services.DownloadMediaService;
 import ml.docilealligator.infinityforreddit.services.DownloadRedditVideoService;
+import ml.docilealligator.infinityforreddit.utils.Utils;
 import retrofit2.Retrofit;
 
 /**
@@ -200,19 +201,23 @@ public class PostOptionsBottomSheetFragment extends LandscapeExpandedRoundedBott
                 binding.crosspostTextViewPostOptionsBottomSheetFragment.setVisibility(View.GONE);
                 binding.reportTextViewPostOptionsBottomSheetFragment.setVisibility(View.GONE);
             } else {
-                binding.commentTextViewPostOptionsBottomSheetFragment.setOnClickListener(view -> {
-                    Intent intent = new Intent(mBaseActivity, CommentActivity.class);
-                    intent.putExtra(CommentActivity.EXTRA_PARENT_FULLNAME_KEY, mPost.getFullName());
-                    intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_TITLE_KEY, mPost.getTitle());
-                    intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_BODY_MARKDOWN_KEY, mPost.getSelfText());
-                    intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_BODY_KEY, mPost.getSelfTextPlain());
-                    intent.putExtra(CommentActivity.EXTRA_SUBREDDIT_NAME_KEY, mPost.getSubredditName());
-                    intent.putExtra(CommentActivity.EXTRA_IS_REPLYING_KEY, false);
-                    intent.putExtra(CommentActivity.EXTRA_PARENT_DEPTH_KEY, 0);
-                    mBaseActivity.startActivity(intent);
+                if (mPost.isLocked() || mPost.isArchived()) {
+                    binding.commentTextViewPostOptionsBottomSheetFragment.setVisibility(View.GONE);
+                } else {
+                    binding.commentTextViewPostOptionsBottomSheetFragment.setOnClickListener(view -> {
+                        Intent intent = new Intent(mBaseActivity, CommentActivity.class);
+                        intent.putExtra(CommentActivity.EXTRA_PARENT_FULLNAME_KEY, mPost.getFullName());
+                        intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_TITLE_KEY, mPost.getTitle());
+                        intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_BODY_MARKDOWN_KEY, mPost.getSelfText());
+                        intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_BODY_KEY, mPost.getSelfTextPlain());
+                        intent.putExtra(CommentActivity.EXTRA_SUBREDDIT_NAME_KEY, mPost.getSubredditName());
+                        intent.putExtra(CommentActivity.EXTRA_IS_REPLYING_KEY, false);
+                        intent.putExtra(CommentActivity.EXTRA_PARENT_DEPTH_KEY, 0);
+                        mBaseActivity.startActivity(intent);
 
-                    dismiss();
-                });
+                        dismiss();
+                    });
+                }
 
                 if (mPost.isHidden()) {
                     binding.hidePostTextViewPostOptionsBottomSheetFragment.setText(R.string.action_unhide_post);
@@ -280,17 +285,33 @@ public class PostOptionsBottomSheetFragment extends LandscapeExpandedRoundedBott
                 if (mPost.isCanModPost()) {
                     binding.modTextViewPostOptionsBottomSheetFragment.setVisibility(View.VISIBLE);
                     binding.modTextViewPostOptionsBottomSheetFragment.setOnClickListener(view -> {
-                        ModerationActionBottomSheetFragment moderationActionBottomSheetFragment = ModerationActionBottomSheetFragment.newInstance(mPost, getArguments().getInt(EXTRA_POST_LIST_POSITION, 0));
+                        PostModerationActionBottomSheetFragment postModerationActionBottomSheetFragment = PostModerationActionBottomSheetFragment.newInstance(mPost, getArguments().getInt(EXTRA_POST_LIST_POSITION, 0));
                         Fragment parentFragment = getParentFragment();
                         if (parentFragment != null) {
-                            moderationActionBottomSheetFragment.show(parentFragment.getChildFragmentManager(), moderationActionBottomSheetFragment.getTag());
+                            postModerationActionBottomSheetFragment.show(parentFragment.getChildFragmentManager(), postModerationActionBottomSheetFragment.getTag());
                         } else {
-                            moderationActionBottomSheetFragment.show(mBaseActivity.getSupportFragmentManager(), moderationActionBottomSheetFragment.getTag());
+                            postModerationActionBottomSheetFragment.show(mBaseActivity.getSupportFragmentManager(), postModerationActionBottomSheetFragment.getTag());
                         }
                         dismiss();
                     });
                 }
             }
+
+            if (mPost.isApproved()) {
+                binding.statusTextViewPostOptionsBottomSheetFragment.setText(getString(R.string.approved_status, mPost.getApprovedBy()));
+            } else if (mPost.isRemoved()) {
+                if (mPost.isSpam()) {
+                    binding.statusTextViewPostOptionsBottomSheetFragment.setText(R.string.post_spam_status);
+                } else {
+                    binding.statusTextViewPostOptionsBottomSheetFragment.setText(R.string.post_removed_status);
+                }
+            } else {
+                binding.statusTextViewPostOptionsBottomSheetFragment.setVisibility(View.GONE);
+            }
+        }
+
+        if (mBaseActivity.typeface != null) {
+            Utils.setFontToAllTextViews(binding.getRoot(), mBaseActivity.typeface);
         }
 
         return binding.getRoot();
