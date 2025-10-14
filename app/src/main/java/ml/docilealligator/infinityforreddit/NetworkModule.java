@@ -40,10 +40,22 @@ abstract class NetworkModule {
     static OkHttpClient provideBaseOkhttp(@Named("proxy") SharedPreferences mProxySharedPreferences) {
         boolean proxyEnabled = mProxySharedPreferences.getBoolean(SharedPreferencesUtils.PROXY_ENABLED, false);
 
-        var builder =  new OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS);
+        var builder = new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .addInterceptor(chain -> {
+                    if (chain.request().header("User-Agent") == null) {
+                        return chain.proceed(
+                                chain.request()
+                                        .newBuilder()
+                                        .header("User-Agent", APIUtils.USER_AGENT)
+                                        .build()
+                        );
+                    } else {
+                        return chain.proceed(chain.request());
+                    }
+                });
 
         if (proxyEnabled) {
             Proxy.Type proxyType = Proxy.Type.valueOf(mProxySharedPreferences.getString(SharedPreferencesUtils.PROXY_TYPE, "HTTP"));
@@ -225,6 +237,15 @@ abstract class NetworkModule {
                 .client(okHttpClientBuilder.build())
                 .build();
     }
+
+    /*@Provides
+    @Named("redgifs")
+    @Singleton
+    static Retrofit provideRedgifsRetrofit(@Named("base") Retrofit retrofit) {
+        return retrofit.newBuilder()
+                .baseUrl(APIUtils.OH_MY_DL_BASE_URI)
+                .build();
+    }*/
 
     @Provides
     @Named("imgur")
