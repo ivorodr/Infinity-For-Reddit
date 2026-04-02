@@ -61,21 +61,20 @@ import ml.docilealligator.infinityforreddit.apis.RedditAPI;
 import ml.docilealligator.infinityforreddit.asynctasks.AccountManagement;
 import ml.docilealligator.infinityforreddit.comment.Comment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
-import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
 import ml.docilealligator.infinityforreddit.databinding.ActivityViewPostDetailBinding;
 import ml.docilealligator.infinityforreddit.events.NeedForPostListFromPostFragmentEvent;
 import ml.docilealligator.infinityforreddit.events.ProvidePostListToViewPostDetailActivityEvent;
 import ml.docilealligator.infinityforreddit.events.SwitchAccountEvent;
 import ml.docilealligator.infinityforreddit.fragments.MorePostsInfoFragment;
 import ml.docilealligator.infinityforreddit.fragments.ViewPostDetailFragment;
-import ml.docilealligator.infinityforreddit.post.HistoryPostPagingSource;
 import ml.docilealligator.infinityforreddit.post.LoadingMorePostsStatus;
 import ml.docilealligator.infinityforreddit.post.ParsePost;
 import ml.docilealligator.infinityforreddit.post.Post;
-import ml.docilealligator.infinityforreddit.post.PostPagingSource;
+import ml.docilealligator.infinityforreddit.post.PostType;
 import ml.docilealligator.infinityforreddit.postfilter.PostFilter;
 import ml.docilealligator.infinityforreddit.readpost.NullReadPostsList;
 import ml.docilealligator.infinityforreddit.readpost.ReadPost;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostType;
 import ml.docilealligator.infinityforreddit.readpost.ReadPostsListInterface;
 import ml.docilealligator.infinityforreddit.thing.SaveThing;
 import ml.docilealligator.infinityforreddit.thing.SortType;
@@ -123,8 +122,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
     CustomThemeWrapper mCustomThemeWrapper;
     @Inject
     Executor mExecutor;
-    @State
-    ArrayList<Post> posts;
+    @PostType
     @State
     int postType;
     @State
@@ -141,14 +139,15 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
     String query;
     @State
     String trendingSource;
+    @ReadPostType
+    @State
+    int readPostType;
     @State
     PostFilter postFilter;
     @State
     SortType.Type sortType;
     @State
     SortType.Time sortTime;
-    @State
-    Post post;
     @State
     @LoadingMorePostsStatus
     int mLoadingMorePostsStatus = LoadingMorePostsStatus.NOT_LOADING;
@@ -188,7 +187,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
                 addOnOffsetChangedListener(binding.appbarLayoutViewPostDetailActivity);
             }
 
-            if (isImmersiveInterface()) {
+            if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     window.setDecorFitsSystemWindows(false);
                 } else {
@@ -199,7 +198,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
                     @NonNull
                     @Override
                     public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                        Insets allInsets = Utils.getInsets(insets, false);
+                        Insets allInsets = Utils.getInsets(insets, false, isForcedImmersiveInterface());
 
                         setMargins(binding.toolbarViewPostDetailActivity,
                                 allInsets.left,
@@ -238,21 +237,13 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
 
         boolean swipeBetweenPosts = mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_BETWEEN_POSTS, false);
         if (!swipeBetweenPosts) {
-            if (mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
-                mSliderPanel = Slidr.attach(this);
-            }
+            attachSliderPanelIfApplicable();
             binding.viewPager2ViewPostDetailActivity.setUserInputEnabled(false);
         } else {
             mViewPager2 = binding.viewPager2ViewPostDetailActivity;
         }
 
-        mSectionsPagerAdapter = new SectionsPagerAdapter(this);
-        binding.viewPager2ViewPostDetailActivity.setAdapter(mSectionsPagerAdapter);
-
         mPostFragmentId = getIntent().getLongExtra(EXTRA_POST_FRAGMENT_ID, -1);
-        if (swipeBetweenPosts && posts == null && mPostFragmentId > 0) {
-            EventBus.getDefault().post(new NeedForPostListFromPostFragmentEvent(mPostFragmentId));
-        }
 
         mPostListPosition = getIntent().getIntExtra(EXTRA_POST_LIST_POSITION, -1);
         mIsNsfwSubreddit = getIntent().getBooleanExtra(EXTRA_IS_NSFW_SUBREDDIT, false);
@@ -263,17 +254,9 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
 
         mFragmentManager = getSupportFragmentManager();
 
-        if (savedInstanceState == null) {
-            post = getIntent().getParcelableExtra(EXTRA_POST_DATA);
-        }
-
         binding.toolbarViewPostDetailActivity.setTitle("");
         setSupportActionBar(binding.toolbarViewPostDetailActivity);
         setToolbarGoToTop(binding.toolbarViewPostDetailActivity);
-
-        if (savedInstanceState == null) {
-            mNewAccountName = getIntent().getStringExtra(EXTRA_NEW_ACCOUNT_NAME);
-        }
 
         mVolumeKeysNavigateComments = mSharedPreferences.getBoolean(SharedPreferencesUtils.VOLUME_KEYS_NAVIGATE_COMMENTS, false);
 
@@ -306,10 +289,32 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
             }
         });
 
-        viewPostDetailActivityViewModel = new ViewModelProvider(this, new ViewPostDetailActivityViewModel.Factory(mExecutor,
-                mHandler, mRedditDataRoomDatabase, mRetrofit)).get(ViewPostDetailActivityViewModel.class);
+        viewPostDetailActivityViewModel = new ViewModelProvider(
+                this,
+                ViewPostDetailActivityViewModel.Companion.provideFactory(
+                        mExecutor, mHandler, mRedditDataRoomDatabase, mRetrofit
+                )
+        ).get(ViewPostDetailActivityViewModel.class);
+
+        viewPostDetailActivityViewModel.getPosts().observe(this, posts -> onPostsChanged());
+
+        if (savedInstanceState == null) {
+            viewPostDetailActivityViewModel.setPost(getIntent().getParcelableExtra(EXTRA_POST_DATA));
+            mNewAccountName = getIntent().getStringExtra(EXTRA_NEW_ACCOUNT_NAME);
+        }
+
+        mSectionsPagerAdapter = new SectionsPagerAdapter(this);
+        binding.viewPager2ViewPostDetailActivity.setAdapter(mSectionsPagerAdapter);
+
+        if (swipeBetweenPosts && viewPostDetailActivityViewModel.getPosts().getValue() == null && mPostFragmentId > 0) {
+            EventBus.getDefault().post(new NeedForPostListFromPostFragmentEvent(mPostFragmentId));
+        }
 
         checkNewAccountAndBindView(savedInstanceState);
+    }
+
+    private void onPostsChanged() {
+        mSectionsPagerAdapter.notifyDataSetChanged();
     }
 
     public void setTitle(String title) {
@@ -382,6 +387,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
         binding.getRoot().setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
         applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutViewPostDetailActivity,
                 binding.collapsingToolbarLayoutViewPostDetailActivity, binding.toolbarViewPostDetailActivity);
+        applyAppBarScrollFlagsIfApplicable(binding.collapsingToolbarLayoutViewPostDetailActivity);
         applyFABTheme(binding.fabViewPostDetailActivity);
         binding.searchPanelMaterialCardViewViewPostDetailActivity.setBackgroundTintList(ColorStateList.valueOf(mCustomThemeWrapper.getColorPrimary()));
         int searchPanelTextAndIconColor = mCustomThemeWrapper.getToolbarPrimaryTextAndIconColor();
@@ -428,6 +434,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
         binding.viewPager2ViewPostDetailActivity.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
+                List<Post> posts = viewPostDetailActivityViewModel.getPosts().getValue();
                 if (posts != null && position > posts.size() - 5) {
                     fetchMorePosts(false);
                 }
@@ -577,21 +584,24 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
 
         Handler handler = new Handler(Looper.getMainLooper());
 
-        if (postType != HistoryPostPagingSource.TYPE_READ_POSTS) {
+        if (postType != PostType.READ_POSTS) {
             mExecutor.execute(() -> {
                 RedditAPI api = (accountName.equals(Account.ANONYMOUS_ACCOUNT) ? mRetrofit : mOauthRetrofit).create(RedditAPI.class);
                 Call<String> call;
-                String afterKey = posts.isEmpty() ? null : posts.get(posts.size() - 1).getFullName();
+                List<Post> posts = viewPostDetailActivityViewModel.getPosts().getValue();
+                String afterKey = posts == null || posts.isEmpty() ? null : posts.get(posts.size() - 1).getFullName();
                 switch (postType) {
-                    case PostPagingSource.TYPE_SUBREDDIT:
+                    case PostType.SUBREDDIT:
                         if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
-                            call = api.getSubredditBestPosts(subredditName, sortType, sortTime, afterKey);
+                            call = api.getSubredditBestPosts(subredditName, sortType, sortTime, afterKey,
+                                    APIUtils.subredditAPICallLimit(subredditName));
                         } else {
                             call = api.getSubredditBestPostsOauth(subredditName, sortType,
-                                    sortTime, afterKey, APIUtils.getOAuthHeader(accessToken));
+                                    sortTime, afterKey, APIUtils.subredditAPICallLimit(subredditName),
+                                    APIUtils.getOAuthHeader(accessToken));
                         }
                         break;
-                    case PostPagingSource.TYPE_USER:
+                    case PostType.USER:
                         if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                             call = api.getUserPosts(username, afterKey, sortType, sortTime);
                         } else {
@@ -599,7 +609,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
                                     sortTime, APIUtils.getOAuthHeader(accessToken));
                         }
                         break;
-                    case PostPagingSource.TYPE_SEARCH:
+                    case PostType.SEARCH:
                         if (subredditName == null) {
                             if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                                 call = api.searchPosts(query, afterKey, sortType, sortTime,
@@ -619,7 +629,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
                             }
                         }
                         break;
-                    case PostPagingSource.TYPE_MULTI_REDDIT:
+                    case PostType.MULTIREDDIT:
                         if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                             call = api.getMultiRedditPosts(multiPath, afterKey, sortTime);
                         } else {
@@ -627,9 +637,11 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
                                     sortTime, APIUtils.getOAuthHeader(accessToken));
                         }
                         break;
-                    case PostPagingSource.TYPE_ANONYMOUS_FRONT_PAGE:
-                    case PostPagingSource.TYPE_ANONYMOUS_MULTIREDDIT:
-                        call = api.getAnonymousFrontPageOrMultiredditPosts(concatenatedSubredditNames, sortType, sortTime, afterKey, APIUtils.ANONYMOUS_USER_AGENT);
+                    case PostType.ANONYMOUS_FRONT_PAGE:
+                    case PostType.ANONYMOUS_MULTIREDDIT:
+                        call = api.getAnonymousFrontPageOrMultiredditPosts(concatenatedSubredditNames, sortType,
+                                sortTime, afterKey, APIUtils.subredditAPICallLimit(subredditName),
+                                APIUtils.ANONYMOUS_USER_AGENT);
                         break;
                     default:
                         call = api.getBestPosts(sortType, sortTime, afterKey,
@@ -662,7 +674,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
                                     }
                                 });
                             } else {
-                                posts = new ArrayList<>(postLinkedHashSet);
+                                viewPostDetailActivityViewModel.setPosts(new ArrayList<>(postLinkedHashSet));
                                 handler.post(() -> {
                                     if (changePage) {
                                         binding.viewPager2ViewPostDetailActivity.setCurrentItem(currentPostsSize - 1, false);
@@ -699,10 +711,11 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
         } else {
             mExecutor.execute(() -> {
                 long lastItem = 0;
-                if (!posts.isEmpty()) {
+                List<Post> posts = viewPostDetailActivityViewModel.getPosts().getValue();
+                if (posts != null && !posts.isEmpty()) {
                     lastItem = mRedditDataRoomDatabase.readPostDao().getReadPost(posts.get(posts.size() - 1).getId()).getTime();
                 }
-                List<ReadPost> readPosts = mRedditDataRoomDatabase.readPostDao().getAllReadPosts(accountName, lastItem);
+                List<ReadPost> readPosts = mRedditDataRoomDatabase.readPostDao().getAllReadPosts(accountName, lastItem, readPostType);
                 StringBuilder ids = new StringBuilder();
                 for (ReadPost readPost : readPosts) {
                     ids.append("t3_").append(readPost.getId()).append(",");
@@ -744,7 +757,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
                                     }
                                 });
                             } else {
-                                posts = new ArrayList<>(postLinkedHashSet);
+                                viewPostDetailActivityViewModel.setPosts(new ArrayList<>(postLinkedHashSet));
                                 handler.post(() -> {
                                     if (changePage) {
                                         binding.viewPager2ViewPostDetailActivity.setCurrentItem(currentPostsSize - 1, false);
@@ -790,8 +803,8 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
 
     @Subscribe
     public void onProvidePostListToViewPostDetailActivityEvent(ProvidePostListToViewPostDetailActivityEvent event) {
-        if (event.postFragmentId == mPostFragmentId && posts == null) {
-            this.posts = event.posts;
+        if (event.postFragmentId == mPostFragmentId && viewPostDetailActivityViewModel.getPosts().getValue() == null) {
+            viewPostDetailActivityViewModel.setPosts(event.posts);
             this.postType = event.postType;
             this.subredditName = event.subredditName;
             this.concatenatedSubredditNames = event.concatenatedSubredditNames;
@@ -800,6 +813,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
             this.multiPath = event.multiPath;
             this.query = event.query;
             this.trendingSource = event.trendingSource;
+            this.readPostType = event.readPostType;
             this.postFilter = event.postFilter;
             this.sortType = event.sortType.getType();
             this.sortTime = event.sortType.getTime();
@@ -948,9 +962,9 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
         public Fragment createFragment(int position) {
             ViewPostDetailFragment fragment = new ViewPostDetailFragment();
             Bundle bundle = new Bundle();
+            List<Post> posts = viewPostDetailActivityViewModel.getPosts().getValue();
             if (posts != null) {
-                if (mPostListPosition == position && post != null) {
-                    bundle.putParcelable(ViewPostDetailFragment.EXTRA_POST_DATA, post);
+                if (mPostListPosition == position && viewPostDetailActivityViewModel.getPost() != null) {
                     bundle.putInt(ViewPostDetailFragment.EXTRA_POST_LIST_POSITION, position);
                     bundle.putString(ViewPostDetailFragment.EXTRA_SINGLE_COMMENT_ID, getIntent().getStringExtra(EXTRA_SINGLE_COMMENT_ID));
                     bundle.putString(ViewPostDetailFragment.EXTRA_CONTEXT_NUMBER, getIntent().getStringExtra(EXTRA_CONTEXT_NUMBER));
@@ -963,14 +977,12 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
                         morePostsInfoFragment.setArguments(moreBundle);
                         return morePostsInfoFragment;
                     }
-                    bundle.putParcelable(ViewPostDetailFragment.EXTRA_POST_DATA, posts.get(position));
                     bundle.putInt(ViewPostDetailFragment.EXTRA_POST_LIST_POSITION, position);
                 }
             } else {
-                if (post == null) {
+                if (viewPostDetailActivityViewModel.getPost() == null) {
                     bundle.putString(ViewPostDetailFragment.EXTRA_POST_ID, getIntent().getStringExtra(EXTRA_POST_ID));
                 } else {
-                    bundle.putParcelable(ViewPostDetailFragment.EXTRA_POST_DATA, post);
                     bundle.putInt(ViewPostDetailFragment.EXTRA_POST_LIST_POSITION, mPostListPosition);
                 }
                 bundle.putString(ViewPostDetailFragment.EXTRA_SINGLE_COMMENT_ID, getIntent().getStringExtra(EXTRA_SINGLE_COMMENT_ID));
@@ -983,6 +995,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
 
         @Override
         public int getItemCount() {
+            List<Post> posts = viewPostDetailActivityViewModel.getPosts().getValue();
             return posts == null ? 1 : posts.size() + 1;
         }
 
@@ -1000,6 +1013,7 @@ public class ViewPostDetailActivity extends BaseActivity implements SortTypeSele
 
         @Nullable
         MorePostsInfoFragment getMorePostsInfoFragment() {
+            List<Post> posts = viewPostDetailActivityViewModel.getPosts().getValue();
             if (posts == null || mFragmentManager == null) {
                 return null;
             }

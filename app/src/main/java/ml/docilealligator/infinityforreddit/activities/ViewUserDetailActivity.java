@@ -89,7 +89,6 @@ import ml.docilealligator.infinityforreddit.bottomsheetfragments.UserThingSortTy
 import ml.docilealligator.infinityforreddit.comment.Comment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.customviews.NavigationWrapper;
-import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
 import ml.docilealligator.infinityforreddit.databinding.ActivityViewUserDetailBinding;
 import ml.docilealligator.infinityforreddit.events.ChangeInboxCountEvent;
 import ml.docilealligator.infinityforreddit.events.ChangeNSFWEvent;
@@ -104,7 +103,9 @@ import ml.docilealligator.infinityforreddit.multireddit.MultiReddit;
 import ml.docilealligator.infinityforreddit.post.MarkPostAsReadInterface;
 import ml.docilealligator.infinityforreddit.post.Post;
 import ml.docilealligator.infinityforreddit.post.PostPagingSource;
-import ml.docilealligator.infinityforreddit.readpost.InsertReadPost;
+import ml.docilealligator.infinityforreddit.post.PostType;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostModification;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostType;
 import ml.docilealligator.infinityforreddit.readpost.ReadPostsUtils;
 import ml.docilealligator.infinityforreddit.subreddit.ParseSubredditData;
 import ml.docilealligator.infinityforreddit.subreddit.SubredditData;
@@ -226,9 +227,7 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
 
         applyCustomTheme();
 
-        if (mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
-            mSliderPanel = Slidr.attach(this);
-        }
+        attachSliderPanelIfApplicable();
 
         mViewPager2 = binding.viewPagerViewUserDetailActivity;
 
@@ -268,7 +267,7 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Window window = getWindow();
-            if (isImmersiveInterface()) {
+            if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
                     window.setDecorFitsSystemWindows(false);
@@ -281,7 +280,7 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
                     @NonNull
                     @Override
                     public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                        Insets allInsets = Utils.getInsets(insets, false);
+                        Insets allInsets = Utils.getInsets(insets, false, isForcedImmersiveInterface());
 
                         topSystemBarHeight = allInsets.top;
 
@@ -694,6 +693,8 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
         });
         applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutViewUserDetail,
                 binding.collapsingToolbarLayoutViewUserDetailActivity, binding.toolbarViewUserDetailActivity, false);
+        applyAppBarScrollFlagsIfApplicable(binding.collapsingToolbarLayoutViewUserDetailActivity,
+                binding.tabLayoutViewUserDetailActivity);
         expandedTabTextColor = mCustomThemeWrapper.getTabLayoutWithExpandedCollapsingToolbarTextColor();
         expandedTabIndicatorColor = mCustomThemeWrapper.getTabLayoutWithExpandedCollapsingToolbarTabIndicator();
         expandedTabBackgroundColor = mCustomThemeWrapper.getTabLayoutWithExpandedCollapsingToolbarTabBackground();
@@ -1035,6 +1036,11 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
                 Intent intent = new Intent(this, SubscribedThingListingActivity.class);
                 intent.putExtra(SubscribedThingListingActivity.EXTRA_SHOW_MULTIREDDITS, true);
                 startActivity(intent);
+                break;
+            }
+            case SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_SUBMIT_POSTS: {
+                PostTypeBottomSheetFragment postTypeBottomSheetFragment = new PostTypeBottomSheetFragment();
+                postTypeBottomSheetFragment.show(getSupportFragmentManager(), postTypeBottomSheetFragment.getTag());
                 break;
             }
             case SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_OPTION_REFRESH: {
@@ -1664,7 +1670,7 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
     @Override
     public void markPostAsRead(Post post) {
         int readPostsLimit = ReadPostsUtils.GetReadPostsLimit(accountName, mPostHistorySharedPreferences);
-        InsertReadPost.insertReadPost(mRedditDataRoomDatabase, mExecutor, accountName, post.getId(), readPostsLimit);
+        ReadPostModification.insertReadPost(mRedditDataRoomDatabase, mExecutor, accountName, post.getId(), ReadPostType.READ_POSTS, readPostsLimit);
     }
 
     @Override
@@ -1709,7 +1715,7 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
             if (position == 0) {
                 PostFragment fragment = new PostFragment();
                 Bundle bundle = new Bundle();
-                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostPagingSource.TYPE_USER);
+                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostType.USER);
                 bundle.putString(PostFragment.EXTRA_USER_NAME, username);
                 bundle.putString(PostFragment.EXTRA_USER_WHERE, PostPagingSource.USER_WHERE_SUBMITTED);
                 fragment.setArguments(bundle);

@@ -140,7 +140,7 @@ public class SubmitCrosspostActivity extends BaseActivity implements FlairBottom
 
         applyCustomTheme();
 
-        if (isImmersiveInterface()) {
+        if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
             if (isChangeStatusBarIconColor()) {
                 addOnOffsetChangedListener(binding.appbarLayoutSubmitCrosspostActivity);
             }
@@ -149,7 +149,7 @@ public class SubmitCrosspostActivity extends BaseActivity implements FlairBottom
                 @NonNull
                 @Override
                 public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                    Insets allInsets = Utils.getInsets(insets, true);
+                    Insets allInsets = Utils.getInsets(insets, true, isForcedImmersiveInterface());
 
                     setMargins(binding.toolbarSubmitCrosspostActivity,
                             allInsets.left,
@@ -620,7 +620,7 @@ public class SubmitCrosspostActivity extends BaseActivity implements FlairBottom
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == SUBREDDIT_SELECTION_REQUEST_CODE) {
-            if (resultCode == RESULT_OK) {
+            if (resultCode == RESULT_OK && data != null) {
                 subredditName = data.getStringExtra(SelectThingReturnKey.RETURN_EXTRA_SUBREDDIT_OR_USER_NAME);
                 iconUrl = data.getStringExtra(SelectThingReturnKey.RETURN_EXTRA_SUBREDDIT_OR_USER_ICON);
                 subredditSelected = true;

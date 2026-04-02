@@ -2,6 +2,9 @@ package ml.docilealligator.infinityforreddit.activities;
 
 import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO;
 import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
+import static com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS;
+import static com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL;
+import static com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL;
 
 import android.Manifest;
 import android.content.Intent;
@@ -53,6 +56,7 @@ import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.badge.ExperimentalBadgeUtils;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
@@ -110,7 +114,9 @@ import ml.docilealligator.infinityforreddit.multireddit.MultiRedditViewModel;
 import ml.docilealligator.infinityforreddit.post.MarkPostAsReadInterface;
 import ml.docilealligator.infinityforreddit.post.Post;
 import ml.docilealligator.infinityforreddit.post.PostPagingSource;
-import ml.docilealligator.infinityforreddit.readpost.InsertReadPost;
+import ml.docilealligator.infinityforreddit.post.PostType;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostModification;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostType;
 import ml.docilealligator.infinityforreddit.readpost.ReadPostsUtils;
 import ml.docilealligator.infinityforreddit.subreddit.ParseSubredditData;
 import ml.docilealligator.infinityforreddit.subreddit.SubredditData;
@@ -124,6 +130,7 @@ import ml.docilealligator.infinityforreddit.user.FetchUserData;
 import ml.docilealligator.infinityforreddit.user.UserData;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.CustomThemeSharedPreferencesUtils;
+import ml.docilealligator.infinityforreddit.utils.SharedPreferencesLiveDataKt;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
 import ml.docilealligator.infinityforreddit.worker.PullNotificationWorker;
@@ -252,7 +259,7 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
                 addOnOffsetChangedListener(binding.includedAppBar.appbarLayoutMainActivity);
             }
 
-            if (isImmersiveInterface()) {
+            if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
                 binding.drawerLayout.setStatusBarBackgroundColor(Color.TRANSPARENT);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     binding.drawerLayout.setFitsSystemWindows(false);
@@ -266,7 +273,7 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
                     @NonNull
                     @Override
                     public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                        Insets allInsets = Utils.getInsets(insets, false);
+                        Insets allInsets = Utils.getInsets(insets, false, isForcedImmersiveInterface());
 
                         binding.navigationViewMainActivity.setPadding(allInsets.left, 0, 0, 0);
 
@@ -350,6 +357,17 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
                     binding.navDrawerRecyclerViewMainActivity.setPadding(0, 0, 0, navBarHeight);
                 }*/
             } else {
+                /*ViewGroupCompat.installCompatInsetsDispatch(binding.getRoot());
+                ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                            @NonNull
+                            @Override
+                            public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                                Insets inset = Utils.getInsets(insets, false);
+
+                                setMargins(binding.drawerLayout, inset.left, inset.top, inset.right, inset.bottom);
+                                return insets;
+                            }
+                });*/
                 binding.drawerLayout.setStatusBarBackgroundColor(mCustomThemeWrapper.getColorPrimaryDark());
             }
         }
@@ -369,6 +387,10 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
                 }
             }
         });
+        SharedPreferencesLiveDataKt.stringLiveData(mSharedPreferences, SharedPreferencesUtils.NAVIGATION_DRAWER_SWIPE_AREA, "0").observe(this, swipeArea -> {
+            binding.drawerLayout.setSwipeEdgeSize(Integer.parseInt(swipeArea));
+        });
+
         toggle.syncState();
 
         mViewPager2 = binding.includedAppBar.viewPagerMainActivity;
@@ -421,6 +443,12 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
                     }
                 }
             }
+        });
+
+        SharedPreferencesLiveDataKt.booleanLiveData(mSharedPreferences, SharedPreferencesUtils.LOCK_TOOLBAR, false).observe(this, lock -> {
+            AppBarLayout.LayoutParams p = (AppBarLayout.LayoutParams) binding.includedAppBar.collapsingToolbarLayoutMainActivity.getLayoutParams();
+            p.setScrollFlags(lock ? SCROLL_FLAG_NO_SCROLL : SCROLL_FLAG_SCROLL | SCROLL_FLAG_ENTER_ALWAYS);
+            binding.includedAppBar.collapsingToolbarLayoutMainActivity.setLayoutParams(p);
         });
 
         initializeNotificationAndBindView();
@@ -541,6 +569,11 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
                 Intent intent = new Intent(this, ViewUserDetailActivity.class);
                 intent.putExtra(ViewUserDetailActivity.EXTRA_USER_NAME_KEY, accountName);
                 startActivity(intent);
+                break;
+            }
+            case SharedPreferencesUtils.MAIN_ACTIVITY_BOTTOM_APP_BAR_OPTION_SUBMIT_POSTS: {
+                PostTypeBottomSheetFragment postTypeBottomSheetFragment = new PostTypeBottomSheetFragment();
+                postTypeBottomSheetFragment.show(getSupportFragmentManager(), postTypeBottomSheetFragment.getTag());
                 break;
             }
             case SharedPreferencesUtils.MAIN_ACTIVITY_BOTTOM_APP_BAR_OPTION_REFRESH: {
@@ -894,16 +927,36 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
                         } else if (stringId == R.string.history) {
                             intent = new Intent(MainActivity.this, HistoryActivity.class);
                         } else if (stringId == R.string.upvoted) {
-                            intent = new Intent(MainActivity.this, AccountPostsActivity.class);
-                            intent.putExtra(AccountPostsActivity.EXTRA_USER_WHERE, PostPagingSource.USER_WHERE_UPVOTED);
+                            if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
+                                intent = new Intent(MainActivity.this, HistoryActivity.class);
+                                intent.putExtra(HistoryActivity.EXTRA_READ_POST_TYPE, ReadPostType.ANONYMOUS_UPVOTED_POSTS);
+                            } else {
+                                intent = new Intent(MainActivity.this, AccountPostsActivity.class);
+                                intent.putExtra(AccountPostsActivity.EXTRA_USER_WHERE, PostPagingSource.USER_WHERE_UPVOTED);
+                            }
                         } else if (stringId == R.string.downvoted) {
-                            intent = new Intent(MainActivity.this, AccountPostsActivity.class);
-                            intent.putExtra(AccountPostsActivity.EXTRA_USER_WHERE, PostPagingSource.USER_WHERE_DOWNVOTED);
+                            if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
+                                intent = new Intent(MainActivity.this, HistoryActivity.class);
+                                intent.putExtra(HistoryActivity.EXTRA_READ_POST_TYPE, ReadPostType.ANONYMOUS_DOWNVOTED_POSTS);
+                            } else {
+                                intent = new Intent(MainActivity.this, AccountPostsActivity.class);
+                                intent.putExtra(AccountPostsActivity.EXTRA_USER_WHERE, PostPagingSource.USER_WHERE_DOWNVOTED);
+                            }
                         } else if (stringId == R.string.hidden) {
-                            intent = new Intent(MainActivity.this, AccountPostsActivity.class);
-                            intent.putExtra(AccountPostsActivity.EXTRA_USER_WHERE, PostPagingSource.USER_WHERE_HIDDEN);
+                            if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
+                                intent = new Intent(MainActivity.this, HistoryActivity.class);
+                                intent.putExtra(HistoryActivity.EXTRA_READ_POST_TYPE, ReadPostType.ANONYMOUS_HIDDEN_POSTS);
+                            } else {
+                                intent = new Intent(MainActivity.this, AccountPostsActivity.class);
+                                intent.putExtra(AccountPostsActivity.EXTRA_USER_WHERE, PostPagingSource.USER_WHERE_HIDDEN);
+                            }
                         } else if (stringId == R.string.account_saved_thing_activity_label) {
-                            intent = new Intent(MainActivity.this, AccountSavedThingActivity.class);
+                            if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
+                                intent = new Intent(MainActivity.this, HistoryActivity.class);
+                                intent.putExtra(HistoryActivity.EXTRA_READ_POST_TYPE, ReadPostType.ANONYMOUS_SAVED_POSTS);
+                            } else {
+                                intent = new Intent(MainActivity.this, AccountSavedThingActivity.class);
+                            }
                         } else if (stringId == R.string.light_theme) {
                             mSharedPreferences.edit().putString(SharedPreferencesUtils.THEME_KEY, "0").apply();
                             AppCompatDelegate.setDefaultNightMode(MODE_NIGHT_NO);
@@ -1255,10 +1308,11 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
     }
 
     private void changeSortType() {
-        int currentPostType = sectionsPagerAdapter.getCurrentPostType();
         PostFragment postFragment = sectionsPagerAdapter.getCurrentFragment();
         if (postFragment != null) {
-            SortTypeBottomSheetFragment sortTypeBottomSheetFragment = SortTypeBottomSheetFragment.getNewInstance(currentPostType != PostPagingSource.TYPE_FRONT_PAGE, postFragment.getSortType());
+            SortTypeBottomSheetFragment sortTypeBottomSheetFragment = SortTypeBottomSheetFragment.getNewInstance(
+                    sectionsPagerAdapter.getCurrentPostType() != PostType.FRONT_PAGE, postFragment.getSortType()
+            );
             sortTypeBottomSheetFragment.show(getSupportFragmentManager(), sortTypeBottomSheetFragment.getTag());
         }
     }
@@ -1688,7 +1742,7 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
     @Override
     public void markPostAsRead(Post post) {
         int readPostsLimit = ReadPostsUtils.GetReadPostsLimit(accountName, mPostHistorySharedPreferences);
-        InsertReadPost.insertReadPost(mRedditDataRoomDatabase, mExecutor, accountName, post.getId(), readPostsLimit);
+        ReadPostModification.insertReadPost(mRedditDataRoomDatabase, mExecutor, accountName, post.getId(), ReadPostType.READ_POSTS, readPostsLimit);
     }
 
     public void doNotShowRedditAPIInfoAgain() {
@@ -1802,20 +1856,20 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
             if (postType == SharedPreferencesUtils.MAIN_PAGE_TAB_POST_TYPE_HOME) {
                 PostFragment fragment = new PostFragment();
                 Bundle bundle = new Bundle();
-                bundle.putInt(PostFragment.EXTRA_POST_TYPE, accountName.equals(Account.ANONYMOUS_ACCOUNT) ? PostPagingSource.TYPE_ANONYMOUS_FRONT_PAGE : PostPagingSource.TYPE_FRONT_PAGE);
+                bundle.putInt(PostFragment.EXTRA_POST_TYPE, accountName.equals(Account.ANONYMOUS_ACCOUNT) ? PostType.ANONYMOUS_FRONT_PAGE : PostType.FRONT_PAGE);
                 fragment.setArguments(bundle);
                 return fragment;
             } else if (postType == SharedPreferencesUtils.MAIN_PAGE_TAB_POST_TYPE_ALL) {
                 PostFragment fragment = new PostFragment();
                 Bundle bundle = new Bundle();
-                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostPagingSource.TYPE_SUBREDDIT);
+                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostType.SUBREDDIT);
                 bundle.putString(PostFragment.EXTRA_NAME, "all");
                 fragment.setArguments(bundle);
                 return fragment;
             } else if (postType == SharedPreferencesUtils.MAIN_PAGE_TAB_POST_TYPE_SUBREDDIT) {
                 PostFragment fragment = new PostFragment();
                 Bundle bundle = new Bundle();
-                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostPagingSource.TYPE_SUBREDDIT);
+                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostType.SUBREDDIT);
                 bundle.putString(PostFragment.EXTRA_NAME, name);
                 fragment.setArguments(bundle);
                 return fragment;
@@ -1823,13 +1877,13 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
                 PostFragment fragment = new PostFragment();
                 Bundle bundle = new Bundle();
                 bundle.putString(PostFragment.EXTRA_NAME, name);
-                bundle.putInt(PostFragment.EXTRA_POST_TYPE, accountName.equals(Account.ANONYMOUS_ACCOUNT) ? PostPagingSource.TYPE_ANONYMOUS_MULTIREDDIT : PostPagingSource.TYPE_MULTI_REDDIT);
+                bundle.putInt(PostFragment.EXTRA_POST_TYPE, accountName.equals(Account.ANONYMOUS_ACCOUNT) ? PostType.ANONYMOUS_MULTIREDDIT : PostType.MULTIREDDIT);
                 fragment.setArguments(bundle);
                 return fragment;
             } else if (postType == SharedPreferencesUtils.MAIN_PAGE_TAB_POST_TYPE_USER) {
                 PostFragment fragment = new PostFragment();
                 Bundle bundle = new Bundle();
-                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostPagingSource.TYPE_USER);
+                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostType.USER);
                 bundle.putString(PostFragment.EXTRA_USER_NAME, name);
                 bundle.putString(PostFragment.EXTRA_USER_WHERE, PostPagingSource.USER_WHERE_SUBMITTED);
                 fragment.setArguments(bundle);
@@ -1840,7 +1894,7 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
                     || postType == SharedPreferencesUtils.MAIN_PAGE_TAB_POST_TYPE_SAVED) {
                 PostFragment fragment = new PostFragment();
                 Bundle bundle = new Bundle();
-                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostPagingSource.TYPE_USER);
+                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostType.USER);
                 bundle.putString(PostFragment.EXTRA_USER_NAME, accountName);
                 bundle.putBoolean(PostFragment.EXTRA_DISABLE_READ_POSTS, true);
 
@@ -1859,7 +1913,7 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
             } else {
                 PostFragment fragment = new PostFragment();
                 Bundle bundle = new Bundle();
-                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostPagingSource.TYPE_SUBREDDIT);
+                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostType.SUBREDDIT);
                 bundle.putString(PostFragment.EXTRA_NAME, "popular");
                 fragment.setArguments(bundle);
                 return fragment;
@@ -1892,12 +1946,13 @@ public class MainActivity extends BaseActivity implements SortTypeSelectionCallb
             return false;
         }
 
+        @PostType
         int getCurrentPostType() {
             PostFragment currentFragment = getCurrentFragment();
             if (currentFragment != null) {
                 return currentFragment.getPostType();
             }
-            return PostPagingSource.TYPE_SUBREDDIT;
+            return PostType.SUBREDDIT;
         }
 
         void changeSortType(SortType sortType) {

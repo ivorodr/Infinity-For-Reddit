@@ -153,7 +153,7 @@ public class PostTextActivity extends BaseActivity implements FlairBottomSheetFr
 
         applyCustomTheme();
 
-        if (isImmersiveInterface()) {
+        if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
             if (isChangeStatusBarIconColor()) {
                 addOnOffsetChangedListener(binding.appbarLayoutPostTextActivity);
             }
@@ -162,7 +162,7 @@ public class PostTextActivity extends BaseActivity implements FlairBottomSheetFr
                 @NonNull
                 @Override
                 public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                    Insets allInsets = Utils.getInsets(insets, true);
+                    Insets allInsets = Utils.getInsets(insets, true, isForcedImmersiveInterface());
 
                     setMargins(binding.toolbarPostTextActivity,
                             allInsets.left,
@@ -649,10 +649,12 @@ public class PostTextActivity extends BaseActivity implements FlairBottomSheetFr
                     return;
                 }
                 Utils.uploadImageToReddit(this, mExecutor, mOauthRetrofit, mUploadMediaRetrofit,
-                        accessToken, binding.postTextContentEditTextPostTextActivity, binding.coordinatorLayoutPostTextActivity, data.getData(), uploadedImages);
+                        accessToken, binding.postTextContentEditTextPostTextActivity,
+                        binding.coordinatorLayoutPostTextActivity, data.getData(), uploadedImages);
             } else if (requestCode == CAPTURE_IMAGE_REQUEST_CODE) {
                 Utils.uploadImageToReddit(this, mExecutor, mOauthRetrofit, mUploadMediaRetrofit,
-                        accessToken, binding.postTextContentEditTextPostTextActivity, binding.coordinatorLayoutPostTextActivity, capturedImageUri, uploadedImages);
+                        accessToken, binding.postTextContentEditTextPostTextActivity,
+                        binding.coordinatorLayoutPostTextActivity, capturedImageUri, uploadedImages);
             } else if (requestCode == MARKDOWN_PREVIEW_REQUEST_CODE) {
                 submitPost(mMenu.findItem(R.id.action_send_post_text_activity));
             }

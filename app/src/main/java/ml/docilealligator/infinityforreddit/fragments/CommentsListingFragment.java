@@ -128,12 +128,12 @@ public class CommentsListingFragment extends Fragment implements FragmentCommuni
 
         mGlide = Glide.with(mActivity);
 
-        if (mActivity.isImmersiveInterface()) {
+        if (mActivity.isImmersiveInterfaceRespectForcedEdgeToEdge()) {
             ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
                 @NonNull
                 @Override
                 public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                    Insets allInsets = Utils.getInsets(insets, false);
+                    Insets allInsets = Utils.getInsets(insets, false, mActivity.isForcedImmersiveInterface());
                     binding.recyclerViewCommentsListingFragment.setPadding(
                             0, 0, 0, allInsets.bottom
                     );
@@ -257,7 +257,10 @@ public class CommentsListingFragment extends Fragment implements FragmentCommuni
         });
 
         if (enableSwipeAction) {
-            touchHelper.attachToRecyclerView(binding.recyclerViewCommentsListingFragment, 5);
+            touchHelper.attachToRecyclerView(
+                    binding.recyclerViewCommentsListingFragment,
+                    Float.parseFloat(mSharedPreferences.getString(SharedPreferencesUtils.SWIPE_ACTION_SENSITIVITY_IN_COMMENTS, "5"))
+            );
         }
 
         new Handler().postDelayed(this::bindView, 0);

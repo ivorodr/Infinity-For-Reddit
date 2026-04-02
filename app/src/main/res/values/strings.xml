@@ -43,10 +43,12 @@
     <string name="wiki_activity_label">Wiki</string>
     <string name="edit_profile_activity_label">Edit Profile</string>
     <string name="post_poll_activity_label">Poll Post</string>
-    <string name="history_activity_label">History</string>
+    <string name="history_activity_read_posts_label">Read Posts</string>
+    <string name="history_activity_subtitle">Stored on this device</string>
     <string name="subscription_activity_label">Subscription</string>
     <string name="comment_filter_preference_activity_label">Comment Filter</string>
     <string name="customize_comment_filter_activity_label">Customize Comment Filter</string>
+    <string name="copy_multireddit_activity_label">Copy Multireddit</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -55,6 +57,7 @@
     <string name="action_refresh">Refresh</string>
     <string name="action_add_comment">Send comment</string>
     <string name="action_save_post">Save post</string>
+    <string name="action_unsave_post">Unsave post</string>
     <string name="action_view_crosspost_parent">View crosspost parent</string>
     <string name="action_search">Search</string>
     <string name="action_start_lazy_mode">Start Lazy Mode</string>
@@ -74,6 +77,7 @@
     <string name="action_save">Save</string>
     <string name="action_edit_multi_reddit">Edit MultiReddit</string>
     <string name="action_delete_multi_reddit">Delete Multireddit</string>
+    <string name="action_copy_multi_reddit">Copy Multireddit</string>
     <string name="action_share">Share</string>
     <string name="action_preview">Preview</string>
     <string name="action_report">Report</string>
@@ -103,6 +107,7 @@
     <string name="action_download_all_imgur_album_media">Download All Imgur Album Media</string>
     <string name="action_next_parent_comment">Next Top-Level Comment</string>
     <string name="action_previous_parent_comment">Previous Top-Level Comment</string>
+    <string name="action_back_content_description">Back</string>
 
     <string name="parse_json_response_error">Error occurred when parsing the JSON response</string>
     <string name="retrieve_token_error">Error Retrieving the token</string>
@@ -156,6 +161,7 @@
     <string name="cannot_fetch_user_info">Cannot fetch user info</string>
     <string name="cannot_fetch_sidebar">Cannot fetch sidebar</string>
     <string name="cannot_fetch_multireddit">Cannot fetch multireddit info</string>
+    <string name="cannot_fetch_multireddit_tap_to_retry">Unable to fetch multireddit information. Tap to retry.</string>
 
     <string name="subscribe">Subscribe</string>
     <string name="unsubscribe">Unsubscribe</string>
@@ -387,6 +393,7 @@
     <string name="settings_link_handler_title">Link Handler</string>
     <string name="settigns_video_title">Video</string>
     <string name="settings_video_autoplay_title">Video Autoplay</string>
+    <string name="settings_simultaneous_autoplay_limit_title">Simultaneous Autoplay Limit</string>
     <string name="settings_mute_autoplaying_videos_title">Mute Autoplaying Videos</string>
     <string name="settings_autoplay_nsfw_videos_title">Autoplay Sensitive Videos</string>
     <string name="settings_start_autoplay_visible_area_offset_portrait_title">Autoplay Videos Visible Area Offset (Portrait)</string>
@@ -395,8 +402,6 @@
     <string name="settings_start_autoplay_visible_area_offset_landscape_summary">Start autoplaying videos when %1$d%% of them are visible</string>
     <string name="settings_immersive_interface_title">Immersive Interface</string>
     <string name="settings_immersive_interface_summary">Does Not Apply to All Pages</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_title">Ignore Navigation Bar in Immersive Interface</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_summary">Prevent the Bottom Navigation Bar Having Extra Padding</string>
     <string name="settings_disable_immersive_interface_in_landscape_mode">Disable Immersive Interface in Landscape Mode</string>
     <string name="settings_customize_tabs_in_main_page_title">Customize Tabs in Main Page</string>
     <string name="only_for_logged_in_user">Only for Logged-in User</string>
@@ -436,6 +441,7 @@
     <string name="settings_swipe_to_go_back_summary">Does Not Apply to All Pages</string>
     <string name="settings_swipe_vertically_to_go_back_from_media_title">Swipe Vertically to Go Back From Image and Gif</string>
     <string name="settings_lock_jump_to_next_top_level_comment_button_title">Lock Jump to Next Top-level Comment Button</string>
+    <string name="settings_lock_toolbar_title">Lock Toolbar</string>
     <string name="settings_lock_bottom_app_bar_title">Lock Bottom Navigation Bar</string>
     <string name="settings_swipe_up_to_hide_jump_to_next_top_level_comment_button_title">Swipe Up to Hide Jump to Next Top-level Comment Button</string>
     <string name="settings_lazy_mode_interval_title">Lazy Mode Interval</string>
@@ -573,13 +579,16 @@
     <string name="settings_language_title">Language</string>
     <string name="settings_enable_search_history_title">Enable Search History</string>
     <string name="settings_post_history_title">Post History</string>
-    <string name="settings_mark_posts_as_read_title">Mark Posts as Read</string>
-    <string name="settings_read_posts_limit_title">Limit Read Posts</string>
-    <string name="settings_read_posts_limit_hint">Set read posts limit</string>
+    <string name="settings_save_read_posts_title">Save Read Posts</string>
+    <string name="settings_limit_history_size_title">Limit History Size</string>
+    <string name="settings_limit_history_size_hint">History Limit</string>
     <string name="settings_read_posts_db_summary">Read Posts DB Table \nSize: %1$d(KB) \nCount: %2$d</string>
     <string name="settings_mark_posts_as_read_after_voting_title">Mark Posts as Read After Voting</string>
     <string name="settings_mark_posts_as_read_on_scroll_title">Mark Posts as Read on Scroll</string>
     <string name="settings_hide_read_posts_automatically_title">Hide Read Posts Automatically</string>
+    <string name="settings_hide_read_posts_automatically_in_subreddits_title">Hide Read Posts Automatically in Subreddits</string>
+    <string name="settings_hide_read_posts_automatically_in_users_title">Hide Read Posts Automatically in Users</string>
+    <string name="settings_hide_read_posts_automatically_in_search_title">Hide Read Posts Automatically in Search</string>
     <string name="settings_hide_read_posts_automatically_summary">The setting is not applied when viewing posts from searches, specific users, or subreddits.</string>
     <string name="settings_sort_type_title">Sort Type</string>
     <string name="settings_save_sort_type_title">Save Sort Type</string>
@@ -664,6 +673,17 @@
     <string name="settings_proxy_port">Port</string>
     <string name="settings_hide_fab_in_post_details">Hide Floating Action Button</string>
     <string name="settings_category_media_title">Media</string>
+    <string name="settings_category_gesture_sensitivity_title">Gesture Sensitivity</string>
+    <string name="settings_tab_switching_sensitivity">Tab Switching Sensitivity</string>
+    <string name="settings_swipe_right_to_go_back_sensitivity">Swipe Right to Go Back Sensitivity</string>
+    <string name="settings_swipe_action_sensitivity_in_comments">Swipe Action Sensitivity in Comments</string>
+    <string name="default_sensitivity">Default</string>
+    <string name="low">Low</string>
+    <string name="very_low">Very Low</string>
+    <string name="settings_navigation_drawer_swipe_area">Navigation Drawer Swipe Area</string>
+    <string name="default_swipe_area">Default</string>
+    <string name="larger_swipe_area">Large</string>
+    <string name="very_larger_swipe_area">Very Large</string>
 
     <string name="no_link_available">Cannot get the link</string>
 
@@ -769,6 +789,7 @@
     <string name="delete_multi_reddit_success">Deleted successfully</string>
     <string name="delete_multi_reddit_failed">Delete failed</string>
     <string name="delete_multi_reddit_dialog_message">Are you sure?</string>
+    <string name="copy_multi_reddit_failed">Cannot copy this multireddit.</string>
 
     <string name="cannot_save_image">Cannot save the image</string>
     <string name="cannot_save_gif">Cannot save the gif</string>
@@ -1091,6 +1112,7 @@
     <string name="top_score">%1$s pts</string>
 
     <string name="login_activity_2fa_prompt">2-factor authentication: &lt;password&gt;:&lt;2FA code&gt;.\nExample: yourpass:123456\nGoogle login or having trouble login: click the bottom right button.</string>
+    <string name="login_activity_internet_disconnected_error">No Internet Connection</string>
 
     <string name="block_user">Block User</string>
     <string name="block_user_success">Blocked</string>
@@ -1122,6 +1144,7 @@
     <string name="warning">Warning</string>
     <string name="this_is_a_nsfw_subreddit">This is a sensitive subreddit.</string>
     <string name="this_user_has_nsfw_content">This user has sensitive content</string>
+    <string name="this_post_contains_sensitive_content">This post contains sensitive content.</string>
     <string name="dismiss">Dismiss</string>
     <string name="leave">Leave</string>
 
@@ -1248,6 +1271,7 @@
     <string name="always_on">Always On</string>
     <string name="only_on_wifi">Only on Wifi</string>
     <string name="never">Never</string>
+    <string name="unlimited">Unlimited</string>
     <string name="normal">Normal</string>
     <string name="extra_small">Extra Small</string>
     <string name="extra_large">Extra Large</string>
@@ -1588,4 +1612,6 @@
     <string name="post_spam_status">This post is removed as spam</string>
     <string name="comment_removed_status">This comment is removed</string>
     <string name="comment_spam_status">This comment is removed as spam</string>
+
+    <string name="copying_multi_reddit">Copying</string>
 </resources>

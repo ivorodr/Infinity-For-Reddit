@@ -282,8 +282,6 @@
     <string name="settings_start_autoplay_visible_area_offset_landscape_summary">"Videó automatikus lejátszása, ha %1$d%%-a látszódik"</string>
     <string name="settings_immersive_interface_title">"Immerzív felület"</string>
     <string name="settings_immersive_interface_summary">"Nem alkalmazható az összes oldalon"</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_title">"Navigációs sáv mellőzése az immerzív felületen"</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_summary">"Alsó navigációs sáv extra térközének megakadályozása"</string>
     <string name="settings_customize_tabs_in_main_page_title">"A Főoldal lapjainak testreszabása"</string>
     <string name="settings_enable_bottom_app_bar_title">"Alsó navigáció engedélyezése"</string>
     <string name="settings_category_post_and_comment_title">"Bejegyzés és hozzászólás"</string>
@@ -852,7 +850,6 @@ Videó autómatikus lejátszása le van tiltva."</string>
     <string name="settings_only_disable_preview_in_video_and_gif_posts_title">"Előnézet tiltása csak videó és gif posztokban"</string>
     <string name="settings_enable_search_history_title">"Keresési előzmény engedélyezése"</string>
     <string name="settings_post_history_title">"Poszt előzmény"</string>
-    <string name="settings_mark_posts_as_read_title">"Poszt olvasottnak jelölése"</string>
     <string name="settings_mark_posts_as_read_after_voting_title">"Poszt olvasottnak jelölése szavazás után"</string>
     <string name="settings_mark_posts_as_read_on_scroll_title">"Poszt olvasottnak jelölése görgetésnél"</string>
     <string name="settings_hide_read_posts_automatically_title">"Olvasott posztok autómatikus elrejtése"</string>

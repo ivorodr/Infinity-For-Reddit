@@ -132,7 +132,7 @@ public class EditCommentActivity extends BaseActivity implements UploadImageEnab
 
         applyCustomTheme();
 
-        if (isImmersiveInterface()) {
+        if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
             if (isChangeStatusBarIconColor()) {
                 addOnOffsetChangedListener(binding.appbarLayoutEditCommentActivity);
             }
@@ -141,7 +141,7 @@ public class EditCommentActivity extends BaseActivity implements UploadImageEnab
                 @NonNull
                 @Override
                 public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                    Insets allInsets = Utils.getInsets(insets, true);
+                    Insets allInsets = Utils.getInsets(insets, true, isForcedImmersiveInterface());
 
                     setMargins(binding.toolbarEditCommentActivity,
                             allInsets.left,
@@ -427,10 +427,12 @@ public class EditCommentActivity extends BaseActivity implements UploadImageEnab
                     return;
                 }
                 Utils.uploadImageToReddit(this, mExecutor, mOauthRetrofit, mUploadMediaRetrofit,
-                        mAccessToken, binding.commentEditTextEditCommentActivity, binding.coordinatorLayoutEditCommentActivity, data.getData(), uploadedImages);
+                        mAccessToken, binding.commentEditTextEditCommentActivity,
+                        binding.coordinatorLayoutEditCommentActivity, data.getData(), uploadedImages);
             } else if (requestCode == CAPTURE_IMAGE_REQUEST_CODE) {
                 Utils.uploadImageToReddit(this, mExecutor, mOauthRetrofit, mUploadMediaRetrofit,
-                        mAccessToken, binding.commentEditTextEditCommentActivity, binding.coordinatorLayoutEditCommentActivity, capturedImageUri, uploadedImages);
+                        mAccessToken, binding.commentEditTextEditCommentActivity,
+                        binding.coordinatorLayoutEditCommentActivity, capturedImageUri, uploadedImages);
             } else if (requestCode == MARKDOWN_PREVIEW_REQUEST_CODE) {
                 editComment();
             }

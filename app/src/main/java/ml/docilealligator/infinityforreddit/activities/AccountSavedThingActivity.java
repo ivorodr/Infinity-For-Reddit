@@ -38,7 +38,6 @@ import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.PostLayoutBottomSheetFragment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
-import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
 import ml.docilealligator.infinityforreddit.databinding.ActivityAccountSavedThingBinding;
 import ml.docilealligator.infinityforreddit.events.ChangeNSFWEvent;
 import ml.docilealligator.infinityforreddit.events.SwitchAccountEvent;
@@ -47,7 +46,9 @@ import ml.docilealligator.infinityforreddit.fragments.PostFragment;
 import ml.docilealligator.infinityforreddit.post.MarkPostAsReadInterface;
 import ml.docilealligator.infinityforreddit.post.Post;
 import ml.docilealligator.infinityforreddit.post.PostPagingSource;
-import ml.docilealligator.infinityforreddit.readpost.InsertReadPost;
+import ml.docilealligator.infinityforreddit.post.PostType;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostModification;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostType;
 import ml.docilealligator.infinityforreddit.readpost.ReadPostsUtils;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
@@ -94,9 +95,7 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
 
         applyCustomTheme();
 
-        if (mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
-            mSliderPanel = Slidr.attach(this);
-        }
+        attachSliderPanelIfApplicable();
 
         mViewPager2 = binding.accountSavedThingViewPager2;
 
@@ -107,7 +106,7 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
                 addOnOffsetChangedListener(binding.accountSavedThingAppbarLayout);
             }
 
-            if (isImmersiveInterface()) {
+            if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     window.setDecorFitsSystemWindows(false);
                 } else {
@@ -119,7 +118,7 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
                     @NonNull
                     @Override
                     public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                        Insets allInsets = Utils.getInsets(insets, false);
+                        Insets allInsets = Utils.getInsets(insets, false, isForcedImmersiveInterface());
 
                         setMargins(binding.accountSavedThingToolbar,
                                 allInsets.left,
@@ -127,7 +126,7 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
                                 allInsets.right,
                                 BaseActivity.IGNORE_MARGIN);
 
-                        binding.accountSavedThingViewPager2.setPadding(allInsets.left, 0, allInsets.right, allInsets.bottom);
+                        binding.accountSavedThingViewPager2.setPadding(allInsets.left, 0, allInsets.right, 0);
 
                         return insets;
                     }
@@ -178,6 +177,7 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
                 binding.accountSavedThingAppbarLayout,
                 binding.accountSavedThingCollapsingToolbarLayout,
                 binding.accountSavedThingToolbar);
+        applyAppBarScrollFlagsIfApplicable(binding.accountSavedThingCollapsingToolbarLayout);
         applyTabLayoutTheme(binding.accountSavedThingTabLayout);
     }
 
@@ -281,7 +281,7 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
     @Override
     public void markPostAsRead(Post post) {
         int readPostsLimit = ReadPostsUtils.GetReadPostsLimit(accountName, mPostHistorySharedPreferences);
-        InsertReadPost.insertReadPost(mRedditDataRoomDatabase, mExecutor, accountName, post.getId(), readPostsLimit);
+        ReadPostModification.insertReadPost(mRedditDataRoomDatabase, mExecutor, accountName, post.getId(), ReadPostType.READ_POSTS, readPostsLimit);
     }
 
     private class SectionsPagerAdapter extends FragmentStateAdapter {
@@ -296,7 +296,7 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
             if (position == 0) {
                 PostFragment fragment = new PostFragment();
                 Bundle bundle = new Bundle();
-                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostPagingSource.TYPE_USER);
+                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostType.USER);
                 bundle.putString(PostFragment.EXTRA_USER_NAME, accountName);
                 bundle.putString(PostFragment.EXTRA_USER_WHERE, PostPagingSource.USER_WHERE_SAVED);
                 bundle.putBoolean(PostFragment.EXTRA_DISABLE_READ_POSTS, true);

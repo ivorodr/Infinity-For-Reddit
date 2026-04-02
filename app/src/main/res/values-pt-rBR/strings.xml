@@ -308,8 +308,6 @@ Toque para tentar de novo."</string>
     <string name="settings_start_autoplay_visible_area_offset_landscape_summary">"Iniciar reprodução automática dos vídeos ao %1$d%% deles estar visível"</string>
     <string name="settings_immersive_interface_title">"Interface Imersiva"</string>
     <string name="settings_immersive_interface_summary">"Não se aplica a toda página"</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_title">"Ignorar barra de navegação na interface imersiva"</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_summary">"Evitar que a barra de navegação inferior tenha preenchimento extra"</string>
     <string name="settings_customize_tabs_in_main_page_title">"Customizar abas da página inicial"</string>
     <string name="settings_enable_bottom_app_bar_title">"Ativar barra de navegação inferior"</string>
     <string name="settings_category_post_and_comment_title">"Postagem e comentário"</string>
@@ -861,7 +859,6 @@ A reprodução automática de vídeos fica desativada."</string>
     <string name="settings_only_disable_preview_in_video_and_gif_posts_title">"Só desativar prévia em GIFs e vídeos"</string>
     <string name="settings_enable_search_history_title">"Ativar histórico de busca"</string>
     <string name="settings_post_history_title">"Histórico de busca"</string>
-    <string name="settings_mark_posts_as_read_title">"Marcar postagens como lidas"</string>
     <string name="settings_mark_posts_as_read_after_voting_title">"Marcar postagens como lidas após votar"</string>
     <string name="settings_mark_posts_as_read_on_scroll_title">"Marcar postagens como lidas ao rolar página"</string>
     <string name="settings_hide_read_posts_automatically_title">"Ocultar postagens lidas automaticamente"</string>
@@ -1174,7 +1171,6 @@ Toque para tentar de novo."</string>
     <string name="comment_karma">"Carma do comentário:"</string>
     <string name="awarder_karma">"Carma do premiador:"</string>
     <string name="awardee_karma">"Carma do premiado:"</string>
-    <string name="history_activity_label">"Histórico"</string>
     <string name="history">"Histórico"</string>
     <string name="settings_easier_to_watch_in_full_screen_title">"Mais fácil de assistir em tela cheia"</string>
     <string name="clear_user_flair">"Limpar etiqueta"</string>

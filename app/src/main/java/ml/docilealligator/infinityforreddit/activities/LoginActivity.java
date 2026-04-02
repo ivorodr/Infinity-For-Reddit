@@ -14,6 +14,8 @@ import android.view.InflateException;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.CookieManager;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
@@ -103,7 +105,7 @@ public class LoginActivity extends BaseActivity {
 
         applyCustomTheme();
 
-        if (isImmersiveInterface()) {
+        if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
             if (isChangeStatusBarIconColor()) {
                 addOnOffsetChangedListener(binding.appbarLayoutLoginActivity);
             }
@@ -112,7 +114,7 @@ public class LoginActivity extends BaseActivity {
                 @NonNull
                 @Override
                 public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                    Insets allInsets = Utils.getInsets(insets, true);
+                    Insets allInsets = Utils.getInsets(insets, true, isForcedImmersiveInterface());
 
                     setMargins(binding.toolbarLoginActivity,
                             allInsets.left,
@@ -158,6 +160,10 @@ public class LoginActivity extends BaseActivity {
         uriBuilder.appendQueryParameter(APIUtils.SCOPE_KEY, APIUtils.SCOPE);
 
         String url = uriBuilder.toString();
+
+        binding.internetDisconnectedErrorRetryButtonLoginActivity.setOnClickListener(view -> {
+            recreate();
+        });
 
         binding.fabLoginActivity.setOnClickListener(view -> {
             Intent intent = new Intent(this, LoginChromeCustomTabActivity.class);
@@ -270,6 +276,15 @@ public class LoginActivity extends BaseActivity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
             }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (request.isForMainFrame() && !Utils.isConnectedToInternet(LoginActivity.this)) {
+                    binding.internetDisconnectedErrorLinearLayoutLoginActivity.setVisibility(View.VISIBLE);
+                } else {
+                    super.onReceivedError(view, request, error);
+                }
+            }
         });
 
         if (!isAgreeToUserAgreement) {
@@ -334,14 +349,22 @@ public class LoginActivity extends BaseActivity {
 
     @Override
     protected void applyCustomTheme() {
-        binding.getRoot().setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
+        int backgroundColor = mCustomThemeWrapper.getBackgroundColor();
+        binding.getRoot().setBackgroundColor(backgroundColor);
         applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutLoginActivity, null, binding.toolbarLoginActivity);
-        binding.twoFaInfOTextViewLoginActivity.setTextColor(mCustomThemeWrapper.getPrimaryTextColor());
+        int primaryTextColor = mCustomThemeWrapper.getPrimaryTextColor();
+        binding.twoFaInfOTextViewLoginActivity.setTextColor(primaryTextColor);
         Drawable infoDrawable = Utils.getTintedDrawable(this, R.drawable.ic_info_preference_day_night_24dp, mCustomThemeWrapper.getPrimaryIconColor());
         binding.twoFaInfOTextViewLoginActivity.setCompoundDrawablesWithIntrinsicBounds(infoDrawable, null, null, null);
+        binding.internetDisconnectedErrorLinearLayoutLoginActivity.setBackgroundColor(backgroundColor);
+        binding.internetDisconnectedErrorTextViewLoginActivity.setTextColor(primaryTextColor);
+        binding.internetDisconnectedErrorRetryButtonLoginActivity.setTextColor(mCustomThemeWrapper.getButtonTextColor());
+        binding.internetDisconnectedErrorRetryButtonLoginActivity.setBackgroundColor(mCustomThemeWrapper.getColorPrimaryLightTheme());
         applyFABTheme(binding.fabLoginActivity);
         if (typeface != null) {
             binding.twoFaInfOTextViewLoginActivity.setTypeface(typeface);
+            binding.internetDisconnectedErrorTextViewLoginActivity.setTypeface(typeface);
+            binding.internetDisconnectedErrorRetryButtonLoginActivity.setTypeface(typeface);
         }
     }
 

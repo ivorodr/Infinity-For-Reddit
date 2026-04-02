@@ -322,8 +322,6 @@ Toque para tentar novamente."</string>
     <string name="settings_start_autoplay_visible_area_offset_landscape_summary">"Inicia reprodução automática de vídeos quando estão %1$d%% visíveis"</string>
     <string name="settings_immersive_interface_title">"Interface Imersiva"</string>
     <string name="settings_immersive_interface_summary">"Não é Aplicada a Todas as Páginas"</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_title">"Ignorar Barra de Navegação na Interface Imersiva"</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_summary">"Impede que Barra de Navegação Inferior tenha Preenchimento Extra"</string>
     <string name="settings_customize_tabs_in_main_page_title">"Personalizar Separadores da Página Principal"</string>
     <string name="settings_enable_bottom_app_bar_title">"Ativar Barra Navegação Inferior"</string>
     <string name="settings_category_post_and_comment_title">"Publicação e Comentário"</string>
@@ -870,7 +868,6 @@ Reprodução automática de vídeos desativada."</string>
     <string name="settings_only_disable_preview_in_video_and_gif_posts_title">"Desativar Pré-visualização apenas a Publicações Vídeo e GIF"</string>
     <string name="settings_enable_search_history_title">"Ativar Histórico de Pesquisa"</string>
     <string name="settings_post_history_title">"Histórico de Pesquisa"</string>
-    <string name="settings_mark_posts_as_read_title">"Marcar Publicação como Lida"</string>
     <string name="settings_mark_posts_as_read_after_voting_title">"Marcar Publicação como Lida após Votar"</string>
     <string name="settings_mark_posts_as_read_on_scroll_title">"Marcar Publicações como Lidas ao Deslizar"</string>
     <string name="settings_hide_read_posts_automatically_title">"Esconder Publicações Lidas Automaticamente"</string>

@@ -37,12 +37,10 @@ import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.customviews.LinearLayoutManagerBugFixed;
 import ml.docilealligator.infinityforreddit.customviews.SwipeLockInterface;
 import ml.docilealligator.infinityforreddit.customviews.SwipeLockLinearLayoutManager;
-import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
 import ml.docilealligator.infinityforreddit.databinding.ActivityCommentFullMarkdownBinding;
 import ml.docilealligator.infinityforreddit.events.SwitchAccountEvent;
 import ml.docilealligator.infinityforreddit.markdown.CustomMarkwonAdapter;
 import ml.docilealligator.infinityforreddit.markdown.MarkdownUtils;
-import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
 
 public class FullMarkdownActivity extends BaseActivity {
@@ -78,9 +76,7 @@ public class FullMarkdownActivity extends BaseActivity {
 
         setTitle(" ");
 
-        if (mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
-            mSliderPanel = Slidr.attach(this);
-        }
+        attachSliderPanelIfApplicable();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Window window = getWindow();
@@ -89,7 +85,7 @@ public class FullMarkdownActivity extends BaseActivity {
                 addOnOffsetChangedListener(binding.appbarLayoutCommentFullMarkdownActivity);
             }
 
-            if (isImmersiveInterface()) {
+            if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     window.setDecorFitsSystemWindows(false);
                 } else {
@@ -100,7 +96,7 @@ public class FullMarkdownActivity extends BaseActivity {
                     @NonNull
                     @Override
                     public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                        Insets allInsets = Utils.getInsets(insets, false);
+                        Insets allInsets = Utils.getInsets(insets, false, isForcedImmersiveInterface());
 
                         setMargins(binding.toolbarCommentFullMarkdownActivity,
                                 allInsets.left,
@@ -218,7 +214,9 @@ public class FullMarkdownActivity extends BaseActivity {
     @Override
     protected void applyCustomTheme() {
         binding.getRoot().setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
-        applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutCommentFullMarkdownActivity, binding.collapsingToolbarLayoutCommentFullMarkdownActivity, binding.toolbarCommentFullMarkdownActivity);
+        applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutCommentFullMarkdownActivity,
+                binding.collapsingToolbarLayoutCommentFullMarkdownActivity, binding.toolbarCommentFullMarkdownActivity);
+        applyAppBarScrollFlagsIfApplicable(binding.collapsingToolbarLayoutCommentFullMarkdownActivity);
     }
 
     @Override

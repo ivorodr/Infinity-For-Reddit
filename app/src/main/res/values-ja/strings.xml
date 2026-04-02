@@ -352,8 +352,6 @@
     <string name="settings_immersive_interface_summary">"一部のページでは動作しません"</string>
 
     <!-- Fuzzy -->
-    <string name="settings_immersive_interface_ignore_nav_bar_title">"没入型インターフェースでナビゲーションバーを無視"</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_summary">"下部ナビゲーションバーがオフセットされることを防止します"</string>
     <string name="settings_customize_tabs_in_main_page_title">"メインページのタブをカスタマイズ"</string>
     <string name="settings_enable_bottom_app_bar_title">"下部ナビゲーションを有効化"</string>
     <string name="settings_category_post_and_comment_title">"投稿とコメント"</string>
@@ -963,7 +961,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="settings_only_disable_preview_in_video_and_gif_posts_title">"ビデオとGIF投稿でのみプレビューを無効にする"</string>
     <string name="settings_enable_search_history_title">"検索履歴を有効化"</string>
     <string name="settings_post_history_title">"投稿履歴"</string>
-    <string name="settings_mark_posts_as_read_title">"投稿を既読にする"</string>
     <string name="settings_mark_posts_as_read_after_voting_title">"投票後に投稿を既読にする"</string>
     <string name="settings_mark_posts_as_read_on_scroll_title">"スクロール時に投稿を既読にする"</string>
     <string name="settings_hide_read_posts_automatically_title">"自動で既読の投稿を非表示にする"</string>

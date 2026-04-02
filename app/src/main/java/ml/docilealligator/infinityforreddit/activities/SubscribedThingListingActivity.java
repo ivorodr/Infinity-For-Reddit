@@ -54,7 +54,6 @@ import ml.docilealligator.infinityforreddit.asynctasks.DeleteMultiredditInDataba
 import ml.docilealligator.infinityforreddit.asynctasks.InsertMultireddit;
 import ml.docilealligator.infinityforreddit.asynctasks.InsertSubscribedThings;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
-import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
 import ml.docilealligator.infinityforreddit.databinding.ActivitySubscribedThingListingBinding;
 import ml.docilealligator.infinityforreddit.events.GoBackToMainPageEvent;
 import ml.docilealligator.infinityforreddit.events.RefreshMultiRedditsEvent;
@@ -133,9 +132,7 @@ public class SubscribedThingListingActivity extends BaseActivity implements Acti
 
         applyCustomTheme();
 
-        if (mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
-            mSliderPanel = Slidr.attach(this);
-        }
+        attachSliderPanelIfApplicable();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Window window = getWindow();
@@ -144,7 +141,7 @@ public class SubscribedThingListingActivity extends BaseActivity implements Acti
                 addOnOffsetChangedListener(binding.appbarLayoutSubscribedThingListingActivity);
             }
 
-            if (isImmersiveInterface()) {
+            if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     window.setDecorFitsSystemWindows(false);
                 } else {
@@ -156,7 +153,7 @@ public class SubscribedThingListingActivity extends BaseActivity implements Acti
                     @NonNull
                     @Override
                     public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                        Insets allInsets = Utils.getInsets(insets, true);
+                        Insets allInsets = Utils.getInsets(insets, true, isForcedImmersiveInterface());
 
                         setMargins(binding.toolbarSubscribedThingListingActivity,
                                 allInsets.left,
@@ -299,6 +296,7 @@ public class SubscribedThingListingActivity extends BaseActivity implements Acti
         binding.getRoot().setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
         applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutSubscribedThingListingActivity,
                 binding.collapsingToolbarLayoutSubscribedThingListingActivity, binding.toolbarSubscribedThingListingActivity);
+        applyAppBarScrollFlagsIfApplicable(binding.collapsingToolbarLayoutSubscribedThingListingActivity);
         applyTabLayoutTheme(binding.tabLayoutSubscribedThingListingActivity);
         applyFABTheme(binding.fabSubscribedThingListingActivity);
         binding.searchEditTextSubscribedThingListingActivity.setTextColor(mCustomThemeWrapper.getToolbarPrimaryTextAndIconColor());
@@ -367,8 +365,7 @@ public class SubscribedThingListingActivity extends BaseActivity implements Acti
                         imm.showSoftInput(binding.searchEditTextSubscribedThingListingActivity, InputMethodManager.SHOW_IMPLICIT);
                     }
                     return true;
-                }
-                else {
+                } else {
                     intent.putExtra(SearchActivity.EXTRA_SEARCH_SUBREDDITS_AND_USERS, true);
                 }
                 requestSearchThingLauncher.launch(intent);

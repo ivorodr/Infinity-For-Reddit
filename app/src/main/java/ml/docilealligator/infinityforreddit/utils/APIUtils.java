@@ -4,6 +4,7 @@ import android.os.SystemClock;
 import android.util.Base64;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -107,6 +108,9 @@ public class APIUtils {
 
     public static final String MULTIPATH_KEY = "multipath";
     public static final String MODEL_KEY = "model";
+    public static final String FROM_KEY = "from";
+    public static final String DISPLAY_NAME_KEY = "display_name";
+    public static final String DESCRIPTION_MD_KEY = "description_md";
 
     public static final String REASON_KEY = "reason";
 
@@ -169,6 +173,11 @@ public class APIUtils {
         params.put(APIUtils.REFERER_KEY, APIUtils.REVEDDIT_REFERER);
         params.put(APIUtils.USER_AGENT_KEY, APIUtils.USER_AGENT);
         return params;
+    }
+
+    // Concatenated subreddit name works too
+    public static int subredditAPICallLimit(@Nullable String subredditName) {
+        return subredditName != null && subredditName.toLowerCase().contains("stablediffusion") ? 55 : 100;
     }
 
     // RedGifs token management

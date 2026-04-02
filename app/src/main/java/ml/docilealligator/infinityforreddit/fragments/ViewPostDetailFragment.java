@@ -56,6 +56,7 @@ import com.livefront.bridge.Bridge;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -106,7 +107,8 @@ import ml.docilealligator.infinityforreddit.post.FetchPost;
 import ml.docilealligator.infinityforreddit.post.HidePost;
 import ml.docilealligator.infinityforreddit.post.ParsePost;
 import ml.docilealligator.infinityforreddit.post.Post;
-import ml.docilealligator.infinityforreddit.readpost.InsertReadPost;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostModification;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostType;
 import ml.docilealligator.infinityforreddit.readpost.ReadPostsUtils;
 import ml.docilealligator.infinityforreddit.subreddit.FetchSubredditData;
 import ml.docilealligator.infinityforreddit.subreddit.Flair;
@@ -130,7 +132,6 @@ import retrofit2.Retrofit;
 
 public class ViewPostDetailFragment extends Fragment implements FragmentCommunicator, PostModerationActionHandler, CommentModerationActionHandler {
 
-    public static final String EXTRA_POST_DATA = "EPD";
     public static final String EXTRA_POST_ID = "EPI";
     public static final String EXTRA_SINGLE_COMMENT_ID = "ESCI";
     public static final String EXTRA_CONTEXT_NUMBER = "ECN";
@@ -177,8 +178,6 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     @Inject
     Executor mExecutor;
     @State
-    Post mPost;
-    @State
     boolean isLoadingMoreChildren = false;
     @State
     boolean isRefreshing = false;
@@ -206,10 +205,11 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     boolean commentFilterFetched;
     @State
     CommentFilter mCommentFilter;
-    private ViewPostDetailActivity activity;
+    private ViewPostDetailActivity mActivity;
     private RequestManager mGlide;
     private Locale mLocale;
     private Menu mMenu;
+    private Post mPost;
     private int postListPosition = -1;
     private String mSingleCommentId;
     private String mContextNumber;
@@ -224,8 +224,6 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     private PostDetailRecyclerViewAdapter mPostAdapter;
     private CommentsRecyclerViewAdapter mCommentsAdapter;
     private RecyclerView.SmoothScroller mSmoothScroller;
-    private Drawable mSavedIcon;
-    private Drawable mUnsavedIcon;
     private ColorDrawable backgroundSwipeRight;
     private ColorDrawable backgroundSwipeLeft;
     private Drawable drawableSwipeRight;
@@ -239,6 +237,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     private FragmentViewPostDetailBinding binding;
     private RecyclerView mCommentsRecyclerView;
     public ViewPostDetailFragmentViewModel viewPostDetailFragmentViewModel;
+    public ViewPostDetailActivityViewModel viewPostDetailActivityViewModel;
 
     public ViewPostDetailFragment() {
         // Required empty public constructor
@@ -250,7 +249,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
         // Inflate the layout for this fragment
         binding = FragmentViewPostDetailBinding.inflate(inflater, container, false);
 
-        ((Infinity) activity.getApplication()).getAppComponent().inject(this);
+        ((Infinity) mActivity.getApplication()).getAppComponent().inject(this);
 
         setHasOptionsMenu(true);
 
@@ -261,9 +260,6 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
         applyTheme();
 
         binding.postDetailRecyclerViewViewPostDetailFragment.addOnWindowFocusChangedListener(this::onWindowFocusChanged);
-
-        mSavedIcon = getMenuItemIcon(R.drawable.ic_bookmark_toolbar_24dp);
-        mUnsavedIcon = getMenuItemIcon(R.drawable.ic_bookmark_border_toolbar_24dp);
 
         mCommentsRecyclerView = binding.commentsRecyclerViewViewPostDetailFragment;
         if (!((mPostDetailsSharedPreferences.getBoolean(SharedPreferencesUtils.SEPARATE_POST_AND_COMMENTS_IN_LANDSCAPE_MODE, true)
@@ -278,17 +274,17 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
             mSeparatePostAndComments = true;
         }
 
-        if (activity.isImmersiveInterface()) {
+        if (mActivity.isImmersiveInterfaceRespectForcedEdgeToEdge()) {
             ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
                 @NonNull
                 @Override
                 public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                    Insets allInsets = Utils.getInsets(insets, false);
+                    Insets allInsets = Utils.getInsets(insets, false, mActivity.isForcedImmersiveInterface());
                     binding.postDetailRecyclerViewViewPostDetailFragment.setPadding(
-                            0, 0, 0, (int) Utils.convertDpToPixel(144, activity) + allInsets.bottom
+                            0, 0, 0, (int) Utils.convertDpToPixel(144, mActivity) + allInsets.bottom
                     );
                     if (mCommentsRecyclerView != null) {
-                        mCommentsRecyclerView.setPadding(0, 0, 0, (int) Utils.convertDpToPixel(144, activity) + allInsets.bottom);
+                        mCommentsRecyclerView.setPadding(0, 0, 0, (int) Utils.convertDpToPixel(144, mActivity) + allInsets.bottom);
                     }
                     return WindowInsetsCompat.CONSUMED;
                 }
@@ -303,7 +299,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
         mLockFab = mSharedPreferences.getBoolean(SharedPreferencesUtils.LOCK_JUMP_TO_NEXT_TOP_LEVEL_COMMENT_BUTTON, false);
         mSwipeUpToHideFab = mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_UP_TO_HIDE_JUMP_TO_NEXT_TOP_LEVEL_COMMENT_BUTTON, false);
         mExpandChildren = !mSharedPreferences.getBoolean(SharedPreferencesUtils.SHOW_TOP_LEVEL_COMMENTS_FIRST, false);
-        mMarkPostsAsRead = mPostHistorySharedPreferences.getBoolean(activity.accountName + SharedPreferencesUtils.MARK_POSTS_AS_READ_BASE, false);
+        mMarkPostsAsRead = mPostHistorySharedPreferences.getBoolean(mActivity.accountName + SharedPreferencesUtils.MARK_POSTS_AS_READ_BASE, false);
         if (savedInstanceState == null) {
             mRespectSubredditRecommendedSortType = mSharedPreferences.getBoolean(SharedPreferencesUtils.RESPECT_SUBREDDIT_RECOMMENDED_COMMENT_SORT_TYPE, false);
             viewPostDetailFragmentId = System.currentTimeMillis();
@@ -353,19 +349,19 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                     super.onScrolled(recyclerView, dx, dy);
                     if (!mIsSmoothScrolling && !mLockFab) {
                         if (!recyclerView.canScrollVertically(1)) {
-                            activity.hideFab();
+                            mActivity.hideFab();
                         } else {
                             if (dy > 0) {
                                 if (mSwipeUpToHideFab) {
-                                    activity.showFab();
+                                    mActivity.showFab();
                                 } else {
-                                    activity.hideFab();
+                                    mActivity.hideFab();
                                 }
                             } else {
                                 if (mSwipeUpToHideFab) {
-                                    activity.hideFab();
+                                    mActivity.hideFab();
                                 } else {
-                                    activity.showFab();
+                                    mActivity.showFab();
                                 }
                             }
                         }
@@ -396,19 +392,19 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                     super.onScrolled(recyclerView, dx, dy);
                     if (!mIsSmoothScrolling && !mLockFab) {
                         if (!recyclerView.canScrollVertically(1)) {
-                            activity.hideFab();
+                            mActivity.hideFab();
                         } else {
                             if (dy > 0) {
                                 if (mSwipeUpToHideFab) {
-                                    activity.showFab();
+                                    mActivity.showFab();
                                 } else {
-                                    activity.hideFab();
+                                    mActivity.hideFab();
                                 }
                             } else {
                                 if (mSwipeUpToHideFab) {
-                                    activity.hideFab();
+                                    mActivity.hideFab();
                                 } else {
-                                    activity.showFab();
+                                    mActivity.showFab();
                                 }
                             }
                         }
@@ -467,7 +463,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
             @Override
             public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
                 View itemView = viewHolder.itemView;
-                int horizontalOffset = (int) Utils.convertDpToPixel(16, activity);
+                int horizontalOffset = (int) Utils.convertDpToPixel(16, mActivity);
                 if (dX > 0) {
                     if (dX > (itemView.getRight() - itemView.getLeft()) * swipeActionThreshold) {
                         dX = (itemView.getRight() - itemView.getLeft()) * swipeActionThreshold;
@@ -532,12 +528,15 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
         });
 
         if (enableSwipeAction) {
-            touchHelper.attachToRecyclerView((mCommentsRecyclerView == null ? binding.postDetailRecyclerViewViewPostDetailFragment : mCommentsRecyclerView), 5);
+            touchHelper.attachToRecyclerView(
+                    (mCommentsRecyclerView == null ? binding.postDetailRecyclerViewViewPostDetailFragment : mCommentsRecyclerView),
+                    Float.parseFloat(mSharedPreferences.getString(SharedPreferencesUtils.SWIPE_ACTION_SENSITIVITY_IN_COMMENTS, "5"))
+            );
         }
 
         binding.swipeRefreshLayoutViewPostDetailFragment.setOnRefreshListener(() -> refresh(true, true));
 
-        mSmoothScroller = new LinearSmoothScroller(activity) {
+        mSmoothScroller = new LinearSmoothScroller(mActivity) {
             @Override
             protected int getVerticalSnapPreference() {
                 return LinearSmoothScroller.SNAP_TO_START;
@@ -555,11 +554,11 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
 
             if (!mRespectSubredditRecommendedSortType || isSingleCommentThreadMode) {
                 sortType = loadSortType();
-                activity.setTitle(sortType.fullName);
+                mActivity.setTitle(sortType.fullName);
             }
         } else {
             if (sortType != null) {
-                activity.setTitle(sortType.fullName);
+                mActivity.setTitle(sortType.fullName);
             }
         }
 
@@ -569,8 +568,11 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
 
         viewPostDetailFragmentViewModel = new ViewModelProvider(
                 this,
-                ViewPostDetailFragmentViewModel.Companion.provideFactory(mOauthRetrofit, activity.accessToken, activity.accountName)
+                ViewPostDetailFragmentViewModel.Companion.provideFactory(mOauthRetrofit, mActivity.accessToken, mActivity.accountName)
         ).get(ViewPostDetailFragmentViewModel.class);
+
+        viewPostDetailActivityViewModel = new ViewModelProvider(requireActivity())
+                .get(ViewPostDetailActivityViewModel.class);
 
         bindView();
 
@@ -578,8 +580,8 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     }
 
     private void bindView() {
-        if (!activity.accountName.equals(Account.ANONYMOUS_ACCOUNT) && mMessageFullname != null) {
-            ReadMessage.readMessage(mOauthRetrofit, activity.accessToken, mMessageFullname, new ReadMessage.ReadMessageListener() {
+        if (!mActivity.accountName.equals(Account.ANONYMOUS_ACCOUNT) && mMessageFullname != null) {
+            ReadMessage.readMessage(mOauthRetrofit, mActivity.accessToken, mMessageFullname, new ReadMessage.ReadMessageListener() {
                 @Override
                 public void readSuccess() {
                     mMessageFullname = null;
@@ -593,23 +595,34 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
         }
 
         if (mPost == null) {
-            mPost = getArguments().getParcelable(EXTRA_POST_DATA);
+            mPost = viewPostDetailActivityViewModel.getPost(postListPosition);
+            if (mPost == null) {
+                mPost = viewPostDetailActivityViewModel.getPost();
+            }
         }
 
         if (mPost == null) {
             fetchPostAndCommentsById(getArguments().getString(EXTRA_POST_ID));
         } else {
+            if (showSensitiveWarning()) {
+                return;
+            }
             setupMenu();
 
-            mPostAdapter = new PostDetailRecyclerViewAdapter(activity,
+            mPostAdapter = new PostDetailRecyclerViewAdapter(mActivity,
                     this, mExecutor, mCustomThemeWrapper, mOauthRetrofit, mRetrofit,
                     mRedgifsRetrofit, mStreamableApiProvider, mRedditDataRoomDatabase, mGlide,
-                    mSeparatePostAndComments, activity.accessToken, activity.accountName, mPost, mLocale,
-                    mSharedPreferences, mCurrentAccountSharedPreferences, mNsfwAndSpoilerSharedPreferences, mPostDetailsSharedPreferences,
-                    mExoCreator, post -> EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition)));
-            mCommentsAdapter = new CommentsRecyclerViewAdapter(activity,
+                    mSeparatePostAndComments, mActivity.accessToken, mActivity.accountName, mPost,
+                    mLocale, mSharedPreferences, mCurrentAccountSharedPreferences,
+                    mNsfwAndSpoilerSharedPreferences, mPostDetailsSharedPreferences,
+                    mPostHistorySharedPreferences, mExoCreator,
+                    post -> {
+                        EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
+                        setupMenu();
+                    });
+            mCommentsAdapter = new CommentsRecyclerViewAdapter(mActivity,
                     this, mCustomThemeWrapper, mExecutor, mRetrofit, mOauthRetrofit,
-                    activity.accessToken, activity.accountName, mPost, mLocale, mSingleCommentId,
+                    mActivity.accessToken, mActivity.accountName, mPost, mLocale, mSingleCommentId,
                     isSingleCommentThreadMode, mSharedPreferences, mNsfwAndSpoilerSharedPreferences,
                     new CommentsRecyclerViewAdapter.CommentRecyclerViewAdapterCallback() {
                         @Override
@@ -662,14 +675,14 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                 mPostAdapter.updatePost(mPost);
             }
             EventBus.getDefault().post(new PostUpdateEventToPostList(moderationEvent.getPost(), moderationEvent.getPosition()));
-            Toast.makeText(activity, moderationEvent.getToastMessageResId(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(mActivity, moderationEvent.getToastMessageResId(), Toast.LENGTH_SHORT).show();
         });
 
         viewPostDetailFragmentViewModel.getCommentModerationEventLiveData().observe(getViewLifecycleOwner(), moderationEvent -> {
             if (mCommentsAdapter != null) {
                 mCommentsAdapter.updateModdedStatus(moderationEvent.getComment(), moderationEvent.getPosition());
             }
-            Toast.makeText(activity, moderationEvent.getToastMessageResId(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(mActivity, moderationEvent.getToastMessageResId(), Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -697,34 +710,31 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
             MenuItem saveItem = mMenu.findItem(R.id.action_save_view_post_detail_fragment);
             MenuItem hideItem = mMenu.findItem(R.id.action_hide_view_post_detail_fragment);
 
+            saveItem.setVisible(true);
+            hideItem.setVisible(true);
             mMenu.findItem(R.id.action_comment_view_post_detail_fragment).setVisible(true);
             mMenu.findItem(R.id.action_sort_view_post_detail_fragment).setVisible(true);
             mMenu.findItem(R.id.action_report_view_post_detail_fragment).setVisible(true);
             mMenu.findItem(R.id.action_crosspost_view_post_detail_fragment).setVisible(true);
             mMenu.findItem(R.id.action_add_to_post_filter_view_post_detail_fragment).setVisible(true);
 
-            if (!activity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
-                if (mPost.isSaved()) {
-                    saveItem.setVisible(true);
-                    saveItem.setIcon(mSavedIcon);
-                } else {
-                    saveItem.setVisible(true);
-                    saveItem.setIcon(mUnsavedIcon);
-                }
-
-                if (mPost.isHidden()) {
-                    hideItem.setVisible(true);
-                    Utils.setTitleWithCustomFontToMenuItem(activity.typeface, hideItem, activity.getString(R.string.action_unhide_post));
-                } else {
-                    hideItem.setVisible(true);
-                    Utils.setTitleWithCustomFontToMenuItem(activity.typeface, hideItem, activity.getString(R.string.action_hide_post));
-                }
+            if (mPost.isHidden()) {
+                Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, hideItem, mActivity.getString(R.string.action_unhide_post));
             } else {
-                saveItem.setVisible(false);
-                hideItem.setVisible(false);
+                Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, hideItem, mActivity.getString(R.string.action_hide_post));
             }
 
-            if (mPost.getAuthor().equals(activity.accountName)) {
+            if (mPost.isSaved()) {
+                Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, saveItem, mActivity.getString(R.string.action_unsave_post));
+            } else {
+                Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, saveItem, mActivity.getString(R.string.action_save_post));
+            }
+
+            if (Account.ANONYMOUS_ACCOUNT.equals(mActivity.accountName)) {
+                mMenu.findItem(R.id.action_crosspost_view_post_detail_fragment).setVisible(false);
+            }
+
+            if (mPost.getAuthor().equals(mActivity.accountName)) {
                 if (mPost.getPostType() == Post.TEXT_TYPE) {
                     mMenu.findItem(R.id.action_edit_view_post_detail_fragment).setVisible(true);
                 }
@@ -733,17 +743,17 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                 MenuItem nsfwItem = mMenu.findItem(R.id.action_nsfw_view_post_detail_fragment);
                 nsfwItem.setVisible(true);
                 if (mPost.isNSFW()) {
-                    Utils.setTitleWithCustomFontToMenuItem(activity.typeface, nsfwItem, activity.getString(R.string.action_unmark_nsfw));
+                    Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, nsfwItem, mActivity.getString(R.string.action_unmark_nsfw));
                 } else {
-                    Utils.setTitleWithCustomFontToMenuItem(activity.typeface, nsfwItem, activity.getString(R.string.action_mark_nsfw));
+                    Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, nsfwItem, mActivity.getString(R.string.action_mark_nsfw));
                 }
 
                 MenuItem spoilerItem = mMenu.findItem(R.id.action_spoiler_view_post_detail_fragment);
                 spoilerItem.setVisible(true);
                 if (mPost.isSpoiler()) {
-                    Utils.setTitleWithCustomFontToMenuItem(activity.typeface, spoilerItem, activity.getString(R.string.action_unmark_spoiler));
+                    Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, spoilerItem, mActivity.getString(R.string.action_unmark_spoiler));
                 } else {
-                    Utils.setTitleWithCustomFontToMenuItem(activity.typeface, spoilerItem, activity.getString(R.string.action_mark_spoiler));
+                    Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, spoilerItem, mActivity.getString(R.string.action_mark_spoiler));
                 }
 
                 mMenu.findItem(R.id.action_edit_flair_view_post_detail_fragment).setVisible(true);
@@ -772,7 +782,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     }
 
     private Drawable getMenuItemIcon(int drawableId) {
-        Drawable icon = AppCompatResources.getDrawable(activity, drawableId);
+        Drawable icon = AppCompatResources.getDrawable(mActivity, drawableId);
         if (icon != null) {
             icon.setTint(mCustomThemeWrapper.getToolbarPrimaryTextAndIconColor());
         }
@@ -822,7 +832,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
         params.put(APIUtils.TEXT_KEY, flair.getText());
 
         mOauthRetrofit.create(RedditAPI.class).selectFlair(mPost.getSubredditNamePrefixed(),
-                APIUtils.getOAuthHeader(activity.accessToken), params).enqueue(new Callback<String>() {
+                APIUtils.getOAuthHeader(mActivity.accessToken), params).enqueue(new Callback<String>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
                 if (response.isSuccessful()) {
@@ -933,7 +943,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     }
 
     public void loadIcon(List<Comment> comments, ViewPostDetailActivityViewModel.LoadIconListener loadIconListener) {
-        activity.loadAuthorIcons(comments, loadIconListener);
+        mActivity.loadAuthorIcons(comments, loadIconListener);
     }
 
     @Override
@@ -950,7 +960,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
         if (itemId == R.id.action_search_view_post_detail_fragment) {
-            if (activity.toggleSearchPanelVisibility() && mCommentsAdapter != null) {
+            if (mActivity.toggleSearchPanelVisibility() && mCommentsAdapter != null) {
                 mCommentsAdapter.resetCommentSearchIndex();
             }
         } else if (itemId == R.id.action_refresh_view_post_detail_fragment) {
@@ -968,12 +978,12 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                     return true;
                 }
 
-                if (activity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+                if (mActivity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                     showMessage(R.string.login_first);
                     return true;
                 }
 
-                Intent intent = new Intent(activity, CommentActivity.class);
+                Intent intent = new Intent(mActivity, CommentActivity.class);
                 intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_TITLE_KEY, mPost.getTitle());
                 intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_BODY_MARKDOWN_KEY, mPost.getSelfText());
                 intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_BODY_KEY, mPost.getSelfTextPlain());
@@ -985,135 +995,176 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
             }
             return true;
         } else if (itemId == R.id.action_save_view_post_detail_fragment) {
-            if (mPost != null && !activity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
-                if (mPost.isSaved()) {
-                    item.setIcon(mUnsavedIcon);
-                    SaveThing.unsaveThing(mOauthRetrofit, activity.accessToken, mPost.getFullName(),
-                            new SaveThing.SaveThingListener() {
-                                @Override
-                                public void success() {
-                                    if (isAdded()) {
-                                        mPost.setSaved(false);
-                                        item.setIcon(mUnsavedIcon);
-                                        showMessage(R.string.post_unsaved_success);
-                                    }
-                                    EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
-                                }
-
-                                @Override
-                                public void failed() {
-                                    if (isAdded()) {
-                                        mPost.setSaved(true);
-                                        item.setIcon(mSavedIcon);
-                                        showMessage(R.string.post_unsaved_failed);
-                                    }
-                                    EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
-                                }
-                            });
+            if (mPost != null) {
+                if (Account.ANONYMOUS_ACCOUNT.equals(mActivity.accountName)) {
+                    if (mPost.isSaved()) {
+                        ReadPostModification.deleteReadPost(mRedditDataRoomDatabase, mExecutor, mActivity.accountName,
+                                mPost.getId(), ReadPostType.ANONYMOUS_SAVED_POSTS);
+                        Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_save_post));
+                        showMessage(R.string.post_unsaved_success);
+                    } else {
+                        ReadPostModification.insertReadPost(mRedditDataRoomDatabase, mExecutor, mActivity.accountName,
+                                mPost.getId(), ReadPostType.ANONYMOUS_SAVED_POSTS,
+                                ReadPostsUtils.GetReadPostsLimit(mActivity.accountName, mPostHistorySharedPreferences));
+                        Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_unsave_post));
+                        showMessage(R.string.post_saved_success);
+                    }
+                    mPost.setSaved(!mPost.isSaved());
+                    EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
+                    mPostAdapter.updatePost(mPost);
                 } else {
-                    item.setIcon(mSavedIcon);
-                    SaveThing.saveThing(mOauthRetrofit, activity.accessToken, mPost.getFullName(),
-                            new SaveThing.SaveThingListener() {
-                                @Override
-                                public void success() {
-                                    if (isAdded()) {
-                                        mPost.setSaved(true);
-                                        item.setIcon(mSavedIcon);
-                                        showMessage(R.string.post_saved_success);
-                                    }
-                                    EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
-                                }
+                    if (mPost.isSaved()) {
+                        Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_save_post));
 
-                                @Override
-                                public void failed() {
-                                    if (isAdded()) {
-                                        mPost.setSaved(false);
-                                        item.setIcon(mUnsavedIcon);
-                                        showMessage(R.string.post_saved_failed);
+                        SaveThing.unsaveThing(mOauthRetrofit, mActivity.accessToken, mPost.getFullName(),
+                                new SaveThing.SaveThingListener() {
+                                    @Override
+                                    public void success() {
+                                        if (isAdded()) {
+                                            mPost.setSaved(false);
+                                            Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_save_post));
+                                            showMessage(R.string.post_unsaved_success);
+                                        }
+                                        EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
+                                        mPostAdapter.updatePost(mPost);
                                     }
-                                    EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
-                                }
-                            });
+
+                                    @Override
+                                    public void failed() {
+                                        if (isAdded()) {
+                                            mPost.setSaved(true);
+                                            Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_unsave_post));
+                                            showMessage(R.string.post_unsaved_failed);
+                                        }
+                                        EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
+                                        mPostAdapter.updatePost(mPost);
+                                    }
+                                });
+                    } else {
+                        Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_unsave_post));
+
+                        SaveThing.saveThing(mOauthRetrofit, mActivity.accessToken, mPost.getFullName(),
+                                new SaveThing.SaveThingListener() {
+                                    @Override
+                                    public void success() {
+                                        if (isAdded()) {
+                                            mPost.setSaved(true);
+                                            Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_unsave_post));
+                                            showMessage(R.string.post_saved_success);
+                                        }
+                                        EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
+                                        mPostAdapter.updatePost(mPost);
+                                    }
+
+                                    @Override
+                                    public void failed() {
+                                        if (isAdded()) {
+                                            mPost.setSaved(false);
+                                            Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_save_post));
+                                            showMessage(R.string.post_saved_failed);
+                                        }
+                                        EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
+                                        mPostAdapter.updatePost(mPost);
+                                    }
+                                });
+                    }
                 }
             }
             return true;
         } else if (itemId == R.id.action_sort_view_post_detail_fragment) {
             if (mPost != null) {
                 PostCommentSortTypeBottomSheetFragment postCommentSortTypeBottomSheetFragment = PostCommentSortTypeBottomSheetFragment.getNewInstance(sortType);
-                postCommentSortTypeBottomSheetFragment.show(activity.getSupportFragmentManager(), postCommentSortTypeBottomSheetFragment.getTag());
+                postCommentSortTypeBottomSheetFragment.show(mActivity.getSupportFragmentManager(), postCommentSortTypeBottomSheetFragment.getTag());
             }
             return true;
         } else if (itemId == R.id.action_view_crosspost_parent_view_post_detail_fragment) {
-            Intent crosspostIntent = new Intent(activity, ViewPostDetailActivity.class);
+            Intent crosspostIntent = new Intent(mActivity, ViewPostDetailActivity.class);
             crosspostIntent.putExtra(ViewPostDetailActivity.EXTRA_POST_ID, mPost.getCrosspostParentId());
             startActivity(crosspostIntent);
             return true;
         } else if (itemId == R.id.action_hide_view_post_detail_fragment) {
-            if (mPost != null && !activity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
-                if (mPost.isHidden()) {
-                    Utils.setTitleWithCustomFontToMenuItem(activity.typeface, item, getString(R.string.action_hide_post));
-
-                    HidePost.unhidePost(mOauthRetrofit, activity.accessToken, mPost.getFullName(), new HidePost.HidePostListener() {
-                        @Override
-                        public void success() {
-                            mPost.setHidden(false);
-                            Utils.setTitleWithCustomFontToMenuItem(activity.typeface, item, activity.getString(R.string.action_hide_post));
-                            showMessage(R.string.post_unhide_success);
-                            EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
-                        }
-
-                        @Override
-                        public void failed() {
-                            mPost.setHidden(true);
-                            Utils.setTitleWithCustomFontToMenuItem(activity.typeface, item, activity.getString(R.string.action_unhide_post));
-                            showMessage(R.string.post_unhide_failed);
-                            EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
-                        }
-                    });
+            if (mPost != null) {
+                if (Account.ANONYMOUS_ACCOUNT.equals(mActivity.accountName)) {
+                    if (mPost.isHidden()) {
+                        ReadPostModification.deleteReadPost(mRedditDataRoomDatabase, mExecutor, mActivity.accountName,
+                                mPost.getId(), ReadPostType.ANONYMOUS_HIDDEN_POSTS);
+                        Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_hide_post));
+                        showMessage(R.string.post_unhide_success);
+                    } else {
+                        ReadPostModification.insertReadPost(mRedditDataRoomDatabase, mExecutor, mActivity.accountName,
+                                mPost.getId(), ReadPostType.ANONYMOUS_HIDDEN_POSTS,
+                                ReadPostsUtils.GetReadPostsLimit(mActivity.accountName, mPostHistorySharedPreferences));
+                        Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_unhide_post));
+                        showMessage(R.string.post_hide_success);
+                    }
+                    mPost.setHidden(!mPost.isHidden());
+                    EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
                 } else {
-                    Utils.setTitleWithCustomFontToMenuItem(activity.typeface, item, getString(R.string.action_unhide_post));
+                    if (mPost.isHidden()) {
+                        Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, getString(R.string.action_hide_post));
 
-                    HidePost.hidePost(mOauthRetrofit, activity.accessToken, mPost.getFullName(), new HidePost.HidePostListener() {
-                        @Override
-                        public void success() {
-                            mPost.setHidden(true);
-                            Utils.setTitleWithCustomFontToMenuItem(activity.typeface, item, activity.getString(R.string.action_unhide_post));
-                            showMessage(R.string.post_hide_success);
-                            EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
-                        }
+                        HidePost.unhidePost(mOauthRetrofit, mActivity.accessToken, mPost.getFullName(), new HidePost.HidePostListener() {
+                            @Override
+                            public void success() {
+                                mPost.setHidden(false);
+                                Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_hide_post));
+                                showMessage(R.string.post_unhide_success);
+                                EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
+                            }
 
-                        @Override
-                        public void failed() {
-                            mPost.setHidden(false);
-                            Utils.setTitleWithCustomFontToMenuItem(activity.typeface, item, activity.getString(R.string.action_hide_post));
-                            showMessage(R.string.post_hide_failed);
-                            EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
-                        }
-                    });
+                            @Override
+                            public void failed() {
+                                mPost.setHidden(true);
+                                Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_unhide_post));
+                                showMessage(R.string.post_unhide_failed);
+                                EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
+                            }
+                        });
+                    } else {
+                        Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, getString(R.string.action_unhide_post));
+
+                        HidePost.hidePost(mOauthRetrofit, mActivity.accessToken, mPost.getFullName(), new HidePost.HidePostListener() {
+                            @Override
+                            public void success() {
+                                mPost.setHidden(true);
+                                Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_unhide_post));
+                                showMessage(R.string.post_hide_success);
+                                EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
+                            }
+
+                            @Override
+                            public void failed() {
+                                mPost.setHidden(false);
+                                Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, mActivity.getString(R.string.action_hide_post));
+                                showMessage(R.string.post_hide_failed);
+                                EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
+                            }
+                        });
+                    }
                 }
             }
             return true;
         } else if (itemId == R.id.action_edit_view_post_detail_fragment) {
             if (mPost.getMediaMetadataMap() == null) {
-                Intent editPostIntent = new Intent(activity, EditPostActivity.class);
+                Intent editPostIntent = new Intent(mActivity, EditPostActivity.class);
                 editPostIntent.putExtra(EditPostActivity.EXTRA_FULLNAME, mPost.getFullName());
                 editPostIntent.putExtra(EditPostActivity.EXTRA_TITLE, mPost.getTitle());
                 editPostIntent.putExtra(EditPostActivity.EXTRA_CONTENT, mPost.getSelfText());
                 startActivityForResult(editPostIntent, EDIT_POST_REQUEST_CODE);
             } else {
-                Toast.makeText(activity, R.string.cannot_edit_post_with_images, Toast.LENGTH_LONG).show();
+                Toast.makeText(mActivity, R.string.cannot_edit_post_with_images, Toast.LENGTH_LONG).show();
             }
             return true;
         } else if (itemId == R.id.action_delete_view_post_detail_fragment) {
-            new MaterialAlertDialogBuilder(activity, R.style.MaterialAlertDialogTheme)
+            new MaterialAlertDialogBuilder(mActivity, R.style.MaterialAlertDialogTheme)
                     .setTitle(R.string.delete_this_post)
                     .setMessage(R.string.are_you_sure)
                     .setPositiveButton(R.string.delete, (dialogInterface, i)
-                            -> DeleteThing.delete(mOauthRetrofit, mPost.getFullName(), activity.accessToken, new DeleteThing.DeleteThingListener() {
+                            -> DeleteThing.delete(mOauthRetrofit, mPost.getFullName(), mActivity.accessToken, new DeleteThing.DeleteThingListener() {
                         @Override
                         public void deleteSuccess() {
-                            Toast.makeText(activity, R.string.delete_post_success, Toast.LENGTH_SHORT).show();
-                            activity.finish();
+                            Toast.makeText(mActivity, R.string.delete_post_success, Toast.LENGTH_SHORT).show();
+                            mActivity.finish();
                         }
 
                         @Override
@@ -1144,25 +1195,25 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
             bundle.putString(FlairBottomSheetFragment.EXTRA_SUBREDDIT_NAME, mPost.getSubredditName());
             bundle.putLong(FlairBottomSheetFragment.EXTRA_VIEW_POST_DETAIL_FRAGMENT_ID, viewPostDetailFragmentId);
             flairBottomSheetFragment.setArguments(bundle);
-            flairBottomSheetFragment.show(activity.getSupportFragmentManager(), flairBottomSheetFragment.getTag());
+            flairBottomSheetFragment.show(mActivity.getSupportFragmentManager(), flairBottomSheetFragment.getTag());
             return true;
         } else if (itemId == R.id.action_report_view_post_detail_fragment) {
-            if (activity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
-                Toast.makeText(activity, R.string.login_first, Toast.LENGTH_SHORT).show();
+            if (mActivity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+                Toast.makeText(mActivity, R.string.login_first, Toast.LENGTH_SHORT).show();
                 return true;
             }
-            Intent intent = new Intent(activity, ReportActivity.class);
+            Intent intent = new Intent(mActivity, ReportActivity.class);
             intent.putExtra(ReportActivity.EXTRA_SUBREDDIT_NAME, mPost.getSubredditName());
             intent.putExtra(ReportActivity.EXTRA_THING_FULLNAME, mPost.getFullName());
             startActivity(intent);
             return true;
         } else if (itemId == R.id.action_crosspost_view_post_detail_fragment) {
-            Intent submitCrosspostIntent = new Intent(activity, SubmitCrosspostActivity.class);
+            Intent submitCrosspostIntent = new Intent(mActivity, SubmitCrosspostActivity.class);
             submitCrosspostIntent.putExtra(SubmitCrosspostActivity.EXTRA_POST, mPost);
             startActivity(submitCrosspostIntent);
             return true;
         } else if (itemId == R.id.action_add_to_post_filter_view_post_detail_fragment) {
-            Intent intent = new Intent(activity, PostFilterPreferenceActivity.class);
+            Intent intent = new Intent(mActivity, PostFilterPreferenceActivity.class);
             intent.putExtra(PostFilterPreferenceActivity.EXTRA_POST, mPost);
             startActivity(intent);
             return true;
@@ -1186,7 +1237,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                         }
                     }
                 } else {
-                    Toast.makeText(activity, R.string.send_comment_failed, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mActivity, R.string.send_comment_failed, Toast.LENGTH_SHORT).show();
                 }
             }
         } else if (requestCode == EDIT_POST_REQUEST_CODE) {
@@ -1199,8 +1250,8 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     private void tryMarkingPostAsRead() {
         if (mMarkPostsAsRead && mPost != null && !mPost.isRead()) {
             mPost.markAsRead();
-            int readPostsLimit = ReadPostsUtils.GetReadPostsLimit(activity.accountName, mPostHistorySharedPreferences);
-            InsertReadPost.insertReadPost(mRedditDataRoomDatabase, mExecutor, activity.accountName, mPost.getId(), readPostsLimit);
+            int readPostsLimit = ReadPostsUtils.GetReadPostsLimit(mActivity.accountName, mPostHistorySharedPreferences);
+            ReadPostModification.insertReadPost(mRedditDataRoomDatabase, mExecutor, mActivity.accountName, mPost.getId(), ReadPostType.READ_POSTS, readPostsLimit);
             EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
         }
     }
@@ -1261,7 +1312,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                     MenuItemCompat.setIconTintList(item, ColorStateList
                             .valueOf(mCustomThemeWrapper.getToolbarPrimaryTextAndIconColor()));
                 }
-                Utils.setTitleWithCustomFontToMenuItem(activity.typeface, item, null);
+                Utils.setTitleWithCustomFontToMenuItem(mActivity.typeface, item, null);
             }
         }
         return true;
@@ -1273,7 +1324,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
         mGlide.clear(binding.fetchPostInfoImageViewViewPostDetailFragment);
 
         Call<String> postAndComments;
-        if (activity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+        if (mActivity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
             if (isSingleCommentThreadMode && mSingleCommentId != null) {
                 postAndComments = mRetrofit.create(RedditAPI.class).getPostAndCommentsSingleThreadById(
                         subredditId, mSingleCommentId, sortType, mContextNumber);
@@ -1284,10 +1335,10 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
         } else {
             if (isSingleCommentThreadMode && mSingleCommentId != null) {
                 postAndComments = mOauthRetrofit.create(RedditAPI.class).getPostAndCommentsSingleThreadByIdOauth(subredditId,
-                        mSingleCommentId, sortType, mContextNumber, APIUtils.getOAuthHeader(activity.accessToken));
+                        mSingleCommentId, sortType, mContextNumber, APIUtils.getOAuthHeader(mActivity.accessToken));
             } else {
                 postAndComments = mOauthRetrofit.create(RedditAPI.class).getPostAndCommentsByIdOauth(subredditId,
-                        sortType, APIUtils.getOAuthHeader(activity.accessToken));
+                        sortType, APIUtils.getOAuthHeader(mActivity.accessToken));
             }
         }
         postAndComments.enqueue(new Callback<>() {
@@ -1303,22 +1354,30 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                         @Override
                         public void onParsePostSuccess(Post post) {
                             mPost = post;
+
+                            if (showSensitiveWarning()) {
+                               return;
+                            }
+
                             tryMarkingPostAsRead();
 
                             setupMenu();
 
-                            mPostAdapter = new PostDetailRecyclerViewAdapter(activity,
+                            mPostAdapter = new PostDetailRecyclerViewAdapter(mActivity,
                                     ViewPostDetailFragment.this, mExecutor, mCustomThemeWrapper,
                                     mOauthRetrofit, mRetrofit, mRedgifsRetrofit,
                                     mStreamableApiProvider, mRedditDataRoomDatabase, mGlide, mSeparatePostAndComments,
-                                    activity.accessToken, activity.accountName, mPost, mLocale, mSharedPreferences,
+                                    mActivity.accessToken, mActivity.accountName, mPost, mLocale, mSharedPreferences,
                                     mCurrentAccountSharedPreferences, mNsfwAndSpoilerSharedPreferences,
-                                    mPostDetailsSharedPreferences, mExoCreator,
-                                    post1 -> EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition)));
+                                    mPostDetailsSharedPreferences, mPostHistorySharedPreferences, mExoCreator,
+                                    post1 -> {
+                                        EventBus.getDefault().post(new PostUpdateEventToPostList(mPost, postListPosition));
+                                        setupMenu();
+                                    });
 
-                            mCommentsAdapter = new CommentsRecyclerViewAdapter(activity,
+                            mCommentsAdapter = new CommentsRecyclerViewAdapter(mActivity,
                                     ViewPostDetailFragment.this, mCustomThemeWrapper, mExecutor,
-                                    mRetrofit, mOauthRetrofit, activity.accessToken, activity.accountName, mPost, mLocale,
+                                    mRetrofit, mOauthRetrofit, mActivity.accessToken, mActivity.accountName, mPost, mLocale,
                                     mSingleCommentId, isSingleCommentThreadMode, mSharedPreferences,
                                     mNsfwAndSpoilerSharedPreferences,
                                     new CommentsRecyclerViewAdapter.CommentRecyclerViewAdapterCallback() {
@@ -1375,19 +1434,19 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                                                                             super.onScrolled(recyclerView, dx, dy);
                                                                             if (!mIsSmoothScrolling && !mLockFab) {
                                                                                 if (!recyclerView.canScrollVertically(1)) {
-                                                                                    activity.hideFab();
+                                                                                    mActivity.hideFab();
                                                                                 } else {
                                                                                     if (dy > 0) {
                                                                                         if (mSwipeUpToHideFab) {
-                                                                                            activity.showFab();
+                                                                                            mActivity.showFab();
                                                                                         } else {
-                                                                                            activity.hideFab();
+                                                                                            mActivity.hideFab();
                                                                                         }
                                                                                     } else {
                                                                                         if (mSwipeUpToHideFab) {
-                                                                                            activity.hideFab();
+                                                                                            mActivity.hideFab();
                                                                                         } else {
-                                                                                            activity.showFab();
+                                                                                            mActivity.showFab();
                                                                                         }
                                                                                     }
                                                                                 }
@@ -1448,7 +1507,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
             if (mPost.getSuggestedSort() != null && !mPost.getSuggestedSort().equals("null") && !mPost.getSuggestedSort().isEmpty()) {
                 try {
                     SortType.Type sortTypeType = SortType.Type.valueOf(mPost.getSuggestedSort().toUpperCase(Locale.US));
-                    activity.setTitle(sortTypeType.fullName);
+                    mActivity.setTitle(sortTypeType.fullName);
                     ViewPostDetailFragment.this.sortType = sortTypeType;
                     fetchComments(changeRefreshState, ViewPostDetailFragment.this.sortType);
                     return;
@@ -1457,8 +1516,8 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                 }
             }
             FetchSubredditData.fetchSubredditData(mExecutor, new Handler(),
-                    activity.accountName.equals(Account.ANONYMOUS_ACCOUNT) ? null : mOauthRetrofit,
-                    mRetrofit, mPost.getSubredditName(), activity.accessToken,
+                    mActivity.accountName.equals(Account.ANONYMOUS_ACCOUNT) ? null : mOauthRetrofit,
+                    mRetrofit, mPost.getSubredditName(), mActivity.accessToken,
                     new FetchSubredditData.FetchSubredditDataListener() {
                         @Override
                         public void onFetchSubredditDataSuccess(SubredditData subredditData, int nCurrentOnlineSubscribers) {
@@ -1475,7 +1534,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                                     sortTypeType = loadSortType();
                                 }
                             }
-                            activity.setTitle(sortTypeType.fullName);
+                            mActivity.setTitle(sortTypeType.fullName);
                             ViewPostDetailFragment.this.sortType = sortTypeType;
                             fetchComments(changeRefreshState, ViewPostDetailFragment.this.sortType);
                         }
@@ -1484,7 +1543,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                         public void onFetchSubredditDataFail(boolean isQuarantined) {
                             mRespectSubredditRecommendedSortType = false;
                             SortType.Type sortTypeType = loadSortType();
-                            activity.setTitle(sortTypeType.fullName);
+                            mActivity.setTitle(sortTypeType.fullName);
                             ViewPostDetailFragment.this.sortType = sortTypeType;
                             fetchComments(changeRefreshState, ViewPostDetailFragment.this.sortType);
                         }
@@ -1503,8 +1562,8 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
             commentId = mSingleCommentId;
         }
 
-        Retrofit retrofit = activity.accountName.equals(Account.ANONYMOUS_ACCOUNT) ? mRetrofit : mOauthRetrofit;
-        FetchComment.fetchComments(mExecutor, new Handler(), retrofit, activity.accessToken, activity.accountName, mPost.getId(), commentId, sortType,
+        Retrofit retrofit = mActivity.accountName.equals(Account.ANONYMOUS_ACCOUNT) ? mRetrofit : mOauthRetrofit;
+        FetchComment.fetchComments(mExecutor, new Handler(), retrofit, mActivity.accessToken, mActivity.accountName, mPost.getId(), commentId, sortType,
                 mContextNumber, mExpandChildren, mCommentFilter, new FetchComment.FetchCommentListener() {
                     @Override
                     public void onFetchCommentSuccess(ArrayList<Comment> expandedComments,
@@ -1523,19 +1582,19 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
                                     super.onScrolled(recyclerView, dx, dy);
                                     if (!mIsSmoothScrolling && !mLockFab) {
                                         if (!recyclerView.canScrollVertically(1)) {
-                                            activity.hideFab();
+                                            mActivity.hideFab();
                                         } else {
                                             if (dy > 0) {
                                                 if (mSwipeUpToHideFab) {
-                                                    activity.showFab();
+                                                    mActivity.showFab();
                                                 } else {
-                                                    activity.hideFab();
+                                                    mActivity.hideFab();
                                                 }
                                             } else {
                                                 if (mSwipeUpToHideFab) {
-                                                    activity.hideFab();
+                                                    mActivity.hideFab();
                                                 } else {
-                                                    activity.showFab();
+                                                    mActivity.showFab();
                                                 }
                                             }
                                         }
@@ -1590,8 +1649,8 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
 
         isLoadingMoreChildren = true;
 
-        Retrofit retrofit = activity.accountName.equals(Account.ANONYMOUS_ACCOUNT) ? mRetrofit : mOauthRetrofit;
-        FetchComment.fetchMoreComment(mExecutor, new Handler(), retrofit, activity.accessToken, activity.accountName,
+        Retrofit retrofit = mActivity.accountName.equals(Account.ANONYMOUS_ACCOUNT) ? mRetrofit : mOauthRetrofit;
+        FetchComment.fetchMoreComment(mExecutor, new Handler(), retrofit, mActivity.accessToken, mActivity.accountName,
                 children, mExpandChildren, mPost.getFullName(), sortType, new FetchComment.FetchMoreCommentListener() {
                     @Override
                     public void onFetchMoreCommentSuccess(ArrayList<Comment> topLevelComments,
@@ -1626,12 +1685,12 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
 
             if (fetchPost) {
                 Retrofit retrofit;
-                if (activity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+                if (mActivity.accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                     retrofit = mRetrofit;
                 } else {
                     retrofit = mOauthRetrofit;
                 }
-                FetchPost.fetchPost(mExecutor, new Handler(), retrofit, mPost.getId(), activity.accessToken, activity.accountName,
+                FetchPost.fetchPost(mExecutor, new Handler(), retrofit, mPost.getId(), mActivity.accessToken, mActivity.accountName,
                         new FetchPost.FetchPostListener() {
                             @Override
                             public void fetchPostSuccess(Post post) {
@@ -1674,10 +1733,29 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
 
     private void showMessage(int resId) {
         if (showToast) {
-            Toast.makeText(activity, resId, Toast.LENGTH_SHORT).show();
+            Toast.makeText(mActivity, resId, Toast.LENGTH_SHORT).show();
         } else {
-            activity.showSnackBar(resId);
+            mActivity.showSnackBar(resId);
         }
+    }
+
+    private boolean showSensitiveWarning() {
+        if (mPost != null && mPost.isNSFW()
+                && (mSharedPreferences.getBoolean(SharedPreferencesUtils.DISABLE_NSFW_FOREVER, false)
+                || !mNsfwAndSpoilerSharedPreferences.getBoolean((mActivity.accountName.equals(Account.ANONYMOUS_ACCOUNT) ? "" : (mActivity.accountName)) + SharedPreferencesUtils.NSFW_BASE, false))) {
+            MaterialAlertDialogBuilder sensitiveWarningBuilder = new MaterialAlertDialogBuilder(mActivity, R.style.MaterialAlertDialogTheme)
+                    .setTitle(R.string.warning)
+                    .setMessage(R.string.this_post_contains_sensitive_content)
+                    .setPositiveButton(R.string.leave, (dialogInterface, i)
+                            -> {
+                        mActivity.finish();
+                    })
+                    .setCancelable(false);
+            sensitiveWarningBuilder.show();
+            return true;
+        }
+
+        return false;
     }
 
     private void markNSFW() {
@@ -1687,7 +1765,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
 
         Map<String, String> params = new HashMap<>();
         params.put(APIUtils.ID_KEY, mPost.getFullName());
-        mOauthRetrofit.create(RedditAPI.class).markNSFW(APIUtils.getOAuthHeader(activity.accessToken), params)
+        mOauthRetrofit.create(RedditAPI.class).markNSFW(APIUtils.getOAuthHeader(mActivity.accessToken), params)
                 .enqueue(new Callback<>() {
                     @Override
                     public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
@@ -1725,7 +1803,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
 
         Map<String, String> params = new HashMap<>();
         params.put(APIUtils.ID_KEY, mPost.getFullName());
-        mOauthRetrofit.create(RedditAPI.class).unmarkNSFW(APIUtils.getOAuthHeader(activity.accessToken), params)
+        mOauthRetrofit.create(RedditAPI.class).unmarkNSFW(APIUtils.getOAuthHeader(mActivity.accessToken), params)
                 .enqueue(new Callback<String>() {
                     @Override
                     public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
@@ -1763,7 +1841,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
 
         Map<String, String> params = new HashMap<>();
         params.put(APIUtils.ID_KEY, mPost.getFullName());
-        mOauthRetrofit.create(RedditAPI.class).markSpoiler(APIUtils.getOAuthHeader(activity.accessToken), params)
+        mOauthRetrofit.create(RedditAPI.class).markSpoiler(APIUtils.getOAuthHeader(mActivity.accessToken), params)
                 .enqueue(new Callback<String>() {
                     @Override
                     public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
@@ -1801,7 +1879,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
 
         Map<String, String> params = new HashMap<>();
         params.put(APIUtils.ID_KEY, mPost.getFullName());
-        mOauthRetrofit.create(RedditAPI.class).unmarkSpoiler(APIUtils.getOAuthHeader(activity.accessToken), params)
+        mOauthRetrofit.create(RedditAPI.class).unmarkSpoiler(APIUtils.getOAuthHeader(mActivity.accessToken), params)
                 .enqueue(new Callback<String>() {
                     @Override
                     public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
@@ -1833,20 +1911,20 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     }
 
     public void deleteComment(String fullName, int position) {
-        new MaterialAlertDialogBuilder(activity, R.style.MaterialAlertDialogTheme)
+        new MaterialAlertDialogBuilder(mActivity, R.style.MaterialAlertDialogTheme)
                 .setTitle(R.string.delete_this_comment)
                 .setMessage(R.string.are_you_sure)
                 .setPositiveButton(R.string.delete, (dialogInterface, i)
-                        -> DeleteThing.delete(mOauthRetrofit, fullName, activity.accessToken, new DeleteThing.DeleteThingListener() {
+                        -> DeleteThing.delete(mOauthRetrofit, fullName, mActivity.accessToken, new DeleteThing.DeleteThingListener() {
                     @Override
                     public void deleteSuccess() {
-                        Toast.makeText(activity, R.string.delete_post_success, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mActivity, R.string.delete_post_success, Toast.LENGTH_SHORT).show();
                         mCommentsAdapter.deleteComment(position);
                     }
 
                     @Override
                     public void deleteFailed() {
-                        Toast.makeText(activity, R.string.delete_post_failed, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mActivity, R.string.delete_post_failed, Toast.LENGTH_SHORT).show();
                     }
                 }))
                 .setNegativeButton(R.string.cancel, null)
@@ -1855,10 +1933,10 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
 
     public void toggleReplyNotifications(Comment comment, int position) {
         ReplyNotificationsToggle.toggleEnableNotification(new Handler(Looper.getMainLooper()), mOauthRetrofit,
-                activity.accessToken, comment, new ReplyNotificationsToggle.SendNotificationListener() {
+                mActivity.accessToken, comment, new ReplyNotificationsToggle.SendNotificationListener() {
                     @Override
                     public void onSuccess() {
-                        Toast.makeText(activity,
+                        Toast.makeText(mActivity,
                                 comment.isSendReplies() ? R.string.reply_notifications_disabled : R.string.reply_notifications_enabled,
                                 Toast.LENGTH_SHORT).show();
                         mCommentsAdapter.toggleReplyNotifications(comment.getFullName(), position);
@@ -1866,7 +1944,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
 
                     @Override
                     public void onError() {
-                        Toast.makeText(activity, R.string.toggle_reply_notifications_failed, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mActivity, R.string.toggle_reply_notifications_failed, Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -1927,8 +2005,8 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     }
 
     public boolean getIsNsfwSubreddit() {
-        if (activity != null) {
-            return activity.isNsfwSubreddit();
+        if (mActivity != null) {
+            return mActivity.isNsfwSubreddit();
         }
         return false;
     }
@@ -1951,13 +2029,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
             mPost.setRemoved(event.post.isRemoved(), event.post.isSpam());
             mPost.setIsLocked(event.post.isLocked());
             mPost.setIsModerator(event.post.isModerator());
-            if (mMenu != null) {
-                if (event.post.isSaved()) {
-                    mMenu.findItem(R.id.action_save_view_post_detail_fragment).setIcon(mSavedIcon);
-                } else {
-                    mMenu.findItem(R.id.action_save_view_post_detail_fragment).setIcon(mUnsavedIcon);
-                }
-            }
+            setupMenu();
             if (mPostAdapter != null) {
                 mPostAdapter.updatePost(mPost);
             }
@@ -2048,7 +2120,7 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        activity = (ViewPostDetailActivity) context;
+        mActivity = (ViewPostDetailActivity) context;
     }
 
     @Override
@@ -2056,8 +2128,8 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
         binding.swipeRefreshLayoutViewPostDetailFragment.setProgressBackgroundColorSchemeColor(mCustomThemeWrapper.getCircularProgressBarBackground());
         binding.swipeRefreshLayoutViewPostDetailFragment.setColorSchemeColors(mCustomThemeWrapper.getColorAccent());
         binding.fetchPostInfoTextViewViewPostDetailFragment.setTextColor(mCustomThemeWrapper.getSecondaryTextColor());
-        if (activity.typeface != null) {
-            binding.fetchPostInfoTextViewViewPostDetailFragment.setTypeface(activity.contentTypeface);
+        if (mActivity.typeface != null) {
+            binding.fetchPostInfoTextViewViewPostDetailFragment.setTypeface(mActivity.contentTypeface);
         }
     }
 
@@ -2100,6 +2172,11 @@ public class ViewPostDetailFragment extends Fragment implements FragmentCommunic
     @Override
     public void toggleMod(@NonNull Post post, int position) {
         viewPostDetailFragmentViewModel.toggleMod(post, position);
+    }
+
+    @Override
+    public void toggleNotification(@NotNull Post post, int position) {
+        viewPostDetailFragmentViewModel.toggleNotification(post, position);
     }
 
     @Override

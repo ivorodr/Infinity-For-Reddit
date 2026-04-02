@@ -5,6 +5,9 @@ import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
 import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO;
 import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
 
+import static com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED;
+import static com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL;
+
 import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -35,7 +38,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.view.menu.MenuItemImpl;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
 import androidx.core.view.MenuItemCompat;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -53,6 +60,7 @@ import ml.docilealligator.infinityforreddit.CustomFontReceiver;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
+import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
 import ml.docilealligator.infinityforreddit.customviews.slidr.widget.SliderPanel;
 import ml.docilealligator.infinityforreddit.events.FinishViewMediaActivityEvent;
 import ml.docilealligator.infinityforreddit.font.ContentFontFamily;
@@ -118,8 +126,8 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomFo
 
         boolean systemDefault = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
         int systemThemeType = Integer.parseInt(mSharedPreferences.getString(SharedPreferencesUtils.THEME_KEY, "2"));
-        immersiveInterface = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                mSharedPreferences.getBoolean(SharedPreferencesUtils.IMMERSIVE_INTERFACE_KEY, true)) || Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM;
+        immersiveInterface = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                mSharedPreferences.getBoolean(SharedPreferencesUtils.IMMERSIVE_INTERFACE_KEY, true);
         if (immersiveInterface && config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             immersiveInterface = !mSharedPreferences.getBoolean(SharedPreferencesUtils.DISABLE_IMMERSIVE_INTERFACE_IN_LANDSCAPE_MODE, false);
         }
@@ -217,6 +225,20 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomFo
                 }
             }
             decorView.setSystemUiVisibility(systemVisibilityToolbarExpanded);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                ViewCompat.setOnApplyWindowInsetsListener(window.getDecorView(), new OnApplyWindowInsetsListener() {
+                    @Override
+                    public @NonNull WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                        if (!isImmersiveInterface()) {
+                            Insets inset = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+                            v.setBackgroundColor(customThemeWrapper.getColorPrimary());
+                            v.setPadding(inset.left, inset.top, inset.right, 0);
+                        }
+                        return insets;
+                    }
+                });
+            }
+
             if (!isImmersiveInterface()) {
                 window.setNavigationBarColor(customThemeWrapper.getNavBarColor());
                 if (!hasDrawerLayout) {
@@ -298,8 +320,23 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomFo
         return systemVisibilityToolbarCollapsed;
     }
 
-    public boolean isImmersiveInterface() {
+    public boolean isImmersiveInterfaceRespectForcedEdgeToEdge() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            return true;
+        }
         return immersiveInterface && isImmersiveInterfaceApplicable;
+    }
+
+    private boolean isImmersiveInterface() {
+        return immersiveInterface && isImmersiveInterfaceApplicable;
+    }
+
+    public boolean isForcedImmersiveInterface() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && !immersiveInterface;
+    }
+
+    public boolean isImmersiveInterfaceEnabled() {
+        return immersiveInterface;
     }
 
     protected void setToolbarGoToTop(Toolbar toolbar) {
@@ -333,28 +370,6 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomFo
             }
         });
     }
-
-    /*public int getNavBarHeight() {
-        if (isImmersiveInterfaceApplicable && immersiveInterface && getDefaultSharedPreferences().getBoolean(SharedPreferencesUtils.IMMERSIVE_INTERFACE_IGNORE_NAV_BAR_KEY, false)) {
-            return 0;
-        }
-
-        Resources resources = getResources();
-        int navBarResourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android");
-        if (navBarResourceId > 0) {
-            return resources.getDimensionPixelSize(navBarResourceId);
-        }
-        return 0;
-    }*/
-
-    /*public int getStatusBarHeight() {
-        int result = 0;
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = getResources().getDimensionPixelSize(resourceId);
-        }
-        return result;
-    }*/
 
     public static <T extends View> void setMargins(T view, int left, int top, int right, int bottom) {
         ViewGroup.LayoutParams lp = view.getLayoutParams();
@@ -428,6 +443,24 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomFo
         }
     }
 
+    protected void applyAppBarScrollFlagsIfApplicable(CollapsingToolbarLayout collapsingToolbarLayout) {
+        applyAppBarScrollFlagsIfApplicable(collapsingToolbarLayout, null);
+    }
+
+    protected void applyAppBarScrollFlagsIfApplicable(@NonNull CollapsingToolbarLayout collapsingToolbarLayout, @Nullable TabLayout tabLayout) {
+        if (getDefaultSharedPreferences().getBoolean(SharedPreferencesUtils.LOCK_TOOLBAR, false)) {
+            AppBarLayout.LayoutParams p = (AppBarLayout.LayoutParams) collapsingToolbarLayout.getLayoutParams();
+            p.setScrollFlags(SCROLL_FLAG_SCROLL | SCROLL_FLAG_EXIT_UNTIL_COLLAPSED);
+            collapsingToolbarLayout.setLayoutParams(p);
+
+            if (tabLayout != null) {
+                AppBarLayout.LayoutParams p1 = (AppBarLayout.LayoutParams) tabLayout.getLayoutParams();
+                p1.setScrollFlags(SCROLL_FLAG_SCROLL | SCROLL_FLAG_EXIT_UNTIL_COLLAPSED);
+                tabLayout.setLayoutParams(p1);
+            }
+        }
+    }
+
     @SuppressLint("RestrictedApi")
     protected boolean applyMenuItemTheme(Menu menu) {
         if (customThemeWrapper != null) {
@@ -469,7 +502,7 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomFo
             Object touchSlopBox = touchSlopField.get(recyclerView);
             if (touchSlopBox != null) {
                 int touchSlop = (int) touchSlopBox;
-                touchSlopField.set(recyclerView, touchSlop * 4);
+                touchSlopField.set(recyclerView, touchSlop * Integer.parseInt(getDefaultSharedPreferences().getString(SharedPreferencesUtils.TAB_SWITCHING_SENSITIVITY, "4")));
             }
         } catch (NoSuchFieldException | IllegalAccessException ignore) {}
     }
@@ -509,6 +542,14 @@ public abstract class BaseActivity extends AppCompatActivity implements CustomFo
             case SharedPreferencesUtils.OTHER_ACTIVITIES_BOTTOM_APP_BAR_FAB_GO_TO_TOP:
                 fab.setContentDescription(getString(R.string.content_description_go_to_top));
                 break;
+        }
+    }
+
+    protected void attachSliderPanelIfApplicable() {
+        if (getDefaultSharedPreferences().getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
+            mSliderPanel = Slidr.attach(this,
+                    Float.parseFloat(getDefaultSharedPreferences().getString(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK_SENSITIVITY, "0.1"))
+            );
         }
     }
 
