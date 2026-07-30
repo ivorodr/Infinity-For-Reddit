@@ -45,6 +45,7 @@ import androidx.media3.ui.DefaultTimeBar;
 import androidx.media3.ui.PlayerView;
 import androidx.media3.ui.TimeBar;
 import androidx.media3.ui.TrackSelectionDialogBuilder;
+import androidx.paging.ItemSnapshotList;
 import androidx.paging.PagingDataAdapter;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -281,6 +282,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
     private boolean canPlayVideo = true;
     private RecyclerView.RecycledViewPool mGalleryRecycledViewPool;
     private MultiPlayPlayerSelector multiPlayPlayerSelector;
+    private int itemWidth;
 
     // postHistorySharedPreferences will be null when being used in HistoryPostFragment.
     public PostRecyclerViewAdapter(BaseActivity activity, PostFragmentBase fragment, RedditDataRoomDatabase redditDataRoomDatabase,
@@ -676,8 +678,30 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
 
             if (mDisplaySubredditName) {
                 if (post.getAuthorNamePrefixed().equals(post.getSubredditNamePrefixed())) {
-                    if (post.getAuthorIconUrl() == null) {
-                        mFragment.loadIcon(post.getAuthor(), false, (subredditOrUserName, iconUrl) -> {
+                    if (post.getAuthorIconUrl() == null && post.getAuthorFullname() != null && !post.getAuthorFullname().isEmpty()) {
+                        ItemSnapshotList<Post> snapshot = snapshot();
+                        mFragment.loadUserIcon(snapshot.subList(holder.getBindingAdapterPosition(),
+                                Math.min(holder.getBindingAdapterPosition() + 100, snapshot.size())),
+                                (subredditOrUserName, iconUrl) -> {
+                                    if (mActivity != null && getItemCount() > 0 && post.getAuthor().equals(subredditOrUserName)) {
+                                        if (iconUrl == null || iconUrl.isEmpty()) {
+                                            mGlide.load(R.drawable.subreddit_default_icon)
+                                                    .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0)))
+                                                    .into(((PostViewHolder) holder).iconGifImageView);
+                                        } else {
+                                            mGlide.load(iconUrl)
+                                                    .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0)))
+                                                    .error(mGlide.load(R.drawable.subreddit_default_icon)
+                                                            .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0))))
+                                                    .into(((PostViewHolder) holder).iconGifImageView);
+                                        }
+
+                                        if (holder.getBindingAdapterPosition() >= 0) {
+                                            post.setAuthorIconUrl(iconUrl);
+                                        }
+                                    }
+                                });
+                        /*mFragment.loadIcon(post.getAuthor(), false, (subredditOrUserName, iconUrl) -> {
                             if (mActivity != null && getItemCount() > 0 && post.getAuthor().equals(subredditOrUserName)) {
                                 if (iconUrl == null || iconUrl.isEmpty()) {
                                     mGlide.load(R.drawable.subreddit_default_icon)
@@ -695,16 +719,12 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                                     post.setAuthorIconUrl(iconUrl);
                                 }
                             }
-                        });
-                    } else if (!post.getAuthorIconUrl().isEmpty()) {
+                        });*/
+                    } else {
                         mGlide.load(post.getAuthorIconUrl())
                                 .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0)))
                                 .error(mGlide.load(R.drawable.subreddit_default_icon)
                                         .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0))))
-                                .into(((PostViewHolder) holder).iconGifImageView);
-                    } else {
-                        mGlide.load(R.drawable.subreddit_default_icon)
-                                .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0)))
                                 .into(((PostViewHolder) holder).iconGifImageView);
                     }
                 } else {
@@ -728,22 +748,40 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                                 }
                             }
                         });
-                    } else if (!post.getSubredditIconUrl().isEmpty()) {
+                    } else {
                         mGlide.load(post.getSubredditIconUrl())
                                 .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0)))
                                 .error(mGlide.load(R.drawable.subreddit_default_icon)
                                         .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0))))
                                 .into(((PostViewHolder) holder).iconGifImageView);
-                    } else {
-                        mGlide.load(R.drawable.subreddit_default_icon)
-                                .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0)))
-                                .into(((PostViewHolder) holder).iconGifImageView);
                     }
                 }
             } else {
-                if (post.getAuthorIconUrl() == null) {
-                    String authorName = post.isAuthorDeleted() ? post.getSubredditName() : post.getAuthor();
-                    mFragment.loadIcon(authorName, post.isAuthorDeleted(), (subredditOrUserName, iconUrl) -> {
+                if (post.getAuthorIconUrl() == null && post.getAuthorFullname() != null && !post.getAuthorFullname().isEmpty()) {
+                    String authorName = post.getAuthor();
+                    ItemSnapshotList<Post> snapshot = snapshot();
+                    mFragment.loadUserIcon(snapshot.subList(holder.getBindingAdapterPosition(),
+                                    Math.min(holder.getBindingAdapterPosition() + 100, snapshot.size())),
+                            (subredditOrUserName, iconUrl) -> {
+                                if (mActivity != null && getItemCount() > 0) {
+                                    if (iconUrl == null || iconUrl.isEmpty() && authorName.equals(subredditOrUserName)) {
+                                        mGlide.load(R.drawable.subreddit_default_icon)
+                                                .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0)))
+                                                .into(((PostViewHolder) holder).iconGifImageView);
+                                    } else {
+                                        mGlide.load(iconUrl)
+                                                .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0)))
+                                                .error(mGlide.load(R.drawable.subreddit_default_icon)
+                                                        .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0))))
+                                                .into(((PostViewHolder) holder).iconGifImageView);
+                                    }
+
+                                    if (holder.getBindingAdapterPosition() >= 0) {
+                                        post.setAuthorIconUrl(iconUrl);
+                                    }
+                                }
+                            });
+                    /*mFragment.loadIcon(authorName, post.isAuthorDeleted(), (subredditOrUserName, iconUrl) -> {
                         if (mActivity != null && getItemCount() > 0) {
                             if (iconUrl == null || iconUrl.isEmpty() && authorName.equals(subredditOrUserName)) {
                                 mGlide.load(R.drawable.subreddit_default_icon)
@@ -761,16 +799,12 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                                 post.setAuthorIconUrl(iconUrl);
                             }
                         }
-                    });
-                } else if (!post.getAuthorIconUrl().isEmpty()) {
+                    });*/
+                } else {
                     mGlide.load(post.getAuthorIconUrl())
                             .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0)))
                             .error(mGlide.load(R.drawable.subreddit_default_icon)
                                     .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0))))
-                            .into(((PostViewHolder) holder).iconGifImageView);
-                } else {
-                    mGlide.load(R.drawable.subreddit_default_icon)
-                            .apply(RequestOptions.bitmapTransform(new RoundedCornersTransformation(72, 0)))
                             .into(((PostViewHolder) holder).iconGifImageView);
                 }
             }
@@ -1157,6 +1191,48 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 }
 
                 mCallback.currentlyBindItem(holder.getBindingAdapterPosition());
+            }
+
+            if (itemWidth < 250) {
+                if (((PostViewHolder) holder).commentsCountButton != null) {
+                    ((PostViewHolder) holder).commentsCountButton.setVisibility(View.GONE);
+                }
+                if (((PostViewHolder) holder).saveButton != null) {
+                    ((PostViewHolder) holder).saveButton.setVisibility(View.GONE);
+                }
+                if (((PostViewHolder) holder).shareButton != null) {
+                    ((PostViewHolder) holder).shareButton.setVisibility(View.GONE);
+                }
+            } else if (itemWidth < 316) {
+                if (((PostViewHolder) holder).commentsCountButton != null) {
+                    ((PostViewHolder) holder).commentsCountButton.setVisibility(View.GONE);
+                }
+                if (((PostViewHolder) holder).saveButton != null) {
+                    ((PostViewHolder) holder).saveButton.setVisibility(View.VISIBLE);
+                }
+                if (((PostViewHolder) holder).shareButton != null) {
+                    ((PostViewHolder) holder).shareButton.setVisibility(View.GONE);
+                }
+            } else if (itemWidth < 420) {
+                if (((PostViewHolder) holder).commentsCountButton != null) {
+                    ((PostViewHolder) holder).commentsCountButton.setVisibility(View.GONE);
+                }
+                if (((PostViewHolder) holder).saveButton != null) {
+                    ((PostViewHolder) holder).saveButton.setVisibility(View.VISIBLE);
+                }
+                if (((PostViewHolder) holder).shareButton != null) {
+                    ((PostViewHolder) holder).shareButton.setVisibility(View.VISIBLE);
+                }
+            } else {
+                if (((PostViewHolder) holder).commentsCountButton != null) {
+                    ((PostViewHolder) holder).commentsCountButton.setVisibility(View.VISIBLE);
+                }
+                if (((PostViewHolder) holder).saveButton != null) {
+                    ((PostViewHolder) holder).saveButton.setVisibility(View.VISIBLE);
+                }
+                if (((PostViewHolder) holder).shareButton != null) {
+                    ((PostViewHolder) holder).shareButton.setVisibility(View.VISIBLE);
+                }
             }
         } else if (holder instanceof PostGalleryViewHolder) {
             Post post = getItem(position);
@@ -1939,6 +2015,10 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
         this.canPlayVideo = canPlayVideo;
     }
 
+    public void provideItemWidth(int width) {
+        itemWidth = width;
+    }
+
     public abstract class PostViewHolder extends RecyclerView.ViewHolder {
         AspectRatioGifImageView iconGifImageView;
         ImageView stickiedPostImageView;
@@ -2223,9 +2303,14 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                     }
 
                     if (Account.ANONYMOUS_ACCOUNT.equals(mAccountName)) {
-                        ReadPostModification.insertReadPost(mRedditDataRoomDatabase, mExecutor, mActivity.accountName,
-                                post.getId(), ReadPostType.ANONYMOUS_UPVOTED_POSTS,
-                                ReadPostsUtils.GetReadPostsLimit(mActivity.accountName, mPostHistorySharedPreferences));
+                        if (previousVoteType == 1) {
+                            ReadPostModification.deleteReadPost(mRedditDataRoomDatabase, mExecutor, mActivity.accountName,
+                                    post.getId(), ReadPostType.ANONYMOUS_UPVOTED_POSTS);
+                        } else {
+                            ReadPostModification.insertReadPost(mRedditDataRoomDatabase, mExecutor, mActivity.accountName,
+                                    post.getId(), ReadPostType.ANONYMOUS_UPVOTED_POSTS,
+                                    ReadPostsUtils.GetReadPostsLimit(mActivity.accountName, mPostHistorySharedPreferences));
+                        }
                         EventBus.getDefault().post(new PostUpdateEventToPostDetailFragment(post));
                         return;
                     } else {
@@ -2337,9 +2422,14 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                     }
 
                     if (Account.ANONYMOUS_ACCOUNT.equals(mAccountName)) {
-                        ReadPostModification.insertReadPost(mRedditDataRoomDatabase, mExecutor, mActivity.accountName,
-                                post.getId(), ReadPostType.ANONYMOUS_DOWNVOTED_POSTS,
-                                ReadPostsUtils.GetReadPostsLimit(mActivity.accountName, mPostHistorySharedPreferences));
+                        if (previousVoteType == -1) {
+                            ReadPostModification.deleteReadPost(mRedditDataRoomDatabase, mExecutor, mActivity.accountName,
+                                    post.getId(), ReadPostType.ANONYMOUS_DOWNVOTED_POSTS);
+                        } else {
+                            ReadPostModification.insertReadPost(mRedditDataRoomDatabase, mExecutor, mActivity.accountName,
+                                    post.getId(), ReadPostType.ANONYMOUS_DOWNVOTED_POSTS,
+                                    ReadPostsUtils.GetReadPostsLimit(mActivity.accountName, mPostHistorySharedPreferences));
+                        }
                         EventBus.getDefault().post(new PostUpdateEventToPostDetailFragment(post));
                         return;
                     } else {

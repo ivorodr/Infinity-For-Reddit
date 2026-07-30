@@ -486,7 +486,7 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
                     });
                 }
 
-                if (userData.isCanBeFollowed()) {
+                if (userData.isCanBeFollowed() || Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
                     binding.subscribeUserChipViewUserDetailActivity.setVisibility(View.VISIBLE);
                     binding.subscribeUserChipViewUserDetailActivity.setOnClickListener(view -> {
                         if (subscriptionReady) {
@@ -618,6 +618,44 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
                         nsfwWarningBuilder.show();
                     }
                 }*/
+            } else {
+                if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
+                    // Only for unfollowing deleted users in the anonymous mode
+                    CheckIsFollowingUser.checkIsFollowingUser(mExecutor, new Handler(), mRedditDataRoomDatabase,
+                            username, accountName, new CheckIsFollowingUser.CheckIsFollowingUserListener() {
+                                @Override
+                                public void isSubscribed() {
+                                    binding.subscribeUserChipViewUserDetailActivity.setText(R.string.unfollow);
+                                    binding.subscribeUserChipViewUserDetailActivity.setChipBackgroundColor(ColorStateList.valueOf(subscribedColor));
+                                    binding.subscribeUserChipViewUserDetailActivity.setVisibility(View.VISIBLE);
+                                    subscriptionReady = true;
+
+                                    binding.subscribeUserChipViewUserDetailActivity.setOnClickListener(view -> {
+                                        if (subscriptionReady) {
+                                            subscriptionReady = false;
+                                            UserFollowing.anonymousUnfollowUser(mExecutor, new Handler(), username,
+                                                    mRedditDataRoomDatabase, new UserFollowing.UserFollowingListener() {
+                                                        @Override
+                                                        public void onUserFollowingSuccess() {
+                                                            binding.subscribeUserChipViewUserDetailActivity.setVisibility(View.GONE);
+                                                            showMessage(R.string.unfollowed, false);
+                                                        }
+
+                                                        @Override
+                                                        public void onUserFollowingFail() {
+                                                            //Will not be called
+                                                        }
+                                                    });
+                                        }
+                                    });
+                                }
+
+                                @Override
+                                public void isNotSubscribed() {
+                                    // We don't care
+                                }
+                            });
+                }
             }
         });
 
@@ -1197,6 +1235,12 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
         }
     }
 
+    public void toggleSaveComment(@NonNull Comment comment, int position) {
+        if (sectionsPagerAdapter != null) {
+            sectionsPagerAdapter.toggleSaveComment(comment, position);
+        }
+    }
+
     public void deleteComment(String fullName) {
         new MaterialAlertDialogBuilder(this, R.style.MaterialAlertDialogTheme)
                 .setTitle(R.string.delete_this_comment)
@@ -1506,6 +1550,10 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
 
             @Override
             public void afterTextChanged(Editable editable) {
+                if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
+                    return;
+                }
+
                 String currentQuery = editable.toString().trim();
                 if (!currentQuery.isEmpty()) {
                     autoCompleteRunnable = () -> {
@@ -1858,6 +1906,15 @@ public class ViewUserDetailActivity extends BaseActivity implements SortTypeSele
             }
 
             Toast.makeText(ViewUserDetailActivity.this, R.string.cannot_find_comment, Toast.LENGTH_SHORT).show();
+        }
+
+        void toggleSaveComment(Comment comment, int position) {
+            if (fragmentManager != null) {
+                Fragment fragment = fragmentManager.findFragmentByTag("f1");
+                if (fragment instanceof CommentsListingFragment) {
+                    ((CommentsListingFragment) fragment).toggleSaveComment(comment, position);
+                }
+            }
         }
     }
 

@@ -9,25 +9,30 @@ import androidx.paging.PagingState;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
+import ml.docilealligator.infinityforreddit.RedditError;
+import ml.docilealligator.infinityforreddit.account.Account;
+import ml.docilealligator.infinityforreddit.apis.RedditAPI;
+import ml.docilealligator.infinityforreddit.postfilter.PostFilter;
 import ml.docilealligator.infinityforreddit.readpost.ReadPost;
 import ml.docilealligator.infinityforreddit.readpost.ReadPostType;
 import ml.docilealligator.infinityforreddit.readpost.ReadPostsListInterface;
 import ml.docilealligator.infinityforreddit.thing.SortType;
-import ml.docilealligator.infinityforreddit.account.Account;
-import ml.docilealligator.infinityforreddit.apis.RedditAPI;
-import ml.docilealligator.infinityforreddit.postfilter.PostFilter;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
+import okhttp3.ResponseBody;
 import retrofit2.HttpException;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -64,7 +69,8 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
     private final ReadPostsListInterface readPostsList;
     private String userWhere;
     private String multiRedditPath;
-    private final LinkedHashSet<Post> postLinkedHashSet;
+    private final List<Post> posts;
+    private final Set<String> existingPostIds = new HashSet<>();
     private String previousLastItem;
 
     PostPagingSource(Executor executor, Retrofit retrofit, RedditDataRoomDatabase redditDataRoomDatabase,
@@ -82,7 +88,7 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
         this.sortType = sortType == null ? new SortType(SortType.Type.BEST) : sortType;
         this.postFilter = postFilter;
         this.readPostsList = readPostsList;
-        postLinkedHashSet = new LinkedHashSet<>();
+        posts = new ArrayList<>();
     }
 
     // PostPagingSource.TYPE_SUBREDDIT || PostPagingSource.TYPE_ANONYMOUS_FRONT_PAGE || PostPagingSource.TYPE_ANONYMOUS_MULTIREDDIT:
@@ -114,7 +120,7 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
         }
         this.postFilter = postFilter;
         this.readPostsList = readPostsList;
-        postLinkedHashSet = new LinkedHashSet<>();
+        posts = new ArrayList<>();
     }
 
     // PostPagingSource.TYPE_MULTI_REDDIT
@@ -130,10 +136,10 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
         this.accountName = accountName;
         this.sharedPreferences = sharedPreferences;
         this.postFeedScrolledPositionSharedPreferences = postFeedScrolledPositionSharedPreferences;
-        if (path.endsWith("/")) {
+        if (path != null && path.endsWith("/")) {
             multiRedditPath = path.substring(0, path.length() - 1);
         } else {
-            multiRedditPath = path;
+            multiRedditPath = path == null ? "" : path;
         }
         this.query = query;
         this.postType = postType;
@@ -144,7 +150,7 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
         }
         this.postFilter = postFilter;
         this.readPostsList = readPostsList;
-        postLinkedHashSet = new LinkedHashSet<>();
+        posts = new ArrayList<>();
     }
 
     PostPagingSource(Executor executor, Retrofit retrofit, RedditDataRoomDatabase redditDataRoomDatabase,
@@ -165,7 +171,7 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
         this.postFilter = postFilter;
         userWhere = where;
         this.readPostsList = readPostsList;
-        postLinkedHashSet = new LinkedHashSet<>();
+        posts = new ArrayList<>();
     }
 
     PostPagingSource(Executor executor, Retrofit retrofit, RedditDataRoomDatabase redditDataRoomDatabase,
@@ -186,8 +192,19 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
         this.postType = postType;
         this.sortType = sortType == null ? new SortType(SortType.Type.RELEVANCE) : sortType;
         this.postFilter = postFilter;
-        postLinkedHashSet = new LinkedHashSet<>();
         this.readPostsList = readPostsList;
+        posts = new ArrayList<>();
+    }
+
+    public static class PostPagingSourceError extends Exception {
+        public final int code;
+        public final String message;
+
+        PostPagingSourceError(int code, String message) {
+            super(message);
+            this.code = code;
+            this.message = message;
+        }
     }
 
     @Nullable
@@ -222,9 +239,9 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
             LinkedHashSet<Post> newPosts = ParsePost.parsePostsSync(responseString, -1, postFilter, readPostsList);
             String lastItem = ParsePost.getLastItem(responseString);
             if (newPosts == null) {
-                return new LoadResult.Error<>(new Exception("Error parsing posts"));
+                return new LoadResult.Error<>(new PostPagingSourceError(response.code(), "Error parsing posts"));
             } else {
-                int currentPostsSize = postLinkedHashSet.size();
+                int currentPostsSize = posts.size();
                 if (lastItem != null && lastItem.equals(previousLastItem)) {
                     lastItem = null;
                 }
@@ -234,15 +251,32 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
                     setMetadataToAnonymousPosts(newPosts);
                 }
 
-                postLinkedHashSet.addAll(newPosts);
-                if (currentPostsSize == postLinkedHashSet.size()) {
+                for (Post p : newPosts) {
+                    if (existingPostIds.contains(p.getId())) {
+                        continue;
+                    }
+
+                    existingPostIds.add(p.getId());
+                    posts.add(p);
+                }
+
+                if (currentPostsSize == posts.size()) {
                     return new LoadResult.Page<>(new ArrayList<>(), null, lastItem);
                 } else {
-                    return new LoadResult.Page<>(new ArrayList<>(postLinkedHashSet).subList(currentPostsSize, postLinkedHashSet.size()), null, lastItem);
+                    return new LoadResult.Page<>(new ArrayList<>(posts.subList(currentPostsSize, posts.size())), null, lastItem);
                 }
             }
         } else {
-            return new LoadResult.Error<>(new Exception("Error getting response"));
+            //{"reason": "banned", "message": "Not Found", "error": 404}
+            try (ResponseBody errorBody = response.errorBody()) {
+                if (errorBody != null) {
+                    RedditError redditError = new Gson().fromJson(errorBody.string(), RedditError.class);
+                    return new LoadResult.Error<>(new PostPagingSourceError(response.code(), redditError.getReason()));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return new LoadResult.Error<>(new PostPagingSourceError(response.code(), null));
         }
     }
 
@@ -277,7 +311,7 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
         if (loadParams.getKey() == null) {
             boolean savePostFeedScrolledPosition = sortType != null && sortType.getType() == SortType.Type.BEST && sharedPreferences.getBoolean(SharedPreferencesUtils.SAVE_FRONT_PAGE_SCROLLED_POSITION, false);
             if (savePostFeedScrolledPosition) {
-                String accountNameForCache = accountName.equals(Account.ANONYMOUS_ACCOUNT) ? SharedPreferencesUtils.FRONT_PAGE_SCROLLED_POSITION_ANONYMOUS : accountName;
+                String accountNameForCache = Account.ANONYMOUS_ACCOUNT.equals(accountName) ? SharedPreferencesUtils.FRONT_PAGE_SCROLLED_POSITION_ANONYMOUS : accountName;
                 afterKey = postFeedScrolledPositionSharedPreferences.getString(accountNameForCache + SharedPreferencesUtils.FRONT_PAGE_SCROLLED_POSITION_FRONT_PAGE_BASE, null);
             } else {
                 afterKey = null;
@@ -300,7 +334,7 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
 
     private ListenableFuture<LoadResult<String, Post>> loadSubredditPosts(@NonNull LoadParams<String> loadParams, RedditAPI api) {
         ListenableFuture<Response<String>> subredditPost;
-        if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+        if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
             subredditPost = api.getSubredditBestPostsListenableFuture(subredditOrUserName, sortType.getType(),
                     sortType.getTime(), loadParams.getKey(), APIUtils.subredditAPICallLimit(subredditOrUserName));
         } else {
@@ -321,7 +355,7 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
 
     private ListenableFuture<LoadResult<String, Post>> loadUserPosts(@NonNull LoadParams<String> loadParams, RedditAPI api) {
         ListenableFuture<Response<String>> userPosts;
-        if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+        if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
             userPosts = api.getUserPostsListenableFuture(subredditOrUserName, loadParams.getKey(), sortType.getType(),
                     sortType.getTime());
         } else {
@@ -342,7 +376,7 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
     private ListenableFuture<LoadResult<String, Post>> loadSearchPosts(@NonNull LoadParams<String> loadParams, RedditAPI api) {
         ListenableFuture<Response<String>> searchPosts;
         if (subredditOrUserName == null) {
-            if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+            if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
                 searchPosts = api.searchPostsListenableFuture(query, loadParams.getKey(), sortType.getType(), sortType.getTime(),
                         trendingSource);
             } else {
@@ -350,7 +384,7 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
                         sortType.getTime(), trendingSource, APIUtils.getOAuthHeader(accessToken));
             }
         } else {
-            if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+            if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
                 searchPosts = api.searchPostsInSpecificSubredditListenableFuture(subredditOrUserName, query,
                         sortType.getType(), sortType.getTime(), loadParams.getKey());
             } else {
@@ -372,7 +406,7 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
 
     private ListenableFuture<LoadResult<String, Post>> loadMultiRedditPosts(@NonNull LoadParams<String> loadParams, RedditAPI api) {
         ListenableFuture<Response<String>> multiRedditPosts;
-        if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+        if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
             if (query != null && !query.isEmpty()) {
                 multiRedditPosts = api.searchMultiRedditPostsListenableFuture(multiRedditPath, query, loadParams.getKey(),
                         sortType.getType(), sortType.getTime());

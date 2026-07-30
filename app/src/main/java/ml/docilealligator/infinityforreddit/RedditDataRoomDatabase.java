@@ -19,6 +19,7 @@ import ml.docilealligator.infinityforreddit.comment.CommentDraft;
 import ml.docilealligator.infinityforreddit.comment.CommentDraftDao;
 import ml.docilealligator.infinityforreddit.commentfilter.CommentFilter;
 import ml.docilealligator.infinityforreddit.commentfilter.CommentFilterDao;
+import ml.docilealligator.infinityforreddit.commentfilter.CommentFilterDaoKt;
 import ml.docilealligator.infinityforreddit.commentfilter.CommentFilterUsage;
 import ml.docilealligator.infinityforreddit.commentfilter.CommentFilterUsageDao;
 import ml.docilealligator.infinityforreddit.customtheme.CustomTheme;
@@ -36,8 +37,11 @@ import ml.docilealligator.infinityforreddit.postfilter.PostFilterUsage;
 import ml.docilealligator.infinityforreddit.postfilter.PostFilterUsageDao;
 import ml.docilealligator.infinityforreddit.readpost.ReadPost;
 import ml.docilealligator.infinityforreddit.readpost.ReadPostDao;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostDaoKt;
 import ml.docilealligator.infinityforreddit.recentsearchquery.RecentSearchQuery;
 import ml.docilealligator.infinityforreddit.recentsearchquery.RecentSearchQueryDao;
+import ml.docilealligator.infinityforreddit.reminder.Reminder;
+import ml.docilealligator.infinityforreddit.reminder.ReminderDao;
 import ml.docilealligator.infinityforreddit.subreddit.SubredditDao;
 import ml.docilealligator.infinityforreddit.subreddit.SubredditData;
 import ml.docilealligator.infinityforreddit.subscribedsubreddit.SubscribedSubredditDao;
@@ -50,7 +54,7 @@ import ml.docilealligator.infinityforreddit.user.UserData;
 @Database(entities = {Account.class, SubredditData.class, SubscribedSubredditData.class, UserData.class,
         SubscribedUserData.class, MultiReddit.class, CustomTheme.class, RecentSearchQuery.class,
         ReadPost.class, PostFilter.class, PostFilterUsage.class, AnonymousMultiredditSubreddit.class,
-        CommentFilter.class, CommentFilterUsage.class, CommentDraft.class}, version = 32, exportSchema = false)
+        CommentFilter.class, CommentFilterUsage.class, CommentDraft.class, Reminder.class}, version = 33, exportSchema = false)
 @TypeConverters(Converters.class)
 public abstract class RedditDataRoomDatabase extends RoomDatabase {
 
@@ -64,7 +68,7 @@ public abstract class RedditDataRoomDatabase extends RoomDatabase {
                         MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21,
                         MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25,
                         MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29,
-                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32)
+                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33)
                 .build();
     }
 
@@ -92,6 +96,8 @@ public abstract class RedditDataRoomDatabase extends RoomDatabase {
 
     public abstract ReadPostDao readPostDao();
 
+    public abstract ReadPostDaoKt readPostDaoKt();
+
     public abstract PostFilterDao postFilterDao();
 
     public abstract PostFilterUsageDao postFilterUsageDao();
@@ -102,9 +108,13 @@ public abstract class RedditDataRoomDatabase extends RoomDatabase {
 
     public abstract CommentFilterDao commentFilterDao();
 
+    public abstract CommentFilterDaoKt commentFilterDaoKt();
+
     public abstract CommentFilterUsageDao commentFilterUsageDao();
 
     public abstract CommentDraftDao commentDraftDao();
+
+    public abstract ReminderDao reminderDao();
 
     private static final Migration MIGRATION_1_2 = new Migration(1, 2) {
         @Override
@@ -495,6 +505,17 @@ public abstract class RedditDataRoomDatabase extends RoomDatabase {
             database.execSQL("INSERT INTO read_posts_new (username, id, time) SELECT username, id, time FROM read_posts");
             database.execSQL("DROP TABLE read_posts");
             database.execSQL("ALTER TABLE read_posts_new RENAME TO read_posts");
+        }
+    };
+
+    private static final Migration MIGRATION_32_33 = new Migration(32, 33) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE reminders"
+                    + "(username TEXT, post_id TEXT NOT NULL, comment_id TEXT NOT NULL, content TEXT NOT NULL, "
+                    + "created_at INTEGER DEFAULT 0 NOT NULL, reminder_time INTEGER DEFAULT 0 NOT NULL, "
+                    + "PRIMARY KEY(post_id, comment_id, reminder_time), "
+                    + "FOREIGN KEY(username) REFERENCES accounts(username) ON DELETE SET NULL)");
         }
     };
 }

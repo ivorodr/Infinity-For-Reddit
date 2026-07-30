@@ -31,6 +31,7 @@ import ml.docilealligator.infinityforreddit.activities.BaseActivity;
 import ml.docilealligator.infinityforreddit.activities.CommentActivity;
 import ml.docilealligator.infinityforreddit.activities.PostFilterPreferenceActivity;
 import ml.docilealligator.infinityforreddit.activities.ReportActivity;
+import ml.docilealligator.infinityforreddit.activities.SetReminderActivity;
 import ml.docilealligator.infinityforreddit.activities.SubmitCrosspostActivity;
 import ml.docilealligator.infinityforreddit.customviews.LandscapeExpandedRoundedBottomSheetDialogFragment;
 import ml.docilealligator.infinityforreddit.databinding.FragmentPostOptionsBottomSheetBinding;
@@ -59,7 +60,6 @@ public class PostOptionsBottomSheetFragment extends LandscapeExpandedRoundedBott
 
     private BaseActivity mBaseActivity;
     private Post mPost;
-    private FragmentPostOptionsBottomSheetBinding binding;
 
     @Inject
     @Named("oauth")
@@ -117,7 +117,7 @@ public class PostOptionsBottomSheetFragment extends LandscapeExpandedRoundedBott
                              Bundle savedInstanceState) {
         ((Infinity) mBaseActivity.getApplication()).getAppComponent().inject(this);
         // Inflate the layout for this fragment
-        binding = FragmentPostOptionsBottomSheetBinding.inflate(inflater, container, false);
+        FragmentPostOptionsBottomSheetBinding binding = FragmentPostOptionsBottomSheetBinding.inflate(inflater, container, false);
 
         if (mPost != null) {
             switch (mPost.getPostType()) {
@@ -252,6 +252,11 @@ public class PostOptionsBottomSheetFragment extends LandscapeExpandedRoundedBott
                         dismiss();
                     });
                 }
+
+                binding.setReminderTextViewPostOptionsBottomSheetFragment.setOnClickListener(view -> {
+                    SetReminderActivity.Companion.startReminderActivity(mBaseActivity, mPost, null);
+                    dismiss();
+                });
 
                 binding.reportTextViewPostOptionsBottomSheetFragment.setOnClickListener(view -> {
                     Intent intent = new Intent(mBaseActivity, ReportActivity.class);

@@ -25,6 +25,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
@@ -52,6 +53,7 @@ import ml.docilealligator.infinityforreddit.databinding.FragmentViewImgurImageBi
 import ml.docilealligator.infinityforreddit.post.ImgurMedia;
 import ml.docilealligator.infinityforreddit.services.DownloadMediaService;
 import ml.docilealligator.infinityforreddit.utils.Utils;
+import ml.docilealligator.infinityforreddit.viewmodels.ViewGalleryViewModel;
 
 public class ViewImgurImageFragment extends Fragment {
 
@@ -67,8 +69,8 @@ public class ViewImgurImageFragment extends Fragment {
     private RequestManager glide;
     private ImgurMedia imgurMedia;
     private boolean isDownloading = false;
-    private boolean isActionBarHidden = false;
     private FragmentViewImgurImageBinding binding;
+    ViewGalleryViewModel viewGalleryViewModel;
 
     public ViewImgurImageFragment() {
         // Required empty public constructor
@@ -88,12 +90,12 @@ public class ViewImgurImageFragment extends Fragment {
         loadImage();
 
         binding.imageViewViewImgurImageFragment.setOnClickListener(view -> {
-            if (isActionBarHidden) {
+            if (activity.isActionBarHidden()) {
                 activity.getWindow().getDecorView().setSystemUiVisibility(
                         View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-                isActionBarHidden = false;
+                activity.setActionBarHidden(false);
                 if (activity.isUseBottomAppBar()) {
                     binding.bottomNavigationViewImgurImageFragment.setVisibility(View.VISIBLE);
                 }
@@ -105,7 +107,7 @@ public class ViewImgurImageFragment extends Fragment {
                                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                                 | View.SYSTEM_UI_FLAG_FULLSCREEN
                                 | View.SYSTEM_UI_FLAG_IMMERSIVE);
-                isActionBarHidden = true;
+                activity.setActionBarHidden(true);
                 if (activity.isUseBottomAppBar()) {
                     binding.bottomNavigationViewImgurImageFragment.setVisibility(View.GONE);
                 }
@@ -139,6 +141,20 @@ public class ViewImgurImageFragment extends Fragment {
                 setWallpaper();
             });
         }
+
+        viewGalleryViewModel = new ViewModelProvider(requireActivity()).get(ViewGalleryViewModel.class);
+        viewGalleryViewModel.getInsets().observe(getViewLifecycleOwner(), insets -> {
+            ViewGroup.LayoutParams lp = binding.bottomNavigationViewImgurImageFragment.getLayoutParams();
+            if (lp instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) lp;
+
+                marginParams.bottomMargin = insets.bottom;
+                marginParams.setMarginStart(insets.left);
+                marginParams.setMarginEnd(insets.right);
+
+                binding.bottomNavigationViewImgurImageFragment.setLayoutParams(marginParams);
+            }
+        });
 
         return binding.getRoot();
     }

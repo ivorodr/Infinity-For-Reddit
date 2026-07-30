@@ -14,11 +14,17 @@ public interface ReadPostDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(ReadPost readPost);
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertAll(List<ReadPost> readPosts);
+
     @Query("SELECT * FROM read_posts WHERE username = :username AND (:before IS NULL OR time < :before) AND read_post_type = :readPostType ORDER BY time DESC LIMIT 25")
     ListenableFuture<List<ReadPost>> getAllReadPostsListenableFuture(String username, Long before, @ReadPostType int readPostType);
 
     @Query("SELECT * FROM read_posts WHERE username = :username AND (:before IS NULL OR time < :before) AND read_post_type = :readPostType ORDER BY time DESC LIMIT 25")
     List<ReadPost> getAllReadPosts(String username, Long before, @ReadPostType int readPostType);
+
+    @Query("SELECT * FROM read_posts")
+    List<ReadPost> getAllReadPostsForBackup();
 
     @Query("SELECT * FROM read_posts WHERE username = :username AND read_post_type != :excludedReadPostType AND read_post_type != 0 AND id IN (:postIds)")
     List<ReadPost> getAllReadPostsForMetadata(String username, @ReadPostType int excludedReadPostType, List<String> postIds);
@@ -41,7 +47,7 @@ public interface ReadPostDao {
     @Query("DELETE FROM read_posts")
     void deleteAllReadPosts();
 
-    @Query("SELECT id FROM read_posts WHERE id IN (:ids) AND username = :username")
+    @Query("SELECT id FROM read_posts WHERE id IN (:ids) AND username = :username AND read_post_type = 0")
     List<String> getReadPostsIdsByIds(List<String> ids, String username);
 
     default int getMaxReadPostEntrySize() { // in bytes

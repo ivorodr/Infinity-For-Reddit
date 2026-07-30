@@ -118,6 +118,9 @@
 
     <string name="error_loading_image_tap_to_retry">Error loading the image. Tap to retry.</string>
     <string name="load_posts_error">Error loading posts.\nTap to retry.</string>
+    <string name="load_posts_error_anonymous_403">Due to platform limitations, content cannot be loaded right now.
+        \n\nYou can try again shortly or subscribe for a more consistent experience.</string>
+    <string name="load_posts_error_with_reason">Error loading posts. Reason: %1$s.\nTap to retry.</string>
     <string name="load_more_posts_error">Error loading posts.</string>
     <string name="load_post_error">Error loading this post.\nTap to retry.</string>
     <string name="search_subreddits_error">Error searching subreddits.\nTap to retry.</string>
@@ -154,6 +157,7 @@
     <string name="downvoted">Downvoted</string>
     <string name="hidden">Hidden</string>
     <string name="saved">Saved</string>
+    <string name="reminders">Reminders</string>
     <string name="settings">Settings</string>
     <string name="subscribers_number_detail">Subscribers: %1$,d</string>
     <string name="online_subscribers_number_detail">Online: %1$,d</string>
@@ -236,6 +240,7 @@
     <string name="subreddits">Subreddits</string>
     <string name="users">Users</string>
     <string name="multi_reddits">MultiReddits</string>
+    <string name="post">Post</string>
     <string name="posts">Posts</string>
     <string name="comments">Comments</string>
     <string name="about">About</string>
@@ -625,7 +630,7 @@
     <string name="settings_video_player_automatic_landscape_orientation">Switch to Landscape Orientation in Video Player Automatically</string>
     <string name="settings_loop_video_title">Loop Video</string>
     <string name="settings_loop_video_summary">Restart the app to apply this setting to autoplaying videos</string>
-    <string name="settings_remember_muting_option_in_post_feed">Remember Muting Option in Post Feed</string>
+    <string name="settings_remember_mute">Remember Mute</string>
     <string name="settings_post_details_title">Post Details</string>
     <string name="settings_separate_post_and_comments_in_portrait_mode_title">Separate Post And Comments in Portrait Mode</string>
     <string name="settings_separate_post_and_comments_in_landscape_mode_title">Separate Post And Comments in Landscape Mode</string>
@@ -661,6 +666,8 @@
     <string name="settings_post_feed_max_resolution_warning_title">Increase the value to show previews in higher resolution, but the app may crash unexpectedly.</string>
     <string name="settings_post_feed_max_resolution_title">Post Feed Preview Max Resolution (Width * Height)</string>
     <string name="settings_reddit_video_default_resolution">Reddit Video Default Resolution</string>
+    <string name="settings_comment_thread_continuity_capacity_title">Comment Thread Continuity Capacity</string>
+    <string name="settings_comment_thread_continuity_capacity_summary">%1$s comment thread(s) will be cached for seamless continuity.</string>
     <string name="settings_easier_to_watch_in_full_screen_title">Easier to Watch in Full Screen</string>
     <string name="settings_hide_fab_in_post_feed">Hide FAB in Post Feed</string>
     <string name="settings_comment_divider_type">Comment Divider Type</string>
@@ -738,6 +745,19 @@
     <string name="elapsed_time_months_ago">%1$d Months</string>
     <string name="elapsed_time_a_year_ago">1 Year</string>
     <string name="elapsed_time_years_ago">%1$d Years</string>
+
+    <string name="remaining_time_passed">In the past</string>
+    <string name="remaining_time_less_than_1_minute">Less than 1 minute</string>
+    <string name="remaining_time_1_minute">1 Minute</string>
+    <string name="remaining_time_in_minutes">%1$d Minutes</string>
+    <string name="remaining_time_1_hour">1 Hour</string>
+    <string name="remaining_time_in_hours">%1$d Hours</string>
+    <string name="remaining_time_1_day">1 Day</string>
+    <string name="remaining_time_in_days">%1$d Days</string>
+    <string name="remaining_time_1_month">1 Month</string>
+    <string name="remaining_time_in_months">%1$d Months</string>
+    <string name="remaining_time_1_year">1 Year</string>
+    <string name="remaining_time_in_years">%1$d Years</string>
 
     <string name="error_getting_multi_reddit_data">Error getting multireddit data</string>
     <string name="error_loading_multi_reddit_list">Cannot sync multireddits</string>
@@ -1079,6 +1099,7 @@
     <string name="downloading_reddit_video_muxing">Muxing Video and Audio</string>
     <string name="downloading_reddit_video_save_file_to_public_dir">Saving Video</string>
     <string name="downloading_reddit_video_finished">Downloaded</string>
+    <string name="downloading_reddit_video_failed_invalid_video_url">Download failed: invalid video url </string>
     <string name="downloading_reddit_video_failed_cannot_get_cache_directory">Download failed: cannot access cache directory </string>
     <string name="downloading_reddit_video_failed_cannot_download_video">Download failed: cannot download video</string>
     <string name="downloading_reddit_video_failed_cannot_save_video">Download failed: cannot save video to cache directory</string>
@@ -1113,6 +1134,17 @@
 
     <string name="login_activity_2fa_prompt">2-factor authentication: &lt;password&gt;:&lt;2FA code&gt;.\nExample: yourpass:123456\nGoogle login or having trouble login: click the bottom right button.</string>
     <string name="login_activity_internet_disconnected_error">No Internet Connection</string>
+    <string name="login">Log in</string>
+    <string name="login_using_different_method">You can try a different login method if this one doesn’t work.</string>
+    <string name="login_using_chrome_custom_tab">Chrome Custom Tab</string>
+    <string name="login_using_webview">WebView (legacy)</string>
+    <string name="login_chrome_required">You must have Chrome browser installed.</string>
+    <string name="login_failed_error">Login failed. Error:</string>
+    <string name="login_failed_auth_result_verification_failed">Verification failed.</string>
+    <string name="login_failed_auth_result_verification_timed_out">Verification timed out.</string>
+    <string name="login_failed_auth_result_unknown_error">Unknown error.</string>
+    <string name="login_failed_result_url_error">No code found in the result URL</string>
+    <string name="login_failed_result_url_unknown_error">No code found in the result URL. No error provided.</string>
 
     <string name="block_user">Block User</string>
     <string name="block_user_success">Blocked</string>
@@ -1243,7 +1275,7 @@
     <string name="choose_a_user">Choose a user</string>
 
     <string name="open_login_page">Open login page</string>
-    <string name="custom_tab_not_available">Chrome custom tab not available. Is Chrome or Firefox installed?</string>
+    <string name="custom_tab_not_available">Chrome custom tab not available. Is Chrome installed?</string>
 
     <string name="vote">Vote</string>
 
@@ -1263,7 +1295,11 @@
     <string name="do_not_show_this_again">Don\'t show this again</string>
     <string name="continue_suicide_prevention_activity">Continue</string>
 
-    <string name="error_fetching_v_redd_it_video_cannot_get_redirect_url">Error fetching v.redd.it video: Cannot get the redirect url</string>
+    <string name="error_fetching_video">Error fetching video</string>
+    <string name="error_fetching_video_invalid_type">Error fetching video: Invalid type</string>
+    <string name="error_fetching_v_redd_it_video_invalid_url">Error fetching v.redd.it video: Invalid url</string>
+    <string name="error_fetching_v_redd_it_video_cannot_get_redirect_url">Error fetching v.redd.it video: Cannot get the redirected url</string>
+    <string name="error_fetching_v_redd_it_video_cannot_parse_redirect_url">Error fetching v.redd.it video: Cannot parse the redirected url</string>
     <string name="error_fetching_v_redd_it_video_cannot_get_post">Error fetching v.redd.it video: Cannot get the post</string>
     <string name="error_fetching_v_redd_it_video_cannot_get_post_id">Error fetching v.redd.it video: Cannot get the post id</string>
     <string name="error_fetching_v_redd_it_video_cannot_get_video_url">Error fetching v.redd.it video: Cannot get the video url</string>
@@ -1475,11 +1511,25 @@
     <string name="restore_subscription_purchase_details">Already paid for the subscription?</string>
     <string name="restore_subscription_purchase">Restore subscription purchase</string>
 
-    <string name="important_info_title">Please re-login your account</string>
-    <string name="important_info">Infinity for Reddit with subscription uses a new API key from Reddit and you have to re-login to continue using the app.\n\nJust
-        open the navigation drawer and click your account header and select \"Add an account\" to login to Reddit using the same account again.
-        Otherwise, Infinity may not load posts at all. Sorry for the inconvenience.</string>
     <string name="i_understand">I understand</string>
+    <string name="important_info_post_comments_rework_title">Important Beta Information (v8.3.0-beta3)</string>
+    <string name="important_info_post_comments_rework_description">
+        New Features:
+        \nReminders: Set a reminder for a post or comment and get notified to check back later
+        \nOnboarding screen: An introduction for new users
+        \n\nBug Fixes:
+        \nFixed swipe actions in comments
+        \nFixed gallery images failing to load
+        \nFixed incorrect posts appearing when swiping between posts
+        \nFixed deleted posts failing to load
+        \nFixed title suggestions not working when submitting link posts
+        \nFixed unable to unfollow deleted users in anonymous mode
+        \nFixed app crashes when refreshing posts
+        \n\nYou are currently using the beta version of the new release.
+        \n\nThis beta includes major under-the-hood changes to the post comments section as part of a large code cleanup and rewrite.
+        The functionality should remain mostly the same, but because many internal systems have changed, bugs and unexpected issues are to be expected during this stage.
+        \n\nThank you for testing the beta and for your patience.</string>
+    <string name="important_info_post_comments_rework_join_subreddit">Click here to join r/Infinity_For_Reddit</string>
 
     <string name="add_to_comment_filter">Add to Comment Filter</string>
     <string name="cannot_edit_post_with_images">Editing posts with images is not allowed.</string>
@@ -1614,4 +1664,58 @@
     <string name="comment_spam_status">This comment is removed as spam</string>
 
     <string name="copying_multi_reddit">Copying</string>
+
+    <string name="set_reminder">Set Reminder</string>
+    <string name="choose_a_predefined_reminder_time">Choose a predefined reminder time:</string>
+    <string name="in_6_hours">In 6 hours</string>
+    <string name="in_1_day">In 1 day</string>
+    <string name="in_2_days">In 2 days</string>
+    <string name="in_3_days">In 3 days</string>
+    <string name="in_1_week">In 1 week</string>
+    <string name="in_2_weeks">In 2 weeks</string>
+    <string name="or_set_a_custom_reminder_time">Or, set a custom reminder time:</string>
+    <string name="set_date">Set Date</string>
+    <string name="set_time">Set Time</string>
+    <string name="you_will_receive_reminder_notification">You\'ll receive a reminder notification on the date and time you set:</string>
+    <string name="please_set_reminder_time">Please set a reminder time</string>
+    <string name="reminder_time_must_be_in_future">The reminder time must be in the future.</string>
+    <string name="invalid_reminder_post_id">Invalid post id</string>
+    <string name="note">Note:</string>
+    <string name="reminder_reliability_notice_app_update_force_stop_title">"App Updates \u0026 Force Stops: "</string>
+    <string name="reminder_reliability_notice_app_update_force_stop_description">If you force-close the app or it updates, reminders will pause. Simply open the app once to reactivate them.</string>
+    <string name="reminder_reliability_notice_battery_title">"Battery \u0026 Timing: "</string>
+    <string name="reminder_reliability_notice_battery_description">To save battery, your phone may slightly delay reminders rather than triggering them at the exact time.</string>
+    <string name="reminder_reliability_notice_device_settings_title">"Device Settings: "</string>
+    <string name="reminder_reliability_notice_device_settings_description">Some phones (like Xiaomi, Oppo, or Vivo) require you to turn on "Auto-start" or "Background App Launch" in your phone\'s system settings. Otherwise, reminders will stop working if your phone restarts.</string>
+    <string name="reminder_set">Reminder set</string>
+    <string name="reminder">Reminder</string>
+
+    <string name="onboarding_welcome_to">Welcome to</string>
+    <string name="onboarding_infinity_for_reddit">Infinity for Reddit</string>
+    <string name="content_description_infinity_icon">Icon of Infinity for Reddit</string>
+    <string name="content_description_background">Background</string>
+    <string name="infinitely_better_experience">The infinitely better Reddit experience</string>
+    <string name="take_a_quick_tour">Take a quick tour</string>
+    <string name="next">Next</string>
+    <string name="get_started">Get started</string>
+    <string name="by_continuing_1">"By continuing, you agree to the "</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="by_continuing_2">" and "</string>
+    <string name="reddit_user_agreement">Reddit User Agreement</string>
+    <string name="by_continuing_3">.\nInfinity is an independent client for Reddit. Not affiliated or endorsed by Reddit.</string>
+    <string name="filter_what_you_see">Filter What You See</string>
+    <string name="filter_what_you_see_description">Advanced rules for a clean feed</string>
+    <string name="content_description_filter_what_you_see">Screenshot of filter what you see</string>
+    <string name="post_like_a_pro">Post Like a Pro</string>
+    <string name="post_like_a_pro_description">Every post type supported\nPlus GIFs in comments</string>
+    <string name="content_description_post_like_a_pro">Screenshot of post like a pro</string>
+    <string name="make_it_yours">Make it Yours</string>
+    <string name="make_it_yours_description">Customize every color, button, and gesture</string>
+    <string name="content_description_make_it_yours">Screenshot of make it yours</string>
+    <string name="private_browsing">Private Browsing</string>
+    <string name="private_browsing_description">Subscribe, save, vote, and revisit, before signing in</string>
+    <string name="content_description_private_browsing">Screenshot of private browsing</string>
+    <string name="more_features">And There\'s More!</string>
+    <string name="more_features_description">Discover even more tools and features waiting for you inside the app</string>
+    <string name="content_description_more_features">Screenshot of more features</string>
 </resources>
