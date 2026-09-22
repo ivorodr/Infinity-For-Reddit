@@ -801,12 +801,14 @@ public abstract class PostFragmentBase extends Fragment {
             String dataSavingMode = mSharedPreferences.getString(SharedPreferencesUtils.DATA_SAVING_MODE, SharedPreferencesUtils.DATA_SAVING_MODE_OFF);
             boolean stateChanged = false;
             if (autoplay.equals(SharedPreferencesUtils.VIDEO_AUTOPLAY_VALUE_ON_WIFI)) {
-                getPostAdapter().setAutoplay(changeNetworkStatusEvent.connectedNetwork == Utils.NETWORK_TYPE_WIFI);
-                stateChanged = true;
+                if (getPostAdapter().setAutoplay(changeNetworkStatusEvent.connectedNetwork == Utils.NETWORK_TYPE_WIFI)) {
+                    stateChanged = true;
+                }
             }
             if (dataSavingMode.equals(SharedPreferencesUtils.DATA_SAVING_MODE_ONLY_ON_CELLULAR_DATA)) {
-                getPostAdapter().setDataSavingMode(changeNetworkStatusEvent.connectedNetwork == Utils.NETWORK_TYPE_CELLULAR);
-                stateChanged = true;
+                if (getPostAdapter().setDataSavingMode(changeNetworkStatusEvent.connectedNetwork == Utils.NETWORK_TYPE_CELLULAR)) {
+                    stateChanged = true;
+                }
             }
 
             if (stateChanged) {
@@ -996,7 +998,7 @@ public abstract class PostFragmentBase extends Fragment {
     protected static class StaggeredGridLayoutManagerItemOffsetDecoration extends RecyclerView.ItemDecoration {
 
         private final int mHalfOffset;
-        private final int mQuaterOffset;
+        private final int mQuarterOffset;
         private final int mCard3HorizontalSpace;
         private final int mCard3VerticalSpace;
         private final int mNColumns;
@@ -1006,7 +1008,7 @@ public abstract class PostFragmentBase extends Fragment {
             mCard3HorizontalSpace = -itemOffset / 4 * 3;
             mCard3VerticalSpace = -itemOffset / 4;
             mHalfOffset = itemOffset / 2;
-            mQuaterOffset = itemOffset / 4;
+            mQuarterOffset = itemOffset / 4;
         }
 
         StaggeredGridLayoutManagerItemOffsetDecoration(@NonNull Context context, @DimenRes int itemOffsetId, int nColumns) {
@@ -1051,17 +1053,17 @@ public abstract class PostFragmentBase extends Fragment {
 
             if (mNColumns == 2) {
                 if (spanIndex == 0) {
-                    outRect.set(mHalfOffset, 0, mQuaterOffset, 0);
+                    outRect.set(mHalfOffset, 0, mQuarterOffset, 0);
                 } else {
-                    outRect.set(mQuaterOffset, 0, mHalfOffset, 0);
+                    outRect.set(mQuarterOffset, 0, mHalfOffset, 0);
                 }
             } else if (mNColumns == 3) {
                 if (spanIndex == 0) {
-                    outRect.set(mHalfOffset, 0, mQuaterOffset, 0);
+                    outRect.set(mHalfOffset, 0, mQuarterOffset, 0);
                 } else if (spanIndex == 1) {
-                    outRect.set(mQuaterOffset, 0, mQuaterOffset, 0);
+                    outRect.set(mQuarterOffset, 0, mQuarterOffset, 0);
                 } else {
-                    outRect.set(mQuaterOffset, 0, mHalfOffset, 0);
+                    outRect.set(mQuarterOffset, 0, mHalfOffset, 0);
                 }
             }
         }

@@ -108,6 +108,7 @@
     <string name="action_next_parent_comment">Next Top-Level Comment</string>
     <string name="action_previous_parent_comment">Previous Top-Level Comment</string>
     <string name="action_back_content_description">Back</string>
+    <string name="action_more_post_options">More Post Options</string>
 
     <string name="parse_json_response_error">Error occurred when parsing the JSON response</string>
     <string name="retrieve_token_error">Error Retrieving the token</string>
@@ -119,10 +120,17 @@
     <string name="error_loading_image_tap_to_retry">Error loading the image. Tap to retry.</string>
     <string name="load_posts_error">Error loading posts.\nTap to retry.</string>
     <string name="load_posts_error_anonymous_403">Due to platform limitations, content cannot be loaded right now.
-        \n\nYou can try again shortly or subscribe for a more consistent experience.</string>
+        \n\nYou can try again shortly or subscribe for a more reliable experience.</string>
     <string name="load_posts_error_with_reason">Error loading posts. Reason: %1$s.\nTap to retry.</string>
     <string name="load_more_posts_error">Error loading posts.</string>
     <string name="load_post_error">Error loading this post.\nTap to retry.</string>
+    <string name="load_post_error_with_reason">Error loading this post. Reason: %1$s.\nTap to retry.</string>
+    <string name="invalid_post_id">Invalid Post Id</string>
+    <string name="network_error">Network Error</string>
+    <string name="response_error_with_code">Response Error: %1$d</string>
+    <string name="response_error_with_code_and_message">Response Error: %1$d. Message: %2$s</string>
+    <string name="quarantined_subreddit">Quarantined Subreddit</string>
+    <string name="unknown_error">Unknown Error</string>
     <string name="search_subreddits_error">Error searching subreddits.\nTap to retry.</string>
     <string name="search_users_error">Error searching users.\nTap to retry.</string>
     <string name="no_posts">No posts found</string>
@@ -261,6 +269,7 @@
     <string name="no_camera_available">No camera app available</string>
     <string name="error_creating_temp_file">Error creating temp file</string>
 
+    <string name="submit_video_or_gif_post_failed_cannot_access_file">Unable to submit post: cannot access the file</string>
     <string name="submit_video_or_gif_post_failed_cannot_get_cache_directory">Unable to submit post: cannot access cache directory</string>
     <string name="video_is_processing">Video is processing. Please wait.</string>
     <string name="image_is_processing">Image is processing. Please wait.</string>
@@ -369,6 +378,7 @@
     <string name="update_flair_failed">Update flair failed</string>
 
     <string name="edit_flair">Edit Flair</string>
+    <string name="remove_flair">Remove Flair</string>
     <string name="only_allow_64_chars">Only allow less than 64 characters</string>
 
     <string name="view_all_comments">Click here to browse all comments</string>
@@ -691,6 +701,9 @@
     <string name="default_swipe_area">Default</string>
     <string name="larger_swipe_area">Large</string>
     <string name="very_larger_swipe_area">Very Large</string>
+    <string name="settings_show_gallery_media_as_grid">Show Gallery Media as a Grid When Available</string>
+    <string name="settings_show_post_and_comment_toolbar_items_based_on_available_space_title">Show Toolbar Items Based on Available Space</string>
+    <string name="settings_show_post_and_comment_toolbar_items_based_on_available_space_summary">Automatically show or hide toolbar items as available space changes.</string>
 
     <string name="no_link_available">Cannot get the link</string>
 
@@ -1512,23 +1525,9 @@
     <string name="restore_subscription_purchase">Restore subscription purchase</string>
 
     <string name="i_understand">I understand</string>
-    <string name="important_info_post_comments_rework_title">Important Beta Information (v8.3.0-beta3)</string>
-    <string name="important_info_post_comments_rework_description">
-        New Features:
-        \nReminders: Set a reminder for a post or comment and get notified to check back later
-        \nOnboarding screen: An introduction for new users
-        \n\nBug Fixes:
-        \nFixed swipe actions in comments
-        \nFixed gallery images failing to load
-        \nFixed incorrect posts appearing when swiping between posts
-        \nFixed deleted posts failing to load
-        \nFixed title suggestions not working when submitting link posts
-        \nFixed unable to unfollow deleted users in anonymous mode
-        \nFixed app crashes when refreshing posts
-        \n\nYou are currently using the beta version of the new release.
-        \n\nThis beta includes major under-the-hood changes to the post comments section as part of a large code cleanup and rewrite.
-        The functionality should remain mostly the same, but because many internal systems have changed, bugs and unexpected issues are to be expected during this stage.
-        \n\nThank you for testing the beta and for your patience.</string>
+    <string name="whats_new_in">What’s New in %1$s?</string>
+    <string name="whats_new_changelogs">Minor bugs fixed.
+    </string>
     <string name="important_info_post_comments_rework_join_subreddit">Click here to join r/Infinity_For_Reddit</string>
 
     <string name="add_to_comment_filter">Add to Comment Filter</string>
@@ -1696,6 +1695,7 @@
     <string name="content_description_background">Background</string>
     <string name="infinitely_better_experience">The infinitely better Reddit experience</string>
     <string name="take_a_quick_tour">Take a quick tour</string>
+    <string name="skip">Skip</string>
     <string name="next">Next</string>
     <string name="get_started">Get started</string>
     <string name="by_continuing_1">"By continuing, you agree to the "</string>

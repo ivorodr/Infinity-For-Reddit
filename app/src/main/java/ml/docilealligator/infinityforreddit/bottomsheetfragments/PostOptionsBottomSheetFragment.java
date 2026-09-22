@@ -57,6 +57,7 @@ public class PostOptionsBottomSheetFragment extends LandscapeExpandedRoundedBott
     private static final String EXTRA_POST = "EP";
     private static final String EXTRA_POST_LIST_POSITION = "EPLP";
     private static final String EXTRA_GALLERY_INDEX = "EGI";
+    private static final String EXTRA_HIDE_CHANGE_FLAIR_OPTION = "EHCFO";
 
     private BaseActivity mBaseActivity;
     private Post mPost;
@@ -83,21 +84,23 @@ public class PostOptionsBottomSheetFragment extends LandscapeExpandedRoundedBott
      * @param post Post
      * @return A new instance of fragment PostOptionsBottomSheetFragment.
      */
-    public static PostOptionsBottomSheetFragment newInstance(Post post, int postListPosition, int galleryIndex) {
+    public static PostOptionsBottomSheetFragment newInstance(Post post, int postListPosition, int galleryIndex, boolean hideChangeFlairOption) {
         PostOptionsBottomSheetFragment fragment = new PostOptionsBottomSheetFragment();
         Bundle args = new Bundle();
         args.putParcelable(EXTRA_POST, post);
         args.putInt(EXTRA_POST_LIST_POSITION, postListPosition);
         args.putInt(EXTRA_GALLERY_INDEX, galleryIndex);
+        args.putBoolean(EXTRA_HIDE_CHANGE_FLAIR_OPTION, hideChangeFlairOption);
         fragment.setArguments(args);
         return fragment;
     }
 
-    public static PostOptionsBottomSheetFragment newInstance(Post post, int postListPosition) {
+    public static PostOptionsBottomSheetFragment newInstance(Post post, int postListPosition, boolean hideChangeFlairOption) {
         PostOptionsBottomSheetFragment fragment = new PostOptionsBottomSheetFragment();
         Bundle args = new Bundle();
         args.putParcelable(EXTRA_POST, post);
         args.putInt(EXTRA_POST_LIST_POSITION, postListPosition);
+        args.putBoolean(EXTRA_HIDE_CHANGE_FLAIR_OPTION, hideChangeFlairOption);
         fragment.setArguments(args);
         return fragment;
     }
@@ -122,13 +125,22 @@ public class PostOptionsBottomSheetFragment extends LandscapeExpandedRoundedBott
         if (mPost != null) {
             switch (mPost.getPostType()) {
                 case Post.IMAGE_TYPE:
-                case Post.GALLERY_TYPE:
                     binding.downloadTextViewPostOptionsBottomSheetFragment.setVisibility(View.VISIBLE);
                     binding.downloadTextViewPostOptionsBottomSheetFragment.setText(R.string.download_image);
+                    break;
+                case Post.GALLERY_TYPE:
+                    if (getArguments().getInt(EXTRA_GALLERY_INDEX, -1) >= 0) {
+                        binding.downloadTextViewPostOptionsBottomSheetFragment.setVisibility(View.VISIBLE);
+                        binding.downloadTextViewPostOptionsBottomSheetFragment.setText(R.string.download_image);
+                    }
                     break;
                 case Post.GIF_TYPE:
                     binding.downloadTextViewPostOptionsBottomSheetFragment.setVisibility(View.VISIBLE);
                     binding.downloadTextViewPostOptionsBottomSheetFragment.setText(R.string.download_gif);
+                    if (mPost.getMp4Variant() != null) {
+                        binding.downloadMp4VariantTextViewPostOptionsBottomSheetFragment.setVisibility(View.VISIBLE);
+                        binding.downloadMp4VariantTextViewPostOptionsBottomSheetFragment.setText(R.string.download_video);
+                    }
                     break;
                 case Post.VIDEO_TYPE:
                     binding.downloadTextViewPostOptionsBottomSheetFragment.setVisibility(View.VISIBLE);
@@ -143,6 +155,33 @@ public class PostOptionsBottomSheetFragment extends LandscapeExpandedRoundedBott
                         if (!mPost.isRedgifs() && !mPost.isStreamable() && !mPost.isImgur()) {
                             PersistableBundle extras = new PersistableBundle();
                             extras.putString(DownloadRedditVideoService.EXTRA_VIDEO_URL, mPost.getVideoDownloadUrl());
+                            extras.putString(DownloadRedditVideoService.EXTRA_POST_ID, mPost.getId());
+                            extras.putString(DownloadRedditVideoService.EXTRA_SUBREDDIT, mPost.getSubredditName());
+                            extras.putInt(DownloadRedditVideoService.EXTRA_IS_NSFW, mPost.isNSFW() ? 1 : 0);
+
+                            //TODO: contentEstimatedBytes
+                            JobInfo jobInfo = DownloadRedditVideoService.constructJobInfo(mBaseActivity, 5000000, extras);
+                            ((JobScheduler) mBaseActivity.getSystemService(Context.JOB_SCHEDULER_SERVICE)).schedule(jobInfo);
+
+                            dismiss();
+                            return;
+                        }
+                    }
+
+                    JobInfo jobInfo = DownloadMediaService.constructJobInfo(mBaseActivity, 5000000, mPost, getArguments().getInt(EXTRA_GALLERY_INDEX, 0));
+                    ((JobScheduler) mBaseActivity.getSystemService(Context.JOB_SCHEDULER_SERVICE)).schedule(jobInfo);
+
+                    dismiss();
+                });
+            }
+
+            if (binding.downloadMp4VariantTextViewPostOptionsBottomSheetFragment.getVisibility() == View.VISIBLE) {
+                binding.downloadMp4VariantTextViewPostOptionsBottomSheetFragment.setOnClickListener(view -> {
+                    Toast.makeText(mBaseActivity, R.string.download_started, Toast.LENGTH_SHORT).show();
+                    if (mPost.getPostType() == Post.GIF_TYPE) {
+                        if (mPost.getMp4Variant() != null) {
+                            PersistableBundle extras = new PersistableBundle();
+                            extras.putString(DownloadRedditVideoService.EXTRA_VIDEO_URL, mPost.getMp4Variant());
                             extras.putString(DownloadRedditVideoService.EXTRA_POST_ID, mPost.getId());
                             extras.putString(DownloadRedditVideoService.EXTRA_SUBREDDIT, mPost.getSubredditName());
                             extras.putInt(DownloadRedditVideoService.EXTRA_IS_NSFW, mPost.isNSFW() ? 1 : 0);
@@ -270,7 +309,11 @@ public class PostOptionsBottomSheetFragment extends LandscapeExpandedRoundedBott
                 if (mPost.isCanModPost()) {
                     binding.modTextViewPostOptionsBottomSheetFragment.setVisibility(View.VISIBLE);
                     binding.modTextViewPostOptionsBottomSheetFragment.setOnClickListener(view -> {
-                        PostModerationActionBottomSheetFragment postModerationActionBottomSheetFragment = PostModerationActionBottomSheetFragment.newInstance(mPost, getArguments().getInt(EXTRA_POST_LIST_POSITION, 0));
+                        PostModerationActionBottomSheetFragment postModerationActionBottomSheetFragment =
+                                PostModerationActionBottomSheetFragment.newInstance(
+                                        mPost, getArguments().getBoolean(EXTRA_HIDE_CHANGE_FLAIR_OPTION, false),
+                                        getArguments().getInt(EXTRA_POST_LIST_POSITION, 0)
+                                );
                         Fragment parentFragment = getParentFragment();
                         if (parentFragment != null) {
                             postModerationActionBottomSheetFragment.show(parentFragment.getChildFragmentManager(), postModerationActionBottomSheetFragment.getTag());

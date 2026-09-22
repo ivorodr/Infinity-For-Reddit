@@ -11,8 +11,8 @@ android {
         applicationId "ir.docilealligator.infinityforreddit"
         minSdk 21
         targetSdk 36
-        versionCode 224
-        versionName "8.3.0-beta3"
+        versionCode 230
+        versionName "8.3.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {

@@ -1,5 +1,6 @@
 package ml.docilealligator.infinityforreddit.activities
 
+import android.R.attr.onClick
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -12,6 +13,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +32,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -40,6 +43,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -75,6 +79,11 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.window.core.layout.WindowHeightSizeClass
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.WindowWidthSizeClass
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
+import com.bumptech.glide.request.RequestOptions
+import jp.wasabeef.glide.transformations.RoundedCornersTransformation
 import kotlinx.coroutines.launch
 import ml.docilealligator.infinityforreddit.Infinity
 import ml.docilealligator.infinityforreddit.R
@@ -82,6 +91,7 @@ import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper
 import ml.docilealligator.infinityforreddit.customviews.compose.AppTheme
 import ml.docilealligator.infinityforreddit.customviews.compose.CustomFilledButton
+import ml.docilealligator.infinityforreddit.customviews.compose.CustomNeutralTextButton
 import ml.docilealligator.infinityforreddit.customviews.compose.LocalAppTheme
 import ml.docilealligator.infinityforreddit.customviews.compose.LocalTypography
 import ml.docilealligator.infinityforreddit.customviews.compose.PrimaryText
@@ -94,19 +104,8 @@ import kotlin.math.roundToInt
 
 class OnboardingActivity: BaseActivity() {
     @Inject
-    @Named("no_oauth")
-    lateinit var mRetrofit: Retrofit
-    @Inject
-    @Named("oauth")
-    lateinit var mOauthRetrofit: Retrofit
-    @Inject
-    lateinit var mRedditDataRoomDatabase: RedditDataRoomDatabase
-    @Inject
     @Named("default")
     lateinit var mSharedPreferences: SharedPreferences
-    @Inject
-    @Named("post_layout")
-    lateinit var mPostLayoutSharedPreferences: SharedPreferences
     @Inject
     @Named("current_account")
     lateinit var mCurrentAccountSharedPreferences: SharedPreferences
@@ -298,14 +297,7 @@ class OnboardingActivity: BaseActivity() {
                                             pagerState.animateScrollToPage(pagerState.currentPage + 1)
                                         }
                                     } else {
-                                        mInternalSharedPreferences.edit {
-                                            putBoolean(
-                                                SharedPreferencesUtils.ONBOARDING_FINISHED,
-                                                true
-                                            )
-                                        }
-                                        startActivity(Intent(context, MainActivity::class.java))
-                                        finish()
+                                        finishOnboarding()
                                     }
                                 }
 
@@ -379,24 +371,44 @@ class OnboardingActivity: BaseActivity() {
         ) {
             Spacer(modifier = Modifier.height(verticalPadding))
 
-            Image(
-                painterResource(R.drawable.onboarding_icon),
-                contentDescription = stringResource(R.string.content_description_infinity_icon),
-                modifier = Modifier
-                    .width(
-                        if (
-                            !(windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT ||
-                                    windowSizeClass.windowHeightSizeClass == WindowHeightSizeClass.COMPACT)
-                        ) 200.dp else if (windowSizeClass.windowHeightSizeClass == WindowHeightSizeClass.COMPACT) 70.dp else 100.dp
-                    )
-                    .offset {
-                        offset
-                    }
-                    .graphicsLayer {
-                        alpha = alphaValue
-                    }
-                    .clip(CircleShape)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painterResource(R.drawable.onboarding_icon),
+                    contentDescription = stringResource(R.string.content_description_infinity_icon),
+                    modifier = Modifier
+                        .width(
+                            if (
+                                !(windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.COMPACT ||
+                                        windowSizeClass.windowHeightSizeClass == WindowHeightSizeClass.COMPACT)
+                            ) 200.dp else if (windowSizeClass.windowHeightSizeClass == WindowHeightSizeClass.COMPACT) 70.dp else 100.dp
+                        )
+                        .offset {
+                            offset
+                        }
+                        .graphicsLayer {
+                            alpha = alphaValue
+                        }
+                        .clip(CircleShape)
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                CustomNeutralTextButton(
+                    modifier = Modifier
+                        .offset {
+                            offset
+                        }
+                        .graphicsLayer {
+                            alpha = alphaValue
+                        },
+                    stringResId = R.string.skip
+                ) {
+                    finishOnboarding()
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -470,6 +482,7 @@ class OnboardingActivity: BaseActivity() {
         }
     }
 
+    @OptIn(ExperimentalGlideComposeApi::class)
     @Composable
     fun OnboardingPage(page: Int, verticalPadding: Dp, windowSizeClass: WindowSizeClass) {
         if (windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT) {
@@ -477,15 +490,15 @@ class OnboardingActivity: BaseActivity() {
                 modifier = Modifier.padding(vertical = verticalPadding),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
-                    painterResource(onboardingPageData[page - 1].drawableResId),
-                    contentDescription = onboardingPageData[page - 1].contentDescription,
+                GlideImage(
                     modifier = if (windowSizeClass.windowHeightSizeClass != WindowHeightSizeClass.COMPACT) Modifier
                         .heightIn(max = 700.dp)
                         .widthIn(max = 500.dp)
                         .fillMaxSize(0.7f)
                         .weight(1f) else Modifier
-                        .weight(1f)
+                        .weight(1f),
+                    model = onboardingPageData[page - 1].drawableResId,
+                    contentDescription = onboardingPageData[page - 1].contentDescription
                 )
 
                 Spacer(modifier = Modifier.width(36.dp))
@@ -549,6 +562,17 @@ class OnboardingActivity: BaseActivity() {
                 )
             }
         }
+    }
+
+    private fun finishOnboarding() {
+        mInternalSharedPreferences.edit {
+            putBoolean(
+                SharedPreferencesUtils.ONBOARDING_FINISHED,
+                true
+            )
+        }
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
     }
 
     override fun getDefaultSharedPreferences(): SharedPreferences {

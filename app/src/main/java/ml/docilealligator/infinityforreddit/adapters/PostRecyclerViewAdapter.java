@@ -48,6 +48,7 @@ import androidx.media3.ui.TrackSelectionDialogBuilder;
 import androidx.paging.ItemSnapshotList;
 import androidx.paging.PagingDataAdapter;
 import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -76,6 +77,7 @@ import javax.inject.Provider;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
 import ml.docilealligator.infinityforreddit.FetchVideoLinkListener;
+import ml.docilealligator.infinityforreddit.PostGalleryGridLayoutItemDecoration;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
 import ml.docilealligator.infinityforreddit.SaveMemoryCenterInisdeDownsampleStrategy;
@@ -271,6 +273,8 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
     private boolean mFixedHeightPreviewInCard;
     private boolean mHideTextPostContent;
     private boolean mEasierToWatchInFullScreen;
+    private boolean mShowGalleryMediaAsGrid;
+    private boolean mShowToolbarItemsBasedOnSpace;
     private int mDataSavingModeDefaultResolution;
     private int mNonDataSavingModeDefaultResolution;
     private int mSimultaneousAutoplayLimit;
@@ -366,6 +370,8 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             mFixedHeightPreviewInCard = sharedPreferences.getBoolean(SharedPreferencesUtils.FIXED_HEIGHT_PREVIEW_IN_CARD, false);
             mHideTextPostContent = sharedPreferences.getBoolean(SharedPreferencesUtils.HIDE_TEXT_POST_CONTENT, false);
             mEasierToWatchInFullScreen = sharedPreferences.getBoolean(SharedPreferencesUtils.EASIER_TO_WATCH_IN_FULL_SCREEN, false);
+            mShowGalleryMediaAsGrid = sharedPreferences.getBoolean(SharedPreferencesUtils.SHOW_GALLERY_MEDIA_AS_GRID, false);
+            mShowToolbarItemsBasedOnSpace = sharedPreferences.getBoolean(SharedPreferencesUtils.SHOW_POST_AND_COMMENT_TOOLBAR_ITEMS_BASED_ON_SPACE, false);
             mDataSavingModeDefaultResolution = Integer.parseInt(mSharedPreferences.getString(SharedPreferencesUtils.REDDIT_VIDEO_DEFAULT_RESOLUTION, "360"));
             mNonDataSavingModeDefaultResolution = Integer.parseInt(mSharedPreferences.getString(SharedPreferencesUtils.REDDIT_VIDEO_DEFAULT_RESOLUTION_NO_DATA_SAVING, "0"));
             mSimultaneousAutoplayLimit = Integer.parseInt(mSharedPreferences.getString(SharedPreferencesUtils.SIMULTANEOUS_AUTOPLAY_LIMIT, "1"));
@@ -1026,12 +1032,13 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                         }
                     }
                 } else if (holder instanceof PostBaseGalleryTypeViewHolder) {
+                    int gallerySize = post.getGallery().size();
                     if (mDataSavingMode && mDisableImagePreview) {
                         ((PostBaseGalleryTypeViewHolder) holder).noPreviewImageView.setVisibility(View.VISIBLE);
                         ((PostBaseGalleryTypeViewHolder) holder).noPreviewImageView.setImageResource(R.drawable.ic_gallery_day_night_24dp);
                     } else {
                         ((PostBaseGalleryTypeViewHolder) holder).frameLayout.setVisibility(View.VISIBLE);
-                        ((PostBaseGalleryTypeViewHolder) holder).imageIndexTextView.setText(mActivity.getString(R.string.image_index_in_gallery, 1, post.getGallery().size()));
+                        ((PostBaseGalleryTypeViewHolder) holder).imageIndexTextView.setText(mActivity.getString(R.string.image_index_in_gallery, 1, gallerySize));
                         Post.Preview preview = getSuitablePreview(post.getPreviews());
                         if (preview != null) {
                             if (mFixedHeightPreviewInCard || (preview.getPreviewWidth() <= 0 || preview.getPreviewHeight() <= 0)) {
@@ -1046,6 +1053,60 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                         ((PostBaseGalleryTypeViewHolder) holder).adapter.setBlurImage(
                                 (post.isNSFW() && mNeedBlurNsfw && !(mDoNotBlurNsfwInNsfwSubreddits && mFragment != null && mFragment.getIsNsfwSubreddit())) || (post.isSpoiler() && mNeedBlurSpoiler));
                     }
+
+                    RecyclerView.LayoutManager layoutManager = ((PostBaseGalleryTypeViewHolder) holder).galleryRecyclerView.getLayoutManager();
+                    if (mShowGalleryMediaAsGrid) {
+                        if (!(layoutManager instanceof GridLayoutManager)) {
+                            layoutManager = new GridLayoutManager(mActivity, 3);
+                            ((PostBaseGalleryTypeViewHolder) holder).galleryRecyclerView.setLayoutManager(layoutManager);
+                        }
+
+                        int spanCount = gallerySize == 2 || gallerySize == 4 ? 2 : 3;
+                        ((GridLayoutManager) layoutManager).setSpanCount(spanCount);
+                        if (((PostBaseGalleryTypeViewHolder) holder).galleryRecyclerView.getItemDecorationCount() > 0) {
+                            RecyclerView.ItemDecoration itemDecoration = ((PostBaseGalleryTypeViewHolder) holder).galleryRecyclerView.getItemDecorationAt(0);
+                            if (itemDecoration instanceof PostGalleryGridLayoutItemDecoration) {
+                                ((PostGalleryGridLayoutItemDecoration) itemDecoration).setSpanCount(spanCount);
+                            }
+                        }
+
+                        int padding = (int) (8 * mScale);
+                        ((PostBaseGalleryTypeViewHolder) holder).galleryRecyclerView.setPadding(
+                                0, (holder instanceof PostGalleryTypeViewHolder) ? 0 : padding,
+                                padding, (holder instanceof PostGalleryTypeViewHolder) ? 0 : padding);
+                        ((PostBaseGalleryTypeViewHolder) holder).adapter.setIsGridLayout(true);
+                        ((PostBaseGalleryTypeViewHolder) holder).imageIndexTextView.setVisibility(View.GONE);
+                    } else {
+                        if (!(layoutManager instanceof LinearLayoutManagerBugFixed)) {
+                            layoutManager = new LinearLayoutManagerBugFixed(mActivity, RecyclerView.HORIZONTAL, false);
+                            ((PostBaseGalleryTypeViewHolder) holder).galleryRecyclerView.setLayoutManager(layoutManager);
+                        }
+
+                        ((PostBaseGalleryTypeViewHolder) holder).galleryRecyclerView.setPadding(0, 0, 0, 0);
+                        ((PostBaseGalleryTypeViewHolder) holder).adapter.setIsGridLayout(false);
+                        ((PostBaseGalleryTypeViewHolder) holder).imageIndexTextView.setVisibility(View.VISIBLE);
+                    }
+                    /*if (layoutManager instanceof GridLayoutManager) {
+                        int spanCount = gallerySize == 2 || gallerySize == 4 ? 2 : 3;
+                        ((GridLayoutManager) layoutManager).setSpanCount(spanCount);
+                        if (((PostBaseGalleryTypeViewHolder) holder).galleryRecyclerView.getItemDecorationCount() > 0) {
+                            RecyclerView.ItemDecoration itemDecoration = ((PostBaseGalleryTypeViewHolder) holder).galleryRecyclerView.getItemDecorationAt(0);
+                            if (itemDecoration instanceof PostGalleryGridLayoutItemDecoration) {
+                                ((PostGalleryGridLayoutItemDecoration) itemDecoration).setSpanCount(spanCount);
+                            }
+                        }
+
+                        int padding = (int) (8 * mScale);
+                        ((PostBaseGalleryTypeViewHolder) holder).galleryRecyclerView.setPadding(
+                                0, (holder instanceof PostGalleryTypeViewHolder) ? 0 : padding,
+                                padding, (holder instanceof PostGalleryTypeViewHolder) ? 0 : padding);
+                        ((PostBaseGalleryTypeViewHolder) holder).adapter.setIsGridLayout(true);
+                        ((PostBaseGalleryTypeViewHolder) holder).imageIndexTextView.setVisibility(View.GONE);
+                    } else {
+                        ((PostBaseGalleryTypeViewHolder) holder).galleryRecyclerView.setPadding(0, 0, 0, 0);
+                        ((PostBaseGalleryTypeViewHolder) holder).adapter.setIsGridLayout(false);
+                        ((PostBaseGalleryTypeViewHolder) holder).imageIndexTextView.setVisibility(View.VISIBLE);
+                    }*/
                 } else if (holder instanceof PostTextTypeViewHolder) {
                     if (!mHideTextPostContent && !post.isSpoiler() && post.getSelfTextPlainTrimmed() != null && !post.getSelfTextPlainTrimmed().isEmpty()) {
                         ((PostTextTypeViewHolder) holder).contentTextView.setVisibility(View.VISIBLE);
@@ -1193,35 +1254,47 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 mCallback.currentlyBindItem(holder.getBindingAdapterPosition());
             }
 
-            if (itemWidth < 250) {
-                if (((PostViewHolder) holder).commentsCountButton != null) {
-                    ((PostViewHolder) holder).commentsCountButton.setVisibility(View.GONE);
-                }
-                if (((PostViewHolder) holder).saveButton != null) {
-                    ((PostViewHolder) holder).saveButton.setVisibility(View.GONE);
-                }
-                if (((PostViewHolder) holder).shareButton != null) {
-                    ((PostViewHolder) holder).shareButton.setVisibility(View.GONE);
-                }
-            } else if (itemWidth < 316) {
-                if (((PostViewHolder) holder).commentsCountButton != null) {
-                    ((PostViewHolder) holder).commentsCountButton.setVisibility(View.GONE);
-                }
-                if (((PostViewHolder) holder).saveButton != null) {
-                    ((PostViewHolder) holder).saveButton.setVisibility(View.VISIBLE);
-                }
-                if (((PostViewHolder) holder).shareButton != null) {
-                    ((PostViewHolder) holder).shareButton.setVisibility(View.GONE);
-                }
-            } else if (itemWidth < 420) {
-                if (((PostViewHolder) holder).commentsCountButton != null) {
-                    ((PostViewHolder) holder).commentsCountButton.setVisibility(View.GONE);
-                }
-                if (((PostViewHolder) holder).saveButton != null) {
-                    ((PostViewHolder) holder).saveButton.setVisibility(View.VISIBLE);
-                }
-                if (((PostViewHolder) holder).shareButton != null) {
-                    ((PostViewHolder) holder).shareButton.setVisibility(View.VISIBLE);
+            if (mShowToolbarItemsBasedOnSpace) {
+                if (itemWidth < 250) {
+                    if (((PostViewHolder) holder).commentsCountButton != null) {
+                        ((PostViewHolder) holder).commentsCountButton.setVisibility(View.GONE);
+                    }
+                    if (((PostViewHolder) holder).saveButton != null) {
+                        ((PostViewHolder) holder).saveButton.setVisibility(View.GONE);
+                    }
+                    if (((PostViewHolder) holder).shareButton != null) {
+                        ((PostViewHolder) holder).shareButton.setVisibility(View.GONE);
+                    }
+                } else if (itemWidth < 316) {
+                    if (((PostViewHolder) holder).commentsCountButton != null) {
+                        ((PostViewHolder) holder).commentsCountButton.setVisibility(View.GONE);
+                    }
+                    if (((PostViewHolder) holder).saveButton != null) {
+                        ((PostViewHolder) holder).saveButton.setVisibility(View.VISIBLE);
+                    }
+                    if (((PostViewHolder) holder).shareButton != null) {
+                        ((PostViewHolder) holder).shareButton.setVisibility(View.GONE);
+                    }
+                } else if (itemWidth < 420) {
+                    if (((PostViewHolder) holder).commentsCountButton != null) {
+                        ((PostViewHolder) holder).commentsCountButton.setVisibility(View.GONE);
+                    }
+                    if (((PostViewHolder) holder).saveButton != null) {
+                        ((PostViewHolder) holder).saveButton.setVisibility(View.VISIBLE);
+                    }
+                    if (((PostViewHolder) holder).shareButton != null) {
+                        ((PostViewHolder) holder).shareButton.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    if (((PostViewHolder) holder).commentsCountButton != null) {
+                        ((PostViewHolder) holder).commentsCountButton.setVisibility(View.VISIBLE);
+                    }
+                    if (((PostViewHolder) holder).saveButton != null) {
+                        ((PostViewHolder) holder).saveButton.setVisibility(View.VISIBLE);
+                    }
+                    if (((PostViewHolder) holder).shareButton != null) {
+                        ((PostViewHolder) holder).shareButton.setVisibility(View.VISIBLE);
+                    }
                 }
             } else {
                 if (((PostViewHolder) holder).commentsCountButton != null) {
@@ -1582,8 +1655,13 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
         mShowAbsoluteNumberOfVotes = showAbsoluteNumberOfVotes;
     }
 
-    public void setAutoplay(boolean autoplay) {
-        mAutoplay = autoplay;
+    public boolean setAutoplay(boolean autoplay) {
+        if (mAutoplay != autoplay) {
+            mAutoplay = autoplay;
+            return true;
+        }
+
+        return false;
     }
 
     public boolean isAutoplay() {
@@ -1618,8 +1696,13 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
         mCompactLayoutToolbarHiddenByDefault = compactLayoutToolbarHiddenByDefault;
     }
 
-    public void setDataSavingMode(boolean dataSavingMode) {
-        mDataSavingMode = dataSavingMode;
+    public boolean setDataSavingMode(boolean dataSavingMode) {
+        if (mDataSavingMode != dataSavingMode) {
+            mDataSavingMode = dataSavingMode;
+            return true;
+        }
+
+        return false;
     }
 
     public void setDisableImagePreview(boolean disableImagePreview) {
@@ -1694,6 +1777,26 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
         multiPlayPlayerSelector.setSimultaneousAutoplayLimit(limit);
     }
 
+    // return true if the current value is not the same as the new value
+    public boolean setShowGalleryMediaAsGrid(boolean showGalleryMediaAsGrid) {
+        if (mShowGalleryMediaAsGrid != showGalleryMediaAsGrid) {
+            mShowGalleryMediaAsGrid = showGalleryMediaAsGrid;
+            return true;
+        }
+
+        return false;
+    }
+
+    // return true if the current value is not the same as the new value
+    public boolean setShowToolbarItemsBasedOnSpace(boolean showToolbarItemsBasedOnSpace) {
+        if (mShowToolbarItemsBasedOnSpace != showToolbarItemsBasedOnSpace) {
+            mShowToolbarItemsBasedOnSpace = showToolbarItemsBasedOnSpace;
+            return true;
+        }
+
+        return false;
+    }
+
     @OptIn(markerClass = UnstableApi.class)
     @Override
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
@@ -1758,6 +1861,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                     ((PostBaseVideoAutoplayViewHolder) holder).toroPlayer.setDefaultResolutionAlready = false;
                 } else if (holder instanceof PostWithPreviewTypeViewHolder) {
                     mGlide.clear(((PostWithPreviewTypeViewHolder) holder).imageView);
+                    ((PostWithPreviewTypeViewHolder) holder).imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     if (((PostWithPreviewTypeViewHolder) holder).imageWrapperFrameLayout != null) {
                         ((PostWithPreviewTypeViewHolder) holder).imageWrapperFrameLayout.setVisibility(View.GONE);
                     }
@@ -1800,6 +1904,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             ((PostGalleryViewHolder) holder).binding.titleTextViewItemPostGallery.setText("");
             ((PostGalleryViewHolder) holder).binding.titleTextViewItemPostGallery.setVisibility(View.GONE);
             mGlide.clear(((PostGalleryViewHolder) holder).binding.imageViewItemPostGallery);
+            ((PostGalleryViewHolder) holder).binding.imageViewItemPostGallery.setScaleType(ImageView.ScaleType.FIT_CENTER);
             ((PostGalleryViewHolder) holder).binding.imageViewItemPostGallery.setVisibility(View.GONE);
             ((PostGalleryViewHolder) holder).binding.progressBarItemPostGallery.setVisibility(View.GONE);
             ((PostGalleryViewHolder) holder).binding.loadImageErrorTextViewItemGallery.setVisibility(View.GONE);
@@ -3211,7 +3316,16 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 }
 
                 if (mLongPressPostNonMediaAreaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS)) {
-                    showPostOptions();
+                    if (post.getPostType() == Post.GALLERY_TYPE && this instanceof PostBaseGalleryTypeViewHolder) {
+                        RecyclerView.LayoutManager layoutManager = ((PostBaseGalleryTypeViewHolder) this).galleryRecyclerView.getLayoutManager();
+                        if (layoutManager instanceof LinearLayoutManagerBugFixed) {
+                            showPostOptions(((LinearLayoutManagerBugFixed) layoutManager).findFirstVisibleItemPosition());
+                        } else {
+                            showPostOptions(-1);
+                        }
+                    } else {
+                        showPostOptions(-1);
+                    }
                 } else if (mLongPressPostNonMediaAreaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_PREVIEW_IN_FULLSCREEN)) {
                     markPostRead(post, true);
                     openMedia(post, true);
@@ -3220,14 +3334,13 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             });
         }
 
-        void showPostOptions() {
+        void showPostOptions(int currentGalleryItemPosition) {
             PostOptionsBottomSheetFragment postOptionsBottomSheetFragment;
-            if (post.getPostType() == Post.GALLERY_TYPE && this instanceof PostBaseGalleryTypeViewHolder) {
+            if (post.getPostType() == Post.GALLERY_TYPE && this instanceof PostBaseGalleryTypeViewHolder && currentGalleryItemPosition >= 0) {
                 postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(post,
-                        getBindingAdapterPosition(),
-                        ((LinearLayoutManagerBugFixed) ((PostBaseGalleryTypeViewHolder) this).galleryRecyclerView.getLayoutManager()).findFirstVisibleItemPosition());
+                        getBindingAdapterPosition(), currentGalleryItemPosition, true);
             } else {
-                postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(post, getBindingAdapterPosition());
+                postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(post, getBindingAdapterPosition(), true);
             }
             postOptionsBottomSheetFragment.show(mFragment.getChildFragmentManager(), postOptionsBottomSheetFragment.getTag());
         }
@@ -3601,7 +3714,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
 
             imageView.setOnLongClickListener(view -> {
                 if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS)) {
-                    showPostOptions();
+                    showPostOptions(-1);
                     return true;
                 } else if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_PREVIEW_IN_FULLSCREEN)) {
                     markPostRead(post, true);
@@ -3723,8 +3836,10 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             galleryRecyclerView.setAdapter(adapter);
             new PagerSnapHelper().attachToRecyclerView(galleryRecyclerView);
             galleryRecyclerView.setRecycledViewPool(mGalleryRecycledViewPool);
-            LinearLayoutManagerBugFixed layoutManager = new LinearLayoutManagerBugFixed(mActivity, RecyclerView.HORIZONTAL, false);
-            galleryRecyclerView.setLayoutManager(layoutManager);
+            PostGalleryGridLayoutItemDecoration itemDecoration =
+                    new PostGalleryGridLayoutItemDecoration(mActivity, R.dimen.staggeredLayoutManagerItemOffset, 2);
+            galleryRecyclerView.addItemDecoration(itemDecoration);
+
             galleryRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
                 public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -3734,7 +3849,11 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                 @Override
                 public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                     super.onScrolled(recyclerView, dx, dy);
-                    imageIndexTextView.setText(mActivity.getString(R.string.image_index_in_gallery, layoutManager.findFirstVisibleItemPosition() + 1, post.getGallery().size()));
+                    RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+                    if (layoutManager instanceof LinearLayoutManagerBugFixed) {
+                        imageIndexTextView.setText(mActivity.getString(R.string.image_index_in_gallery,
+                                ((LinearLayoutManagerBugFixed) layoutManager).findFirstVisibleItemPosition() + 1, post.getGallery().size()));
+                    }
                 }
             });
             galleryRecyclerView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
@@ -3771,14 +3890,23 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
 
                             if (!dragged && !longPressed) {
                                 if (System.currentTimeMillis() - downTime >= longClickThreshold) {
+                                    View itemView = galleryRecyclerView.findChildViewUnder(e.getX(), e.getY());
+                                    int currentItemPosition = -1;
+                                    if (itemView != null) {
+                                        currentItemPosition = galleryRecyclerView.getChildAdapterPosition(itemView);
+                                    }
                                     if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS)) {
                                         galleryRecyclerView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-                                        showPostOptions();
+                                        showPostOptions(currentItemPosition);
                                         longPressed = true;
                                     } else if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_PREVIEW_IN_FULLSCREEN)) {
                                         galleryRecyclerView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-                                        markPostRead(post, true);
-                                        openMedia(post, layoutManager.findFirstVisibleItemPosition(), true);
+                                        if (currentItemPosition >= 0) {
+                                            markPostRead(post, true);
+                                            openMedia(post, currentItemPosition, true);
+                                        } else {
+                                            showPostOptions(currentItemPosition);
+                                        }
                                         longPressed = true;
                                     }
                                 }
@@ -3801,7 +3929,16 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                                     if (position >= 0) {
                                         if (post != null) {
                                             markPostRead(post, true);
-                                            openMedia(post, layoutManager.findFirstVisibleItemPosition(), false);
+                                            View itemView = galleryRecyclerView.findChildViewUnder(e.getX(), e.getY());
+                                            int currentItemPosition = -1;
+                                            if (itemView != null) {
+                                                currentItemPosition = galleryRecyclerView.getChildAdapterPosition(itemView);
+                                            }
+                                            if (currentItemPosition >= 0) {
+                                                openMedia(post, currentItemPosition, false);
+                                            } else {
+                                                openViewPostDetailActivity(post, getBindingAdapterPosition());
+                                            }
                                         }
                                     }
                                 }
@@ -3849,11 +3986,11 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
 
             noPreviewImageView.setOnLongClickListener(view -> {
                 if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_SHOW_POST_OPTIONS)) {
-                    showPostOptions();
+                    showPostOptions(-1);
                     return true;
                 } else if (mLongPressPostMediaAction.equals(SharedPreferencesUtils.LONG_PRESS_POST_VALUE_PREVIEW_IN_FULLSCREEN)) {
                     markPostRead(post, true);
-                    openMedia(post, layoutManager.findFirstVisibleItemPosition(), true);
+                    openMedia(post, true);
                     return true;
                 }
                 return false;
@@ -4255,7 +4392,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
             }
 
             PostOptionsBottomSheetFragment postOptionsBottomSheetFragment;
-            postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(post, getBindingAdapterPosition());
+            postOptionsBottomSheetFragment = PostOptionsBottomSheetFragment.newInstance(post, getBindingAdapterPosition(), true);
             postOptionsBottomSheetFragment.show(mFragment.getChildFragmentManager(), postOptionsBottomSheetFragment.getTag());
         }
 
@@ -4682,7 +4819,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                     if (post.getPostType() == Post.TEXT_TYPE || !mSharedPreferences.getBoolean(SharedPreferencesUtils.CLICK_TO_SHOW_MEDIA_IN_GALLERY_LAYOUT, false)) {
                         openViewPostDetailActivity(post, getBindingAdapterPosition());
                     } else {
-                        openMedia(post, layoutManager.findFirstVisibleItemPosition());
+                        openMedia(post, layoutManager.findFirstVisibleItemPosition(), false);
                     }
                 }
             }
@@ -4698,7 +4835,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                     if (post.getPostType() == Post.TEXT_TYPE || mSharedPreferences.getBoolean(SharedPreferencesUtils.CLICK_TO_SHOW_MEDIA_IN_GALLERY_LAYOUT, false)) {
                         openViewPostDetailActivity(post, getBindingAdapterPosition());
                     } else {
-                        openMedia(post, layoutManager.findFirstVisibleItemPosition());
+                        openMedia(post, layoutManager.findFirstVisibleItemPosition(), false);
                     }
                 }
             }
@@ -4889,6 +5026,7 @@ public class PostRecyclerViewAdapter extends PagingDataAdapter<Post, RecyclerVie
                     binding.saveButtonItemPostCard2GalleryType,
                     binding.shareButtonItemPostCard2GalleryType);
 
+            binding.mediaCardViewItemPostCard2GalleryType.setBackgroundTintList(ColorStateList.valueOf(mCardViewBackgroundColor));
             binding.dividerItemPostCard2GalleryType.setBackgroundColor(mDividerColor);
         }
 
